@@ -18,18 +18,18 @@ def proveedores_app():
         with st.form("form_proveedor", clear_on_submit=True):
             codigo = st.text_input("Código proveedor", value=generar_codigo_correlativo("proveedor", "PRV"))
             nombre = st.text_input("Nombre / Razón social")
-            ruc = st.text_input("DNI / RUC")
+            dni_ruc = st.text_input("DNI / RUC")
             telefono = st.text_input("Teléfono")
             direccion = st.text_input("Dirección")
 
             if st.form_submit_button("💾 Guardar proveedor"):
-                if codigo and nombre:
+                if codigo and nombre and dni_ruc:
                     conn = get_connection()
                     cursor = conn.cursor()
 
                     cursor.execute(
-                        "INSERT INTO proveedor VALUES (?, ?, ?, ?, ?)",
-                        (codigo, nombre, ruc, telefono, direccion)
+                        "INSERT INTO proveedor (id, nombre, dni_ruc, telefono, direccion) VALUES (%s, %s, %s, %s, %s)",
+                        (codigo, nombre, dni_ruc, telefono, direccion)
                     )
                     conn.commit()
                     conn.close()
@@ -52,8 +52,9 @@ def proveedores_app():
             # Campo de búsqueda
             busqueda = st.text_input("🔍 Buscar proveedor por nombre o RUC")
             if busqueda:
+                df_prov.fillna("", inplace=True)
                 df_filtrado = df_prov[df_prov["nombre"].str.contains(busqueda, case=False) |
-                                      df_prov["dni_ruc"].str.contains(busqueda, case=False)]
+                                    df_prov["dni_ruc"].str.contains(busqueda, case=False)]
             else:
                 df_filtrado = df_prov
 
@@ -67,7 +68,7 @@ def proveedores_app():
 
                 with st.form("editar_proveedor"):
                     nuevo_nombre = st.text_input("Nombre / Razón social", datos["nombre"])
-                    nuevo_ruc = st.text_input("DNI / RUC", datos["dni_ruc"])
+                    nuevo_dni_ruc = st.text_input("DNI / RUC", datos["dni_ruc"])
                     nuevo_telefono = st.text_input("Teléfono", datos["telefono"])
                     nueva_direccion = st.text_input("Dirección", datos["direccion"])
 
@@ -79,9 +80,9 @@ def proveedores_app():
 
                             cursor.execute("""
                                 UPDATE proveedor
-                                SET nombre=?, dni_ruc=?, telefono=?, direccion=?
-                                WHERE id=?
-                            """, (...))
+                                SET nombre=%s, dni_ruc=%s, telefono=%s, direccion=%s
+                                WHERE id=%s
+                            """, (nuevo_nombre, nuevo_dni_ruc, nuevo_telefono, nueva_direccion, datos["id"]))
                             conn.commit()
                             conn.close()
                             st.success("✅ Proveedor actualizado correctamente")
@@ -92,7 +93,7 @@ def proveedores_app():
                             conn = get_connection()
                             cursor = conn.cursor()
 
-                            cursor.execute("DELETE FROM proveedor WHERE id=?", (datos["id"],))
+                            cursor.execute("DELETE FROM proveedor WHERE id=%s", (datos["id"],))
                             conn.commit()
                             conn.close()
 

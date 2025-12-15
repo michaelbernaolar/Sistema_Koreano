@@ -11,7 +11,7 @@ from db import obtener_configuracion
 def get_margen_producto(producto_id):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT margen_utilidad FROM producto WHERE id = ?", (producto_id,))
+    cursor.execute("SELECT margen_utilidad FROM producto WHERE id = %s", (producto_id,))
     fila = cursor.fetchone()
     conn.close()
     return fila[0] if fila and fila[0] is not None else None
@@ -38,7 +38,7 @@ def guardar_historial(producto_id, precio_anterior, precio_nuevo, margen, costo_
     cursor = conn.cursor()
     cursor.execute("""
         INSERT INTO historial_precios(producto_id, precio_anterior, precio_nuevo, margen_usado, costo_promedio, fecha)
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s)
     """, (producto_id, precio_anterior, precio_nuevo, margen, costo_promedio, datetime.now()))
     conn.commit()
     conn.close()
@@ -48,11 +48,11 @@ def actualizar_precio_producto(producto_id, nuevo_precio):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT precio_venta FROM producto WHERE id = ?", (producto_id,))
+    cursor.execute("SELECT precio_venta FROM producto WHERE id = %s", (producto_id,))
     fila = cursor.fetchone()
     precio_anterior = fila[0] if fila and fila[0] is not None else None
 
-    cursor.execute("UPDATE producto SET precio_venta = ? WHERE id = ?", (nuevo_precio, producto_id))
+    cursor.execute("UPDATE producto SET precio_venta = %s WHERE id = %s", (nuevo_precio, producto_id))
 
     conn.commit()
     conn.close()
@@ -62,7 +62,7 @@ def actualizar_precio_producto(producto_id, nuevo_precio):
 def actualizar_margen_producto(producto_id, nuevo_margen):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE producto SET margen_utilidad = ? WHERE id = ?", (nuevo_margen, producto_id))
+    cursor.execute("UPDATE producto SET margen_utilidad = %s WHERE id = %s", (nuevo_margen, producto_id))
     conn.commit()
     conn.close()
 
@@ -74,8 +74,8 @@ def actualizar_valor_venta(pid, precio_venta):
 
     cursor.execute("""
         UPDATE producto
-        SET valor_venta = ?
-        WHERE id = ?
+        SET valor_venta = %s
+        WHERE id = %s
     """, (valor_venta, pid))
 
     conn.commit()
@@ -119,20 +119,20 @@ def precios_app():
         codigo_num = ''.join(filter(str.isdigit, filtro_codigo))
         if codigo_num.isdigit():
             codigo_formateado = f"P{int(codigo_num):05d}"
-            query += " AND id = ?"
+            query += " AND id = %s"
             params.append(codigo_formateado)
         else:
-            query += " AND id LIKE ?"
+            query += " AND id LIKE %s"
             params.append(f"%{filtro_codigo}%")
 
     if filtro_desc:
-        query += " AND descripcion LIKE ?"
+        query += " AND descripcion LIKE %s"
         params.append(f"%{filtro_desc}%")
     if filtro_marca:
-        query += " AND marca LIKE ?"
+        query += " AND marca LIKE %s"
         params.append(f"%{filtro_marca}%")
     if filtro_catalogo:
-        query += " AND catalogo LIKE ?"
+        query += " AND catalogo LIKE %s"
         params.append(f"%{filtro_catalogo}%")
 
     df_prod = pd.read_sql_query(query + " ORDER BY descripcion", conn, params=params)
@@ -238,7 +238,7 @@ def precios_app():
             p.descripcion
         FROM historial_precios h
         JOIN producto p ON p.id = h.producto_id
-        WHERE h.producto_id = ?
+        WHERE h.producto_id = %s
         ORDER BY h.fecha DESC
     """, conn, params=[pid])
 

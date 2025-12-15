@@ -30,10 +30,10 @@ def clientes_app():
             direccion = st.text_input("Dirección")
 
             if st.form_submit_button("💾 Guardar cliente"):
-                if codigo and nombre:
+                if codigo and nombre and dni_ruc:
                     cursor.execute("""
                         INSERT INTO cliente (id, nombre, dni_ruc, telefono, direccion)
-                        VALUES (?, ?, ?, ?, ?)
+                        VALUES (%s, %s, %s, %s, %s)
                     """, (codigo, nombre, dni_ruc, telefono, direccion))
                     conn.commit()
                     st.success("✅ Cliente guardado correctamente")
@@ -76,8 +76,8 @@ def clientes_app():
                             if st.form_submit_button("💾 Guardar cambios"):
                                 cursor.execute("""
                                     UPDATE cliente
-                                    SET nombre=?, dni_ruc=?, telefono=?, direccion=?
-                                    WHERE id=?
+                                    SET nombre=%s, dni_ruc=%s, telefono=%s, direccion=%s
+                                    WHERE id=%s
                                 """, (nuevo_nombre, nuevo_dni_ruc, nuevo_telefono, nueva_direccion, datos["id"]))
                                 conn.commit()
                                 st.success("✅ Cliente actualizado correctamente")
@@ -85,7 +85,7 @@ def clientes_app():
 
                         with col2:
                             if st.form_submit_button("🗑️ Eliminar cliente"):
-                                cursor.execute("DELETE FROM cliente WHERE id=?", (datos["id"],))
+                                cursor.execute("DELETE FROM cliente WHERE id=%s", (datos["id"],))
                                 conn.commit()
                                 st.warning("⚠️ Cliente eliminado")
                                 st.rerun()

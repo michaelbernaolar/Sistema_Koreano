@@ -82,13 +82,13 @@ def compras_app():
             params = []
 
             if filtro_codigo:
-                query_prod += " AND id LIKE ?"; params.append(f"%{filtro_codigo}%")
+                query_prod += " AND id LIKE %s"; params.append(f"%{filtro_codigo}%")
             if filtro_desc:
-                query_prod += " AND descripcion LIKE ?"; params.append(f"%{filtro_desc}%")
+                query_prod += " AND descripcion LIKE %s"; params.append(f"%{filtro_desc}%")
             if filtro_marca:
-                query_prod += " AND marca LIKE ?"; params.append(f"%{filtro_marca}%")
+                query_prod += " AND marca LIKE %s"; params.append(f"%{filtro_marca}%")
             if filtro_catalogo:
-                query_prod += " AND catalogo LIKE ?"; params.append(f"%{filtro_catalogo}%")
+                query_prod += " AND catalogo LIKE %s"; params.append(f"%{filtro_catalogo}%")
 
             df_prod_filtrado = pd.read_sql_query(query_prod + " ORDER BY descripcion", conn, params=params)
 
@@ -113,7 +113,7 @@ def compras_app():
                 df_rel = pd.read_sql_query("""
                     SELECT unidad_compra, factor, precio_compra 
                     FROM producto_proveedor 
-                    WHERE id_producto=? AND id_proveedor=?
+                    WHERE id_producto=%s AND id_proveedor=%s
                 """, conn, params=[id_producto, id_proveedor])
                 
                 #Unidad de compra y factor
@@ -215,7 +215,7 @@ def compras_app():
                                 suma_total, descuento, op_gravada, op_gratuita,
                                 igv, total, metodo_pago
                             )
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         """, (
                             fecha, id_proveedor, nro_doc, tipo_doc,
                             suma_total, descuento, op_gravada, op_gratuita,
@@ -223,14 +223,14 @@ def compras_app():
                         ))
 
 
-                        id_compra = cursor.lastrowid
+                        id_compra = cursor.fetchone()[0]
 
                         for item in st.session_state.carrito_compras:
                             cursor.execute("""
                                 INSERT INTO compras_detalle (
                                     id_compra, id_producto, cantidad_compra, unidad_compra, 
                                     factor_conversion, cantidad_final, precio_unitario, subtotal
-                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                             """, (
                                 id_compra, item["ID Producto"], item["Cantidad Compra"], item["Unidad Compra"],
                                 item["Factor"], item["Cantidad Final"], item["Precio U. Compra"], item["Subtotal"]
@@ -267,7 +267,7 @@ def compras_app():
                                     id_producto, tipo, cantidad, fecha, motivo, referencia, 
                                     costo_unitario, valor_total
                                 )
-                                VALUES (?, 'entrada', ?, ?, ?, ?, ?, ?)
+                                VALUES (%s, 'entrada', %s, %s, %s, %s, %s, %s)
                             """, (
                                 item["ID Producto"],
                                 item["Cantidad Final"],
@@ -303,18 +303,18 @@ def compras_app():
             SELECT c.id, c.fecha, p.nombre AS proveedor, c.nro_doc, c.tipo_doc, c.total
             FROM compras c
             JOIN proveedor p ON c.id_proveedor = p.id
-            WHERE date(c.fecha) BETWEEN ? AND ?
+            WHERE date(c.fecha) BETWEEN %s AND %s
         """
         params = [fecha_ini, fecha_fin]
 
         if proveedor_filtro:
-            query += " AND p.nombre LIKE ?"
+            query += " AND p.nombre LIKE %s"
             params.append(f"%{proveedor_filtro}%")
         if producto_filtro:
             query += """ AND c.id IN (
                 SELECT id_compra FROM compras_detalle d 
                 JOIN producto pr ON d.id_producto = pr.id 
-                WHERE pr.descripcion LIKE ?
+                WHERE pr.descripcion LIKE %s
             )"""
             params.append(f"%{producto_filtro}%")
 
@@ -356,7 +356,7 @@ def compras_app():
 
         elif tipo_reporte == "Mensual":
             df = pd.read_sql_query("""
-                SELECT strftime('%Y-%m', fecha) AS mes, SUM(total) AS total_mes
+                SELECT to_char(fecha, 'YYYY-MM') AS mes, SUM(total) AS total_mes
                 FROM compras
                 GROUP BY mes
                 ORDER BY mes

@@ -1,15 +1,19 @@
 # db.py
-import sqlite3
+import psycopg2
 import pandas as pd
 from datetime import datetime
 import os
 
-# Ruta absoluta basada en la carpeta del proyecto
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "inventario.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL no está definida")
 
 def get_connection():
-    return sqlite3.connect(DB_PATH, check_same_thread=False)
+    return psycopg2.connect(
+        DATABASE_URL,
+        sslmode="require"  # clave para nube
+    )
 
 # -------------------------
 # Inicialización de la BD
@@ -19,27 +23,11 @@ def init_db():
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Tabla de producto (inventario)
+    # Tabla de categorias
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS producto (
-        id TEXT PRIMARY KEY,
-        descripcion TEXT,
-        id_categoria INTEGER,
-        catalogo TEXT,
-        marca TEXT,
-        modelo TEXT,
-        ubicacion TEXT,
-        unidad_base TEXT,
-        stock_actual REAL,
-        precio_venta REAL,
-        imagen TEXT,
-        activo INTEGER DEFAULT 1,
-        costo_promedio REAL,
-        costo_ultima_compra REAL,
-        valor_inventario REAL,
-        margen_utilidad REAL DEFAULT NULL,
-        valor_venta Real DEFAULT NULL,
-        FOREIGN KEY (id_categoria) REFERENCES categoria(id)
+    CREATE TABLE IF NOT EXISTS categoria (
+        id SERIAL PRIMARY KEY,
+        nombre TEXT UNIQUE
     )
     ''')
 
@@ -65,18 +53,42 @@ def init_db():
     )
     ''')
 
+    # Tabla de producto
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS producto (
+        id TEXT PRIMARY KEY,
+        descripcion TEXT,
+        id_categoria INTEGER,
+        catalogo TEXT,
+        marca TEXT,
+        modelo TEXT,
+        ubicacion TEXT,
+        unidad_base TEXT,
+        stock_actual NUMERIC(12,4),
+        precio_venta NUMERIC(12,2),
+        imagen TEXT,
+        activo INTEGER DEFAULT 1,
+        costo_promedio NUMERIC(12,4),
+        costo_ultima_compra NUMERIC(12,4),
+        valor_inventario NUMERIC(14,2),
+        margen_utilidad NUMERIC(5,4) DEFAULT NULL,
+        valor_venta NUMERIC(12,2) DEFAULT NULL,
+        FOREIGN KEY (id_categoria) REFERENCES categoria(id)
+    )
+    ''')
+
     # Tabla de venta
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS venta (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        fecha TEXT,
+        id SERIAL PRIMARY KEY,
+        fecha TIMESTAMP,
         id_cliente TEXT,
-        suma_total REAL,
-        descuento REAL,
-        op_gravada REAL,
-        op_gratuita REAL,
-        igv REAL,       
-        total REAL,
+        suma_total NUMERIC(14,2),
+        descuento NUMERIC(14,2),
+        op_gravada NUMERIC(14,2),
+        op_gratuita NUMERIC(14,2),
+        igv NUMERIC(14,2),       
+        total NUMERIC(14,2),
         tipo_comprobante TEXT,
         nro_comprobante TEXT,
         metodo_pago TEXT,
@@ -87,13 +99,13 @@ def init_db():
     # Tabla de venta_detalle
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS venta_detalle (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         id_venta INTEGER,
         id_producto TEXT,
-        cantidad INTEGER,
-        precio_unitario REAL,
-        sub_total REAL,
-        precio_final REAL,
+        cantidad NUMERIC(12,4),
+        precio_unitario NUMERIC(12,2),
+        sub_total NUMERIC(14,2),
+        precio_final NUMERIC(14,2),
         FOREIGN KEY (id_venta) REFERENCES venta(id),
         FOREIGN KEY (id_producto) REFERENCES producto(id)
     )
@@ -102,17 +114,17 @@ def init_db():
     # Tabla de compras
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS compras (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        fecha DATETIME,
+        id SERIAL PRIMARY KEY,
+        fecha TIMESTAMP,
         id_proveedor TEXT,
         nro_doc TEXT,
         tipo_doc TEXT,
-        suma_total REAL,
-        descuento REAL,
-        op_gravada REAL,
-        op_gratuita REAL,
-        igv REAL,       
-        total REAL,
+        suma_total NUMERIC(12,2),
+        descuento NUMERIC(12,2),
+        op_gravada NUMERIC(12,2),
+        op_gratuita NUMERIC(12,2),
+        igv NUMERIC(12,2),       
+        total NUMERIC(14,2),
         metodo_pago TEXT,
         FOREIGN KEY (id_proveedor) REFERENCES proveedor(id)
     )
@@ -121,15 +133,15 @@ def init_db():
     # Tabla de compras_detalle
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS compras_detalle (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         id_compra INTEGER,
         id_producto TEXT,
-        cantidad_compra REAL,
+        cantidad_compra NUMERIC(12,4),
         unidad_compra TEXT,
-        factor_conversion REAL,
-        cantidad_final REAL,
-        precio_unitario REAL,
-        subtotal REAL,
+        factor_conversion NUMERIC(12,4),
+        cantidad_final NUMERIC(12,4),
+        precio_unitario NUMERIC(12,4),
+        subtotal NUMERIC(14,2),
         FOREIGN KEY (id_compra) REFERENCES compras(id),
         FOREIGN KEY (id_producto) REFERENCES producto(id)
     )
@@ -138,14 +150,14 @@ def init_db():
     # Tabla de producto_proveedor
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS producto_proveedor (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        id_producto INTEGER,
-        id_proveedor INTEGER,
+        id SERIAL PRIMARY KEY,
+        id_producto TEXT,
+        id_proveedor TEXT,
         unidad_compra TEXT,
-        factor REAL,
-        precio_compra REAL,
-        lote_min REAL,
-        tiempo_entrega REAL,
+        factor NUMERIC(12,4),
+        precio_compra NUMERIC(12,4),
+        lote_min NUMERIC(12,4),
+        tiempo_entrega NUMERIC(12,4),
         FOREIGN KEY (id_producto) REFERENCES producto(id),
         FOREIGN KEY (id_proveedor) REFERENCES proveedor(id)
     )
@@ -154,24 +166,16 @@ def init_db():
     # Tabla de movimientos
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS movimientos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         id_producto TEXT,
         tipo TEXT,            -- 'entrada' o 'salida'
-        cantidad REAL,
-        fecha DATETIME,
+        cantidad NUMERIC(12,4),
+        fecha TIMESTAMP,
         motivo TEXT,
         referencia TEXT,
-        costo_unitario REAL,
-        valor_total REAL,           
+        costo_unitario NUMERIC(12,4),
+        valor_total NUMERIC(14,2), 
         FOREIGN KEY (id_producto) REFERENCES producto(id)
-    )
-    ''')
-
-    # Tabla de categorias
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS categoria (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT UNIQUE
     )
     ''')
 
@@ -180,28 +184,29 @@ def init_db():
     CREATE TABLE IF NOT EXISTS configuracion (
         id INTEGER PRIMARY KEY CHECK (id = 1),
         tipo_regimen TEXT DEFAULT 'Régimen General',
-        igv REAL DEFAULT 0.18,
-        margen_utilidad REAL DEFAULT 0.25,
+        igv NUMERIC(5,4) DEFAULT 0.18,
+        margen_utilidad NUMERIC(5,4) DEFAULT 0.25,
         incluir_igv_en_precio INTEGER DEFAULT 1
     )
     ''')
 
     # Insertar registro inicial si no existe
     cursor.execute('''
-    INSERT OR IGNORE INTO configuracion (id, tipo_regimen, igv, margen_utilidad, incluir_igv_en_precio)
+    INSERT INTO configuracion (id, tipo_regimen, igv, margen_utilidad, incluir_igv_en_precio)
     VALUES (1, 'Régimen General', 0.18, 0.25, 1)
+    ON CONFLICT (id) DO NOTHING
     ''')
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS historial_precios (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        producto_id INTEGER,
-        precio_anterior REAL,
-        precio_nuevo REAL,
-        margen_usado REAL,
-        costo_promedio REAL,
-        fecha TEXT,
-        FOREIGN KEY(producto_id) REFERENCES producto(id)
+        id SERIAL PRIMARY KEY,
+        producto_id TEXT,
+        precio_anterior NUMERIC(12,2),
+        precio_nuevo NUMERIC(12,2),
+        margen_usado NUMERIC(5,4),
+        costo_promedio NUMERIC(12,4),
+        fecha TIMESTAMP,
+        FOREIGN KEY (producto_id) REFERENCES producto(id)
     )
     """)
 
@@ -242,21 +247,21 @@ def obtener_categorias():
 def agregar_categoria(nombre):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO categoria (nombre) VALUES (?)", (nombre,))
+    cursor.execute("INSERT INTO categoria (nombre) VALUES (%s)", (nombre,))
     conn.commit()
     conn.close()
 
 def editar_categoria(id_cat, nuevo_nombre):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE categoria SET nombre=? WHERE id=?", (nuevo_nombre, id_cat))
+    cursor.execute("UPDATE categoria SET nombre=%s WHERE id=%s", (nuevo_nombre, id_cat))
     conn.commit()
     conn.close()
 
 def eliminar_categoria(id_cat):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM categoria WHERE id=?", (id_cat,))
+    cursor.execute("DELETE FROM categoria WHERE id=%s", (id_cat,))
     conn.commit()
     conn.close()
 
@@ -271,7 +276,7 @@ def insertar_producto(data):
     INSERT INTO producto (
             id, descripcion, id_categoria, catalogo, marca, modelo,
             ubicacion, unidad_base , stock_actual, precio_venta, imagen, activo
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     ''', data)
     conn.commit()
     conn.close()
@@ -285,7 +290,7 @@ def mostrar_todos():
 def existe_codigo(id):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM producto WHERE id = ?", (id,))
+    cursor.execute("SELECT * FROM producto WHERE id = %s", (id,))
     fila = cursor.fetchone()
     conn.close()
     return fila
@@ -295,19 +300,19 @@ def actualizar_producto(data):
     cursor = conn.cursor()
     cursor.execute('''
     UPDATE producto SET
-        descripcion = ?,
-        id_categoria = ?,
-        catalogo = ?,
-        marca = ?,
-        modelo = ?,
-        ubicacion = ?,
-        unidad_base = ?,
-        stock_actual = ?,
-        precio_venta = ?,
-        imagen = ?,
-        activo = ?,
-        margen_utilidad=?           
-    WHERE id = ?
+        descripcion = %s,
+        id_categoria = %s,
+        catalogo = %s,
+        marca = %s,
+        modelo = %s,
+        ubicacion = %s,
+        unidad_base = %s,
+        stock_actual = %s,
+        precio_venta = %s,
+        imagen = %s,
+        activo = %s,
+        margen_utilidad=%s           
+    WHERE id = %s
     ''', data)
 
     # 🔥 Recalcular precio y valor_venta CON el margen recién actualizado
@@ -321,7 +326,7 @@ def actualizar_producto(data):
     conn.close()
 
 def actualizar_costo_promedio(cursor, id_producto, cantidad_entrada, costo_unitario_entrada):
-    cursor.execute("SELECT stock_actual, costo_promedio FROM producto WHERE id = ?", (id_producto,))
+    cursor.execute("SELECT stock_actual, costo_promedio FROM producto WHERE id = %s", (id_producto,))
     fila = cursor.fetchone()
     if not fila:
         return
@@ -343,11 +348,11 @@ def actualizar_costo_promedio(cursor, id_producto, cantidad_entrada, costo_unita
     cursor.execute("""
         UPDATE producto
         SET 
-            stock_actual = ?, 
-            costo_promedio = ?, 
-            costo_ultima_compra = ?,
-            valor_inventario = ?
-        WHERE id = ?
+            stock_actual = %s, 
+            costo_promedio = %s, 
+            costo_ultima_compra = %s,
+            valor_inventario = %s
+        WHERE id = %s
     """, (
         nuevo_stock,
         round(nuevo_costo_promedio, 4),
@@ -361,7 +366,7 @@ def actualizar_costo_promedio(cursor, id_producto, cantidad_entrada, costo_unita
 def registrar_salida_por_venta(cursor, id_producto, cantidad_salida, fecha, referencia):
     """Registra una salida por venta y actualiza el inventario."""
     # Obtener datos actuales del producto
-    cursor.execute("SELECT stock_actual, costo_promedio FROM producto WHERE id = ?", (id_producto,))
+    cursor.execute("SELECT stock_actual, costo_promedio FROM producto WHERE id = %s", (id_producto,))
     fila = cursor.fetchone()
     if not fila:
         return
@@ -381,8 +386,8 @@ def registrar_salida_por_venta(cursor, id_producto, cantidad_salida, fecha, refe
     # Actualizar producto
     cursor.execute("""
         UPDATE producto
-        SET stock_actual = ?, valor_inventario = ?
-        WHERE id = ?
+        SET stock_actual = %s, valor_inventario = %s
+        WHERE id = %s
     """, (
         nuevo_stock,
         round(nuevo_stock * costo_promedio, 2),
@@ -392,7 +397,7 @@ def registrar_salida_por_venta(cursor, id_producto, cantidad_salida, fecha, refe
     # Registrar movimiento
     cursor.execute("""
         INSERT INTO movimientos (id_producto, tipo, cantidad, fecha, motivo, referencia, costo_unitario, valor_total)
-        VALUES (?, 'salida', ?, ?, ?, ?, ?, ?)
+        VALUES (%s, 'salida', %s, %s, %s, %s, %s, %s)
     """, (id_producto, cantidad_salida, fecha, "Venta", referencia, costo_promedio, valor_total))
 
 
@@ -411,7 +416,7 @@ def recalcular_precios_producto(cursor, id_producto):
     cursor.execute("""
         SELECT costo_promedio, margen_utilidad, precio_venta
         FROM producto 
-        WHERE id = ?
+        WHERE id = %s
     """, (id_producto,))
     fila = cursor.fetchone()
 
@@ -433,8 +438,8 @@ def recalcular_precios_producto(cursor, id_producto):
     # Guardar en BD
     cursor.execute("""
         UPDATE producto
-        SET valor_venta = ?, precio_venta = ?
-        WHERE id = ?
+        SET valor_venta = %s, precio_venta = %s
+        WHERE id = %s
     """, (round(valor_venta, 2), round(precio_nuevo, 2), id_producto))
 
     # ✨  ESTA ES LA CLAVE: retornar datos
@@ -484,13 +489,13 @@ def actualizar_configuracion(nuevo_regimen=None, nuevo_igv=None, nuevo_margen=No
     conn = get_connection()
     cursor = conn.cursor()
     if nuevo_regimen is not None:
-        cursor.execute("UPDATE configuracion SET tipo_regimen = ? WHERE id = 1", (nuevo_regimen,))
+        cursor.execute("UPDATE configuracion SET tipo_regimen = %s WHERE id = 1", (nuevo_regimen,))
     if nuevo_igv is not None:
-        cursor.execute("UPDATE configuracion SET igv = ? WHERE id = 1", (nuevo_igv,))
+        cursor.execute("UPDATE configuracion SET igv = %s WHERE id = 1", (nuevo_igv,))
     if nuevo_margen is not None:
-        cursor.execute("UPDATE configuracion SET margen_utilidad = ? WHERE id = 1", (nuevo_margen,))
+        cursor.execute("UPDATE configuracion SET margen_utilidad = %s WHERE id = 1", (nuevo_margen,))
     if incluir_igv is not None:
-        cursor.execute("UPDATE configuracion SET incluir_igv_en_precio = ? WHERE id = 1", (1 if incluir_igv else 0,))
+        cursor.execute("UPDATE configuracion SET incluir_igv_en_precio = %s WHERE id = 1", (1 if incluir_igv else 0,))
     conn.commit()
     conn.close()
 
@@ -499,7 +504,7 @@ def registrar_historial_precio(cursor, producto_id, precio_anterior, precio_nuev
     fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cursor.execute("""
         INSERT INTO historial_precios (producto_id, precio_anterior, precio_nuevo, margen_usado, costo_promedio, fecha)
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s)
     """, (producto_id, precio_anterior, precio_nuevo, margen_usado, costo_promedio, fecha))
 
 def backup_productos_csv():

@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import os
-import sqlite3
 
 from db import get_connection
 from db import (
@@ -179,7 +178,6 @@ def productos_app():
 
         def buscar_producto_avanzado(criterio, marca=None, catalogo=None):
             conn = get_connection()
-            conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
 
             query = """
@@ -196,21 +194,21 @@ def productos_app():
                 criterio = f"%{criterio.lower()}%"
                 query += """
                     AND (
-                        LOWER(p.id) LIKE ? OR
-                        LOWER(p.descripcion) LIKE ? OR
-                        LOWER(p.catalogo) LIKE ? OR
-                        LOWER(p.marca) LIKE ? OR
-                        LOWER(p.modelo) LIKE ?
+                        LOWER(p.id) LIKE %s OR
+                        LOWER(p.descripcion) LIKE %s OR
+                        LOWER(p.catalogo) LIKE %s OR
+                        LOWER(p.marca) LIKE %s OR
+                        LOWER(p.modelo) LIKE %s
                     )
                 """
                 params.extend([criterio] * 5)
 
             if marca and marca != "Todos":
-                query += " AND p.marca = ?"
+                query += " AND p.marca = %s"
                 params.append(marca)
 
             if catalogo and catalogo != "Todos":
-                query += " AND p.catalogo = ?"
+                query += " AND p.catalogo = %s"
                 params.append(catalogo)
 
             cursor.execute(query, params)

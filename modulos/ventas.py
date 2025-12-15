@@ -75,21 +75,21 @@ def ventas_app():
             if codigo_num.isdigit():
                 # Formatea con 5 dígitos y agrega el prefijo P
                 codigo_formateado = f"P{int(codigo_num):05d}"
-                query_prod += " AND id = ?"
+                query_prod += " AND id = %s"
                 params.append(codigo_formateado)
             else:
                 # Si el usuario escribe P00016 completo, también funciona
-                query_prod += " AND id LIKE ?"
+                query_prod += " AND id LIKE %s"
                 params.append(f"%{filtro_codigo.strip()}%")
 
         if filtro_desc:
-            query_prod += " AND descripcion LIKE ?"
+            query_prod += " AND descripcion LIKE %s"
             params.append(f"%{filtro_desc}%")
         if filtro_marca:
-            query_prod += " AND marca LIKE ?"
+            query_prod += " AND marca LIKE %s"
             params.append(f"%{filtro_marca}%")
         if filtro_catalogo:
-            query_prod += " AND catalogo LIKE ?"
+            query_prod += " AND catalogo LIKE %s"
             params.append(f"%{filtro_catalogo}%")
 
         df_prod = query_df(query_prod + " ORDER BY descripcion", params)
@@ -255,14 +255,14 @@ def ventas_app():
                             fecha, id_cliente, suma_total, op_gravada, igv, total,
                             tipo_comprobante, metodo_pago, nro_comprobante, pago_cliente, vuelto
                         )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """, (
                         fecha, cliente_id, suma_total, op_gravada, igv, total,
                         tipo_comprobante, metodo_pago, nro_comprobante,
                         pago_cliente if metodo_pago == "Efectivo" else None,
                         vuelto if metodo_pago == "Efectivo" else None
                     ))
-                    id_venta = cursor.lastrowid
+                    id_venta = cursor.fetchone()[0]
                     st.session_state["venta_actual_id"] = id_venta
 
                     # 2) Guardar detalles
@@ -276,7 +276,7 @@ def ventas_app():
 
                         cursor.execute("""
                             INSERT INTO venta_detalle (id_venta, id_producto, cantidad, precio_unitario, sub_total, precio_final)
-                            VALUES (?, ?, ?, ?, ?, ?)
+                            VALUES (%s, %s, %s, %s, %s, %s)
                         """, (id_venta, item["ID Producto"], item["Cantidad"], precio_sin_igv, subtotal_sin_igv, subtotal_sin_igv))
 
                         registrar_salida_por_venta(
@@ -317,11 +317,11 @@ def ventas_app():
             SELECT v.id, v.fecha, c.nombre AS cliente, v.nro_comprobante, v.tipo_comprobante, v.metodo_pago, v.total
             FROM venta v
             LEFT JOIN cliente c ON v.id_cliente = c.id
-            WHERE date(v.fecha) BETWEEN ? AND ?
+            WHERE date(v.fecha) BETWEEN %s AND %s
         """
         params = [fecha_ini, fecha_fin]
         if cliente_filtro:
-            query += " AND c.nombre LIKE ?"
+            query += " AND c.nombre LIKE %s"
             params.append(f"%{cliente_filtro}%")
         
         df_ventas = query_df(query, params)
@@ -375,7 +375,7 @@ def ventas_app():
 
         elif tipo_reporte == "Mensual":
             df = query_df("""
-                SELECT strftime('%Y-%m', fecha) AS mes, SUM(total) AS total_mes
+                SELECT to_char(fecha, 'YYYY-MM') AS mes, SUM(total) AS total_mes
                 FROM venta
                 GROUP BY mes
                 ORDER BY mes

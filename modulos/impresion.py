@@ -10,7 +10,7 @@ def obtener_venta_completa(venta_id):
                    c.nombre, c.dni_ruc
             FROM venta v
             LEFT JOIN cliente c ON c.id = v.id_cliente
-            WHERE v.id = ?
+            WHERE v.id = %s
         """, (venta_id,))
         venta = cursor.fetchone()
 
@@ -19,7 +19,7 @@ def obtener_venta_completa(venta_id):
             SELECT p.descripcion, dv.cantidad, dv.precio_unitario
             FROM venta_detalle dv
             JOIN producto p ON p.id = dv.id_producto
-            WHERE dv.id_venta = ?
+            WHERE dv.id_venta = %s
         """, (venta_id,))
         detalles = cursor.fetchall()
 
