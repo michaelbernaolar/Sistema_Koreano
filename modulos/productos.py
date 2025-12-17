@@ -2,6 +2,10 @@ import streamlit as st
 import pandas as pd
 import os
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+
+from db import to_float
 from db import get_connection
 from db import (
     generar_codigo_correlativo, obtener_categorias,
@@ -260,7 +264,7 @@ def productos_app():
                                 marca = st.text_input("Marca", row["marca"])
                                 modelo = st.text_input("Modelo", row["modelo"])
                                 ubicacion = st.text_input("Ubicación", row["ubicacion"])
-                                precio_venta = st.number_input("Precio de Venta", value=row["precio_venta"], step=0.1)
+                                precio_venta = st.number_input("Precio de Venta", value=to_float(row["precio_venta"]), step=0.1)
                                 imagen_nueva = st.file_uploader("Actualizar imagen (opcional)", type=["jpg", "png", "jpeg"])
                                 activo = st.selectbox("Activo", [1, 0], index=0 if row["activo"] == 1 else 1)
 

@@ -4,6 +4,10 @@ import pandas as pd
 from datetime import datetime
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()  # ← esto es clave
+
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
@@ -518,3 +522,6 @@ def query_df(sql, params=None):
     df = pd.read_sql_query(sql, conn, params=params)
     conn.close()
     return df
+
+def to_float(value, default=0.0):
+    return float(value) if value is not None else default
