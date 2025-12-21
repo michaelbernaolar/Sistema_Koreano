@@ -4,19 +4,20 @@ import pandas as pd
 from datetime import datetime
 import os
 
-from dotenv import load_dotenv
 
-load_dotenv()  # ← esto es clave
+if os.getenv("STREAMLIT_ENV") != "cloud":
+    from dotenv import load_dotenv
+    load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise ValueError("DATABASE_URL no está definida")
+    raise RuntimeError("DATABASE_URL no está definida")
 
 def get_connection():
     return psycopg2.connect(
         DATABASE_URL,
-        sslmode="require"  # clave para nube
+        sslmode="require"
     )
 
 # -------------------------
