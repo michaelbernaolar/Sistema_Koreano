@@ -1,9 +1,31 @@
 import streamlit as st
 import os
 from db import init_db
+from auth import autenticar_usuario
+
 
 # Configuración de la página
 st.set_page_config(page_title="Sistema de Gestión", layout="wide")
+
+def login():
+    st.title("🔐 Acceso al sistema")
+
+    username = st.text_input("Usuario")
+    password = st.text_input("Contraseña", type="password")
+
+    if st.button("Ingresar"):
+        user = autenticar_usuario(username, password)
+
+        if user:
+            st.session_state["usuario"] = user
+            st.success("Acceso correcto")
+            st.rerun()
+        else:
+            st.error("Usuario o contraseña incorrectos")
+
+if "usuario" not in st.session_state:
+    login()
+    st.stop()
 
 # Importar módulos
 from modulos.proveedores import proveedores_app
@@ -24,11 +46,24 @@ if "db_initialized" not in st.session_state:
 
 
 # -------------------------
+usuario = st.session_state["usuario"]
+
+if st.sidebar.button("Cerrar sesión"):
+    st.session_state.clear()
+    st.rerun()
+
+st.sidebar.markdown("---")
+
+# -------------------------
 # Sidebar con LOGO y BOTONES
 # -------------------------
 logo_path = os.path.join(BASE_DIR, "imagenes", "logo.png")
 if os.path.exists(logo_path):
     st.sidebar.image(logo_path, width='stretch')
+
+
+st.sidebar.write(f"👤 Usuario: {usuario['username']}")
+st.sidebar.write(f"🔑 Rol: {usuario['rol']}")
 
 # Módulos disponibles
 modulos = [
@@ -48,12 +83,6 @@ if "modulo" not in st.session_state:
 
 # Crear los botones de navegación en el sidebar
 for modulo in modulos:
-    # Resaltar el módulo activo con estilo diferente
-    estilo = (
-        "background-color:#4a90e2; color:white; font-weight:bold;"
-        if st.session_state.modulo == modulo
-        else ""
-    )
     if st.sidebar.button(modulo, key=modulo, help=f"Ir a {modulo}", width='stretch'):
         st.session_state.modulo = modulo
         st.rerun()

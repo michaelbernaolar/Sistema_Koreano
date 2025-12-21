@@ -1,8 +1,5 @@
 streamlit
 pandas
-<<<<<<< HEAD
-psycopg2-binary
-=======
 psycopg2-binary
 python-dotenv
->>>>>>> 4f64d6a (Primer commit: app Streamlit con Supabase)
+bcrypt
