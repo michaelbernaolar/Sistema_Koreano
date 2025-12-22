@@ -9,24 +9,20 @@ from session_manager import iniciar_sesion, obtener_usuario_sesion, cerrar_sesio
 st.set_page_config(page_title="Sistema de Gestión", layout="wide")
 
 
-usuario = obtener_usuario_sesion()
-
 # Verificar sesión
 usuario = obtener_usuario_sesion()
 if not usuario:
     st.title("🔐 Acceso al sistema")
     username = st.text_input("Usuario")
     password = st.text_input("Contraseña", type="password")
-
     if st.button("Ingresar"):
         user = autenticar_usuario(username, password)
         if user:
             iniciar_sesion(user)
-            st.stop()  # detiene ejecución y recarga app con sesión activa
+            st.stop()  # detiene ejecución y recarga la app con sesión activa
         else:
             st.error("Usuario o contraseña incorrectos")
-    st.stop()  # detener ejecución hasta que se haga login
-
+    st.stop()
 usuario = obtener_usuario_sesion()  # ahora ya existe
 
 
