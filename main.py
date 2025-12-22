@@ -22,7 +22,7 @@ if not usuario:
         user = autenticar_usuario(username, password)
         if user:
             iniciar_sesion(user)
-            st.experimental_rerun()  # recarga la página con sesión activa
+            st.stop()  # detiene ejecución y recarga app con sesión activa
         else:
             st.error("Usuario o contraseña incorrectos")
     st.stop()  # detener ejecución hasta que se haga login
@@ -50,7 +50,7 @@ if "db_initialized" not in st.session_state:
 
 if st.sidebar.button("Cerrar sesión"):
     cerrar_sesion()
-    st.experimental_rerun()  # recarga la página y muestra login
+    st.stop()  # vuelve al login
 
 st.sidebar.markdown("---")
 
