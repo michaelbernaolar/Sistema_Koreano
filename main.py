@@ -3,11 +3,14 @@ import os
 import time
 from db import init_db
 from auth import autenticar_usuario, obtener_usuario_por_username
-from session_manager import iniciar_sesion, obtener_usuario_sesion, cerrar_sesion
+from session_manager import iniciar_sesion, obtener_usuario_sesion, cerrar_sesion, cookies
 
 
 # Configuración de la página
 st.set_page_config(page_title="Sistema de Gestión", layout="wide")
+
+if not cookies.ready():
+    st.stop()  # Espera a que las cookies estén listas
 
 # Verificar si hay usuario en sesión
 usuario = obtener_usuario_sesion()
