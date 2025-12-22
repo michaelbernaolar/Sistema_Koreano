@@ -11,7 +11,10 @@ st.set_page_config(page_title="Sistema de Gestión", layout="wide")
 
 usuario = obtener_usuario_sesion()
 
-if not usuario:
+if "login_success" not in st.session_state:
+    st.session_state.login_success = False
+
+if not st.session_state.login_success:
     st.title("🔐 Acceso al sistema")
     username = st.text_input("Usuario")
     password = st.text_input("Contraseña", type="password")
@@ -20,10 +23,13 @@ if not usuario:
         user = autenticar_usuario(username, password)
         if user:
             iniciar_sesion(user)
-            st.rerun()  # fuerza rerun para que se refresque la sesión
+            st.session_state.login_success = True  # marcar login exitoso
         else:
             st.error("Usuario o contraseña incorrectos")
-    st.stop()
+
+    st.stop()  # detener ejecución hasta que se haga login
+
+usuario = obtener_usuario_sesion()  # ahora ya existe
 
 
 # Importar módulos
@@ -44,11 +50,12 @@ if "db_initialized" not in st.session_state:
     st.session_state.db_initialized = True
 
 
-
 if st.sidebar.button("Cerrar sesión"):
     cerrar_sesion()
+    st.session_state.login_success = False  # reset login
     st.success("Sesión cerrada correctamente")
-    st.rerun()
+    st.stop()  # detener ejecución y volver al login
+
 
 st.sidebar.markdown("---")
 
