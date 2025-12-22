@@ -1,61 +1,32 @@
 import streamlit as st
 import os
-from db import init_db
-from auth import autenticar_usuario
-from auth import autenticar_usuario, obtener_usuario_por_username
-from streamlit_cookies_manager import EncryptedCookieManager
 import time
+from db import init_db
+from auth import autenticar_usuario, obtener_usuario_por_username
+from session_manager import iniciar_sesion, obtener_usuario_sesion, cerrar_sesion
+
 
 # Configuración de la página
 st.set_page_config(page_title="Sistema de Gestión", layout="wide")
 
-cookies = EncryptedCookieManager(
-    prefix="koreano_",
-    password="clave_super_secreta_123"
-)
+# Verificar si hay usuario en sesión
+usuario = obtener_usuario_sesion()
 
-if not cookies.ready():
-    st.stop()
-
-
-def login():
+# Mostrar login si no hay sesión activa
+if not usuario:
     st.title("🔐 Acceso al sistema")
-
     username = st.text_input("Usuario")
     password = st.text_input("Contraseña", type="password")
 
     if st.button("Ingresar"):
         user = autenticar_usuario(username, password)
-
         if user:
-            st.session_state["usuario"] = user
-
-            cookies["usuario"] = user["username"]
-            cookies["rol"] = user["rol"]
-            cookies["login_time"] = str(time.time())
-            cookies.save()
-
-            st.success("Acceso correcto")
-            st.rerun()
+            iniciar_sesion(user)
+            st.experimental_rerun()
         else:
             st.error("Usuario o contraseña incorrectos")
-
-if "usuario" not in st.session_state and "usuario" in cookies:
-    login_time = float(cookies.get("login_time", 0))
-
-    # Expira sesión después de 8 horas
-    if time.time() - login_time > 8 * 3600:
-        cookies.clear()
-    else:
-        user = obtener_usuario_por_username(cookies["usuario"])
-        if user:
-            st.session_state["usuario"] = user
-        else:
-            cookies.clear()
-
-if "usuario" not in st.session_state:
-    login()
     st.stop()
+
 
 # Importar módulos
 from modulos.proveedores import proveedores_app
@@ -75,14 +46,12 @@ if "db_initialized" not in st.session_state:
     st.session_state.db_initialized = True
 
 
-# -------------------------
-usuario = st.session_state["usuario"]
 
 if st.sidebar.button("Cerrar sesión"):
-    cookies.clear()
+    cerrar_sesion()
     st.session_state.clear()
     st.success("Sesión cerrada correctamente")
-    st.rerun()
+    st.experimental_rerun()
 
 st.sidebar.markdown("---")
 
@@ -93,9 +62,9 @@ logo_path = os.path.join(BASE_DIR, "imagenes", "logo.png")
 if os.path.exists(logo_path):
     st.sidebar.image(logo_path, width='stretch')
 
-
-st.sidebar.write(f"👤 Usuario: {usuario['username']}")
-st.sidebar.write(f"🔑 Rol: {usuario['rol']}")
+if usuario:
+    st.sidebar.write(f"👤 Usuario: {usuario['username']}")
+    st.sidebar.write(f"🔑 Rol: {usuario['rol']}")
 
 # Estado del módulo actual
 if "modulo" not in st.session_state:
