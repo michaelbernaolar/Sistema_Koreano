@@ -3,7 +3,7 @@ import os
 from db import init_db
 from auth import autenticar_usuario
 from auth import autenticar_usuario, obtener_usuario_por_username
-#from streamlit_cookies_manager import EncryptedCookieManager
+from streamlit_cookies_manager import EncryptedCookieManager
 import time
 
 # Configuración de la página
