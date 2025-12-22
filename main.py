@@ -3,19 +3,14 @@ import os
 import time
 from db import init_db
 from auth import autenticar_usuario, obtener_usuario_por_username
-from session_manager import iniciar_sesion, obtener_usuario_sesion, cerrar_sesion, cookies
-
+from session_manager import iniciar_sesion, obtener_usuario_sesion, cerrar_sesion
 
 # Configuración de la página
 st.set_page_config(page_title="Sistema de Gestión", layout="wide")
 
-if not cookies.ready():
-    st.stop()  # Espera a que las cookies estén listas
 
-# Verificar si hay usuario en sesión
 usuario = obtener_usuario_sesion()
 
-# Mostrar login si no hay sesión activa
 if not usuario:
     st.title("🔐 Acceso al sistema")
     username = st.text_input("Usuario")
@@ -25,7 +20,7 @@ if not usuario:
         user = autenticar_usuario(username, password)
         if user:
             iniciar_sesion(user)
-            st.rerun()
+            st.rerun()  # fuerza rerun para que se refresque la sesión
         else:
             st.error("Usuario o contraseña incorrectos")
     st.stop()

@@ -1,34 +1,28 @@
+# session_manager.py
 import time
-from streamlit_cookies_manager import EncryptedCookieManager
+import streamlit as st
 
 SESSION_EXPIRATION = 8 * 3600  # 8 horas
 
-# Configurar cookies
-cookies = EncryptedCookieManager(prefix="koreano_", password="clave_super_secreta_123")
-TOKENS = {}  # token -> usuario
-
+# Iniciar sesión: guarda usuario en session_state
 def iniciar_sesion(user):
-    token = user["username"] + "_" + str(time.time())
-    TOKENS[token] = {"username": user["username"], "rol": user["rol"], "login_time": time.time()}
-    cookies["token"] = token
-    cookies.save()
-    return token
+    st.session_state["usuario"] = {
+        "username": user["username"],
+        "rol": user["rol"],
+        "login_time": time.time()
+    }
 
+# Obtener usuario de la sesión activa
 def obtener_usuario_sesion():
-    if not cookies.ready():
-        return None
-    token = cookies.get("token")
-    if not token or token not in TOKENS:
-        return None
-    user = TOKENS[token]
-    # Verificar expiración
-    if time.time() - user["login_time"] > SESSION_EXPIRATION:
-        cerrar_sesion()
-        return None
-    return user
+    usuario = st.session_state.get("usuario")
+    if usuario:
+        # Verificar expiración
+        if time.time() - usuario.get("login_time", 0) > SESSION_EXPIRATION:
+            cerrar_sesion()
+            return None
+    return usuario
 
+# Cerrar sesión: elimina usuario de session_state
 def cerrar_sesion():
-    token = cookies.get("token")
-    if token in TOKENS:
-        del TOKENS[token]
-    cookies.clear()
+    if "usuario" in st.session_state:
+        del st.session_state["usuario"]
