@@ -22,7 +22,7 @@ if not usuario:
         user = autenticar_usuario(username, password)
         if user:
             iniciar_sesion(user)
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Usuario o contraseña incorrectos")
     st.stop()
@@ -49,9 +49,8 @@ if "db_initialized" not in st.session_state:
 
 if st.sidebar.button("Cerrar sesión"):
     cerrar_sesion()
-    st.session_state.clear()
     st.success("Sesión cerrada correctamente")
-    st.experimental_rerun()
+    st.rerun()
 
 st.sidebar.markdown("---")
 
