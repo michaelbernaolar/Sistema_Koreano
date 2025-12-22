@@ -48,3 +48,17 @@ def autenticar_usuario(username, password):
         }
 
     return None
+
+def obtener_usuario_por_username(username):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT username, rol FROM usuarios WHERE username = %s",
+        (username,)
+    )
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return {"username": row[0], "rol": row[1]}
+    return None

@@ -2,10 +2,21 @@ import streamlit as st
 import os
 from db import init_db
 from auth import autenticar_usuario
-
+from auth import autenticar_usuario, obtener_usuario_por_username
+#from streamlit_cookies_manager import EncryptedCookieManager
+import time
 
 # Configuración de la página
 st.set_page_config(page_title="Sistema de Gestión", layout="wide")
+
+cookies = EncryptedCookieManager(
+    prefix="koreano_",
+    password="clave_super_secreta_123"
+)
+
+if not cookies.ready():
+    st.stop()
+
 
 def login():
     st.title("🔐 Acceso al sistema")
@@ -18,10 +29,29 @@ def login():
 
         if user:
             st.session_state["usuario"] = user
+
+            cookies["usuario"] = user["username"]
+            cookies["rol"] = user["rol"]
+            cookies["login_time"] = str(time.time())
+            cookies.save()
+
             st.success("Acceso correcto")
             st.rerun()
         else:
             st.error("Usuario o contraseña incorrectos")
+
+if "usuario" not in st.session_state and "usuario" in cookies:
+    login_time = float(cookies.get("login_time", 0))
+
+    # Expira sesión después de 8 horas
+    if time.time() - login_time > 8 * 3600:
+        cookies.clear()
+    else:
+        user = obtener_usuario_por_username(cookies["usuario"])
+        if user:
+            st.session_state["usuario"] = user
+        else:
+            cookies.clear()
 
 if "usuario" not in st.session_state:
     login()
@@ -49,7 +79,9 @@ if "db_initialized" not in st.session_state:
 usuario = st.session_state["usuario"]
 
 if st.sidebar.button("Cerrar sesión"):
+    cookies.clear()
     st.session_state.clear()
+    st.success("Sesión cerrada correctamente")
     st.rerun()
 
 st.sidebar.markdown("---")
@@ -65,6 +97,14 @@ if os.path.exists(logo_path):
 st.sidebar.write(f"👤 Usuario: {usuario['username']}")
 st.sidebar.write(f"🔑 Rol: {usuario['rol']}")
 
+# Estado del módulo actual
+if "modulo" not in st.session_state:
+    st.session_state.modulo = "🏠 Inicio"
+
+if st.session_state.modulo == "⚙️ Configuración" and usuario["rol"] != "admin":
+    st.warning("No tienes permisos para acceder a este módulo")
+    st.stop()
+
 # Módulos disponibles
 modulos = [
     "🏠 Inicio",
@@ -77,9 +117,8 @@ modulos = [
     "Cálculo de precios"
 ]
 
-# Estado del módulo actual
-if "modulo" not in st.session_state:
-    st.session_state.modulo = "🏠 Inicio"
+if usuario["rol"] != "admin":
+    modulos.remove("⚙️ Configuración")
 
 # Crear los botones de navegación en el sidebar
 for modulo in modulos:
@@ -121,9 +160,10 @@ if st.session_state.modulo == "🏠 Inicio":
         if st.button("📦 Compras", width='stretch'):
             st.session_state.modulo = "📦 Compras"
             st.rerun()
-        if st.button("⚙️ Configuración", width='stretch'):
-            st.session_state.modulo = "⚙️ Configuración"
-            st.rerun()
+        if usuario["rol"] == "admin":
+            if st.button("⚙️ Configuración", width='stretch'):
+                st.session_state.modulo = "⚙️ Configuración"
+                st.rerun()
 
 # -------------------------
 # Módulos
