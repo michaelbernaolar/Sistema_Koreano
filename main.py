@@ -10,11 +10,13 @@ from streamlit_cookies_manager import CookieManager
 st.set_page_config(page_title="Sistema de Gestión", layout="wide")
 
 cookies = CookieManager(prefix="koreano_")
+
 if not cookies.ready():
+    st.info("Cargando sesión...")
     st.stop()
 
-# Verificar sesión
 usuario = obtener_usuario_sesion(cookies)
+
 if not usuario:
     st.title("🔐 Acceso al sistema")
     username = st.text_input("Usuario")
