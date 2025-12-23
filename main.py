@@ -19,11 +19,11 @@ if not usuario:
         user = autenticar_usuario(username, password)
         if user:
             iniciar_sesion(user)
-            st.stop()  # detiene ejecución y recarga la app con sesión activa
+            st.rerun()
         else:
             st.error("Usuario o contraseña incorrectos")
     st.stop()
-usuario = obtener_usuario_sesion()  # ahora ya existe
+
 
 
 # Importar módulos
@@ -45,8 +45,8 @@ if "db_initialized" not in st.session_state:
 
 
 if st.sidebar.button("Cerrar sesión"):
-    cerrar_sesion()
-    st.stop()  # vuelve al login
+    cerrar_sesion(usuario["id"])
+    st.rerun() # vuelve al login
 
 st.sidebar.markdown("---")
 
