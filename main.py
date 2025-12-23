@@ -4,26 +4,31 @@ import time
 from db import init_db
 from auth import autenticar_usuario, obtener_usuario_por_username
 from session_manager import iniciar_sesion, obtener_usuario_sesion, cerrar_sesion
+from streamlit_cookies_manager import CookieManager
 
 # Configuración de la página
 st.set_page_config(page_title="Sistema de Gestión", layout="wide")
 
+cookies = CookieManager(prefix="koreano_")
+if not cookies.ready():
+    st.stop()
 
 # Verificar sesión
-usuario = obtener_usuario_sesion()
+usuario = obtener_usuario_sesion(cookies)
 if not usuario:
     st.title("🔐 Acceso al sistema")
     username = st.text_input("Usuario")
     password = st.text_input("Contraseña", type="password")
+
     if st.button("Ingresar"):
         user = autenticar_usuario(username, password)
         if user:
-            iniciar_sesion(user)
+            iniciar_sesion(user, cookies)
             st.rerun()
         else:
             st.error("Usuario o contraseña incorrectos")
-    st.stop()
 
+    st.stop()
 
 
 # Importar módulos
@@ -45,8 +50,8 @@ if "db_initialized" not in st.session_state:
 
 
 if st.sidebar.button("Cerrar sesión"):
-    cerrar_sesion(usuario["id"])
-    st.rerun() # vuelve al login
+    cerrar_sesion(usuario["id"], cookies)
+    st.rerun()
 
 st.sidebar.markdown("---")
 

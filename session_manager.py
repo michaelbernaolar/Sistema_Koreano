@@ -1,20 +1,11 @@
 import time
 import uuid
 import streamlit as st
-from streamlit_cookies_manager import EncryptedCookieManager
 from db import get_connection
 
 SESSION_EXPIRATION = 8 * 3600  # 8 horas
 
-cookies = EncryptedCookieManager(
-    prefix="koreano_",
-    password="clave_segura_cambia_esto"
-)
-
-if not cookies.ready():
-    st.stop()
-
-def iniciar_sesion(user):
+def iniciar_sesion(user, cookies):
     token = str(uuid.uuid4())
     login_time = time.time()
 
@@ -36,17 +27,15 @@ def iniciar_sesion(user):
         "rol": user["rol"]
     }
 
-def obtener_usuario_sesion():
-    # 1. Cache rápido
+
+def obtener_usuario_sesion(cookies):
     if "usuario" in st.session_state:
         return st.session_state["usuario"]
 
-    # 2. Cookie
     token = cookies.get("token")
     if not token:
         return None
 
-    # 3. Validar en DB
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
@@ -63,10 +52,9 @@ def obtener_usuario_sesion():
     id_user, username, rol, login_time = row
 
     if time.time() - login_time > SESSION_EXPIRATION:
-        cerrar_sesion(id_user)
+        cerrar_sesion(id_user, cookies)
         return None
 
-    # 4. Cachear
     st.session_state["usuario"] = {
         "id": id_user,
         "username": username,
@@ -76,16 +64,15 @@ def obtener_usuario_sesion():
     return st.session_state["usuario"]
 
 
-def cerrar_sesion(id_user=None):
-    if id_user:
-        conn = get_connection()
-        cur = conn.cursor()
-        cur.execute(
-            "UPDATE usuarios SET token_sesion = NULL WHERE id = %s",
-            (id_user,)
-        )
-        conn.commit()
-        conn.close()
+def cerrar_sesion(id_user, cookies):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE usuarios SET token_sesion = NULL WHERE id = %s",
+        (id_user,)
+    )
+    conn.commit()
+    conn.close()
 
     cookies["token"] = ""
     cookies.save()
