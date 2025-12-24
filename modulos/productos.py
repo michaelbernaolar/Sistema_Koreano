@@ -30,7 +30,7 @@ def productos_app():
     with tab_search:
         st.subheader("🔍 Buscar Producto")
         
-        @st.cache_resource
+        @st.cache_data(ttl=60)
         def obtener_valores_unicos(columna):
             conn = get_connection()
             df = pd.read_sql_query(f"SELECT DISTINCT {columna} FROM producto WHERE {columna} IS NOT NULL", conn)
