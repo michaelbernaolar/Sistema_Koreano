@@ -41,11 +41,13 @@ def productos_app():
         with col1:
             filtro_marca = st.selectbox("Marca", ["Todos"] + obtener_valores_unicos("marca"))
         with col2:
-            filtro_catalogo = st.selectbox("Catálogo", ["Todos"] + obtener_valores_unicos("catalogo"))
+            categorias_df = obtener_categorias()
+            lista_categorias = ["Todos"] + categorias_df["nombre"].tolist()
+            filtro_categoria = st.selectbox("Categoría", lista_categorias)
 
         criterio = st.text_input("Buscar por palabra clave (código, descripción, modelo, etc.)")
 
-        def buscar_producto_avanzado(criterio, marca=None, catalogo=None):
+        def buscar_producto_avanzado(criterio, marca=None, categoria=None):
             conn = get_connection()
             cursor = conn.cursor()
 
@@ -76,9 +78,9 @@ def productos_app():
                 query += " AND p.marca = %s"
                 params.append(marca)
 
-            if catalogo and catalogo != "Todos":
-                query += " AND p.catalogo = %s"
-                params.append(catalogo)
+            if categoria and categoria != "Todos":
+                query += " AND c.nombre = %s"
+                params.append(categoria)
 
             cursor.execute(query, params)
             rows = cursor.fetchall()
@@ -86,12 +88,12 @@ def productos_app():
             conn.close()
             return df
 
-        if criterio or filtro_marca != "Todos" or filtro_catalogo != "Todos":
-            df = buscar_producto_avanzado(criterio, filtro_marca, filtro_catalogo)
+        if criterio or filtro_marca != "Todos" or filtro_categoria != "Todos":
+            df = buscar_producto_avanzado(criterio, filtro_marca, filtro_categoria)
 
             if not df.empty:
                 st.markdown("### 🧾 Resultados")
-                df_filtrado = df[["id", "descripcion", "marca", "modelo", "categoria", "stock_actual"]].copy()
+                df_filtrado = df[["id", "descripcion", "marca", "modelo", "catalogo", "categoria", "stock_actual"]].copy()
                 df_filtrado.set_index("id", inplace=True)
                 st.dataframe(df_filtrado, width='stretch')
 
