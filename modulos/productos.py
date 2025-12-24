@@ -37,17 +37,22 @@ def productos_app():
             conn.close()
             return df[columna].dropna().sort_values().tolist()
 
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         with col1:
             filtro_marca = st.selectbox("Marca", ["Todos"] + obtener_valores_unicos("marca"))
         with col2:
             categorias_df = obtener_categorias()
             lista_categorias = ["Todos"] + categorias_df["nombre"].tolist()
             filtro_categoria = st.selectbox("Categoría", lista_categorias)
+        with col3:
+            filtro_stock = st.selectbox(
+                "Stock disponible",
+                ["Todos", "Con stock", "Sin stock"]
+           )
 
         criterio = st.text_input("Buscar por palabra clave (código, descripción, modelo, etc.)")
 
-        def buscar_producto_avanzado(criterio, marca=None, categoria=None):
+        def buscar_producto_avanzado(criterio, marca=None, categoria=None, stock=None):
             conn = get_connection()
             cursor = conn.cursor()
 
@@ -82,14 +87,19 @@ def productos_app():
                 query += " AND c.nombre = %s"
                 params.append(categoria)
 
+            if stock == "Con stock":
+                query += " AND p.stock_actual > 0"
+            elif stock == "Sin stock":
+                query += " AND p.stock_actual = 0"
+
             cursor.execute(query, params)
             rows = cursor.fetchall()
             df = pd.DataFrame(rows, columns=[col[0] for col in cursor.description])
             conn.close()
             return df
 
-        if criterio or filtro_marca != "Todos" or filtro_categoria != "Todos":
-            df = buscar_producto_avanzado(criterio, filtro_marca, filtro_categoria)
+        if criterio or filtro_marca != "Todos" or filtro_categoria != "Todos" or filtro_stock != "Todos":
+            df = buscar_producto_avanzado(criterio, filtro_marca, filtro_categoria, filtro_stock)
 
             if not df.empty:
                 st.markdown("### 🧾 Resultados")
