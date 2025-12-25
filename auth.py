@@ -136,3 +136,23 @@ def resetear_password_admin(user_id):
     conn.commit()
     conn.close()
 
+def obtener_todos_los_usuarios():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, username, rol, activo
+        FROM usuarios
+        ORDER BY username
+    """)
+    rows = cur.fetchall()
+    conn.close()
+
+    return [
+        {
+            "id": r[0],
+            "username": r[1],
+            "rol": r[2],
+            "activo": r[3]
+        }
+        for r in rows
+    ]
