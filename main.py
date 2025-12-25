@@ -95,7 +95,7 @@ if usuario["rol"] != "admin":
 
 # Crear los botones de navegación en el sidebar
 for modulo in modulos:
-    if st.sidebar.button(modulo, key=modulo, help=f"Ir a {modulo}", width='stretch'):
+    if st.sidebar.button(modulo, key=modulo, width='stretch'):
         st.session_state.modulo = modulo
         st.rerun()
 
