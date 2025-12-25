@@ -128,6 +128,9 @@ if st.session_state.modulo == "🏠 Inicio":
         if st.button("💳 Punto de Venta", width='stretch'):
             st.session_state.modulo = "💳 Punto de Venta"
             st.rerun()
+        if st.button("👤 Mi cuenta", width='stretch'):
+            st.session_state.modulo = "👤 Mi cuenta"
+            st.rerun()
 
     with col3:
         if st.button("📦 Compras", width='stretch'):
