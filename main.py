@@ -163,9 +163,7 @@ elif st.session_state.modulo == "👤 Mi cuenta":
 # -------------------------
 # BOTÓN CERRAR SESIÓN (ABAJO)
 # -------------------------
-st.sidebar.markdown("---")
-
-if st.sidebar.button("🔒 Cerrar sesión", use_container_width=True):
+if st.sidebar.button("Cerrar sesión", use_container_width=True):
     cerrar_sesion(usuario["id"], cookies)
     st.rerun()
 
