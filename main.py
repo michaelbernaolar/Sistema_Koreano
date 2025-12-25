@@ -57,13 +57,6 @@ if "db_initialized" not in st.session_state:
     init_db()
     st.session_state.db_initialized = True
 
-
-if st.sidebar.button("Cerrar sesión"):
-    cerrar_sesion(usuario["id"], cookies)
-    st.rerun()
-
-st.sidebar.markdown("---")
-
 # -------------------------
 # Sidebar con LOGO y BOTONES
 # -------------------------
@@ -166,6 +159,15 @@ elif st.session_state.modulo == "Cálculo de precios":
     precios_app()
 elif st.session_state.modulo == "👤 Mi cuenta":
     mi_cuenta_app(usuario, cookies)
+
+# -------------------------
+# BOTÓN CERRAR SESIÓN (ABAJO)
+# -------------------------
+st.sidebar.markdown("---")
+
+if st.sidebar.button("🔒 Cerrar sesión", use_container_width=True):
+    cerrar_sesion(usuario["id"], cookies)
+    st.rerun()
 
 # -------------------------
 # Pie de página
