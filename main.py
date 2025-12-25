@@ -41,6 +41,7 @@ from modulos.compras import compras_app
 from modulos.ventas import ventas_app
 from modulos.configuracion import configuracion_app
 from modulos.precios import precios_app
+from modulos.mi_cuenta import mi_cuenta_app
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -85,7 +86,8 @@ modulos = [
     "👥 Clientes",
     "💳 Punto de Venta",
     "⚙️ Configuración",
-    "Cálculo de precios"
+    "Cálculo de precios",
+    "👤 Mi cuenta"
 ]
 
 if usuario["rol"] != "admin":
@@ -153,6 +155,8 @@ elif st.session_state.modulo == "⚙️ Configuración":
     configuracion_app()
 elif st.session_state.modulo == "Cálculo de precios":
     precios_app()
+elif st.session_state.modulo == "👤 Mi cuenta":
+    mi_cuenta_app(usuario, cookies)
 
 # -------------------------
 # Pie de página

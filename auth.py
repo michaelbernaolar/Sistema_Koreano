@@ -62,3 +62,38 @@ def obtener_usuario_por_username(username):
     if row:
         return {"username": row[0], "rol": row[1]}
     return None
+
+def validar_password(password: str):
+    if len(password) < 8:
+        return False, "La contraseña debe tener al menos 8 caracteres"
+    if password.isnumeric():
+        return False, "La contraseña no puede ser solo números"
+    return True, ""
+
+def cambiar_password(user_id, password_actual, password_nuevo):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "SELECT password_hash FROM usuarios WHERE id = %s",
+        (user_id,)
+    )
+    row = cur.fetchone()
+
+    if not row or not verificar_password(password_actual, row[0]):
+        conn.close()
+        return False
+
+    nuevo_hash = hash_password(password_nuevo)
+
+    cur.execute("""
+        UPDATE usuarios
+        SET password_hash=%s,
+            password_updated_at=NOW(),
+            token_sesion=NULL
+        WHERE id=%s
+    """, (nuevo_hash, user_id))
+
+    conn.commit()
+    conn.close()
+    return True

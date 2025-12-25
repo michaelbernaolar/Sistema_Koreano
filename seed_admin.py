@@ -15,6 +15,12 @@ ON CONFLICT (username) DO NOTHING
     "admin"
 ))
 
+cursor.execute("""
+UPDATE usuarios
+SET password_updated_at = NOW()
+WHERE username = 'admin'
+""")
+
 conn.commit()
 conn.close()
 

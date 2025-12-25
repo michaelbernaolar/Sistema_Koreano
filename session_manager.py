@@ -11,10 +11,13 @@ def iniciar_sesion(user, cookies):
 
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute(
-        "UPDATE usuarios SET token_sesion=%s, login_time=%s WHERE id=%s",
-        (token, login_time, user["id"])
-    )
+    cur.execute("""
+        UPDATE usuarios
+        SET token_sesion=%s,
+            login_time=%s,
+            last_login=NOW()
+        WHERE id=%s
+    """, (token, login_time, user["id"]))
     conn.commit()
     conn.close()
 
@@ -39,7 +42,7 @@ def obtener_usuario_sesion(cookies):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
-        SELECT id, username, rol, login_time
+        SELECT id, username, rol, login_time, password_updated_at
         FROM usuarios
         WHERE token_sesion = %s
     """, (token,))
@@ -49,12 +52,16 @@ def obtener_usuario_sesion(cookies):
     if not row:
         return None
 
-    id_user, username, rol, login_time = row
+    id_user, username, rol, login_time, pwd_updated = row
 
     if time.time() - login_time > SESSION_EXPIRATION:
         cerrar_sesion(id_user, cookies)
         return None
-
+    
+    if pwd_updated and login_time < pwd_updated.timestamp():
+        cerrar_sesion(id_user, cookies)
+        return None
+    
     st.session_state["usuario"] = {
         "id": id_user,
         "username": username,
