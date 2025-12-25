@@ -24,7 +24,7 @@ def autenticar_usuario(username, password):
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT id, username, password_hash, rol, activo
+        SELECT id, username, password_hash, rol, activo, password_updated_at
         FROM usuarios
         WHERE username = %s
     """, (username,))
@@ -35,7 +35,7 @@ def autenticar_usuario(username, password):
     if not user:
         return None
 
-    id_user, username, password_hash, rol, activo = user
+    id_user, username, password_hash, rol, activo, pwd_updated = user
 
     if not activo:
         return None
@@ -44,9 +44,10 @@ def autenticar_usuario(username, password):
         return {
             "id": id_user,
             "username": username,
-            "rol": rol
+            "rol": rol,
+            "forzar_cambio_password": pwd_updated is None
         }
-
+    
     return None
 
 def obtener_usuario_por_username(username):
@@ -97,3 +98,41 @@ def cambiar_password(user_id, password_actual, password_nuevo):
     conn.commit()
     conn.close()
     return True
+
+def crear_usuario(username, nombre, rol, password="Temp1234"):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO usuarios (username, nombre, rol, password_hash, activo)
+        VALUES (%s, %s, %s, %s, TRUE)
+    """, (username, nombre, rol, hash_password(password)))
+
+    conn.commit()
+    conn.close()
+
+def cambiar_estado_usuario(user_id, activo):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE usuarios SET activo=%s WHERE id=%s",
+        (activo, user_id)
+    )
+    conn.commit()
+    conn.close()
+
+def resetear_password_admin(user_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        UPDATE usuarios
+        SET password_hash=%s,
+            password_updated_at=NULL,
+            token_sesion=NULL
+        WHERE id=%s
+    """, (hash_password("Temp1234"), user_id))
+
+    conn.commit()
+    conn.close()
+

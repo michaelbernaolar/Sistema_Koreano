@@ -11,6 +11,14 @@ def iniciar_sesion(user, cookies):
 
     conn = get_connection()
     cur = conn.cursor()
+
+    # Cerrar cualquier sesión previa del usuario
+    cur.execute(
+        "UPDATE usuarios SET token_sesion=NULL WHERE id=%s",
+        (user["id"],)
+    )
+
+     # Crear nueva sesión
     cur.execute("""
         UPDATE usuarios
         SET token_sesion=%s,
@@ -84,3 +92,24 @@ def cerrar_sesion(id_user, cookies):
     cookies["token"] = ""
     cookies.save()
     st.session_state.clear()
+
+def obtener_todos_los_usuarios():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, username, rol, activo
+        FROM usuarios
+        ORDER BY username
+    """)
+    rows = cur.fetchall()
+    conn.close()
+
+    return [
+        {
+            "id": r[0],
+            "username": r[1],
+            "rol": r[2],
+            "activo": r[3]
+        }
+        for r in rows
+    ]

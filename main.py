@@ -26,12 +26,18 @@ if not usuario:
         user = autenticar_usuario(username, password)
         if user:
             iniciar_sesion(user, cookies)
+            st.session_state["forzar_cambio_password"] = user.get("forzar_cambio_password", False)
             st.rerun()
         else:
             st.error("Usuario o contraseña incorrectos")
 
     st.stop()
 
+if st.session_state.get("forzar_cambio_password"):
+    st.warning("Debes cambiar tu contraseña antes de continuar")
+    from modulos.mi_cuenta import mi_cuenta_app
+    mi_cuenta_app(usuario, cookies)
+    st.stop()
 
 # Importar módulos
 from modulos.proveedores import proveedores_app
