@@ -52,9 +52,16 @@ def productos_app():
            )
 
         criterio = st.text_input("Buscar por palabra clave (código, descripción, modelo, etc.)")
-
+        
         LIMITE_INICIAL = 20
 
+        hay_filtros = any([
+            bool(criterio),
+            filtro_marca != "Todos",
+            filtro_categoria != "Todos",
+            filtro_stock != "Todos"
+        ])
+        
         def buscar_producto_avanzado(criterio, marca=None, categoria=None, stock=None, limit=20):
             conn = get_connection()
             cursor = conn.cursor()
@@ -168,13 +175,6 @@ def productos_app():
                 filtro_stock,
                 limit=limite
             )
-
-        hay_filtros = any([
-            bool(criterio),
-            filtro_marca != "Todos",
-            filtro_categoria != "Todos",
-            filtro_stock != "Todos"
-        ])
 
         if total > 0:
             if total > len(df):
