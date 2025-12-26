@@ -181,10 +181,6 @@ def productos_app():
             filtro_stock != "Todos"
         ])
 
-        LIMITE_INICIAL = 20
-        ver_mas = st.checkbox("📄 Ver más resultados")
-        limite = 100 if ver_mas else LIMITE_INICIAL
-
         if total > 0:
             if total > len(df):
                 st.info(f"🔎 Resultados encontrados: {total} | Mostrando {len(df)}")
