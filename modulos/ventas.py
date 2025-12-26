@@ -6,6 +6,7 @@ from db import registrar_salida_por_venta, obtener_configuracion
 from modulos.impresion import generar_html_comprobante
 from db import get_connection, query_df
 from db import select_cliente
+from db import obtener_cliente_por_id
 from services.producto_service import (
     buscar_producto_avanzado,
     contar_productos,
@@ -37,6 +38,9 @@ def ventas_app():
         if cliente_id is None:
             st.stop()
 
+        cliente = obtener_cliente_por_id(cliente_id)
+        es_varios = cliente["dni_ruc"] == "99999999"
+
         with col2:
             metodo_pago = st.selectbox(
                 "💳 Método de pago",
@@ -49,9 +53,28 @@ def ventas_app():
         with col1:
             fecha = st.date_input("📅 Fecha", datetime.today())
         with col2:
-            nro_comprobante = st.text_input("📑 N° Documento")
+            if es_varios:
+                nro_comprobante = cliente["dni_ruc"]  # 99999999
+                st.text_input(
+                    "📑 N° Documento",
+                    value=nro_comprobante,
+                    disabled=True
+                )
+            else:
+                nro_comprobante = st.text_input("📑 N° Documento")
         with col3:
             tipo_comprobante = st.selectbox("📄 Tipo de comprobante", ["Boleta", "Factura"])
+
+        placa_vehiculo = None
+
+        if es_varios:
+            placa_vehiculo = st.text_input(
+                "🚗 Placa del vehículo (obligatoria)",
+                max_chars=10
+            ).upper()
+
+            if not placa_vehiculo:
+                st.warning("⚠️ Para cliente VARIOS debe ingresar la placa del vehículo")
 
         # --- Carrito en sesión ---
         if "carrito_ventas" not in st.session_state:
@@ -279,13 +302,15 @@ def ventas_app():
                     cursor.execute("""
                         INSERT INTO venta (
                             fecha, id_cliente, suma_total, op_gravada, igv, total,
-                            tipo_comprobante, metodo_pago, nro_comprobante, pago_cliente, vuelto
+                            tipo_comprobante, metodo_pago, nro_comprobante,
+                            placa_vehiculo, pago_cliente, vuelto
                         )
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         RETURNING id
                     """, (
                         fecha, cliente_id, suma_total, op_gravada, igv, total,
                         tipo_comprobante, metodo_pago, nro_comprobante,
+                        placa_vehiculo,
                         pago_cliente if metodo_pago == "Efectivo" else None,
                         vuelto if metodo_pago == "Efectivo" else None
                     ))
@@ -313,7 +338,7 @@ def ventas_app():
                             id_producto=item["ID Producto"],
                             cantidad_salida=item["Cantidad"],
                             fecha=fecha,
-                            referencia=f"Venta cliente {cliente_id} - {nro_comprobante}"
+                            referencia=f"Venta {cliente['nombre']} - {nro_comprobante} - {placa_vehiculo or ''}"
                         )
 
                     conn.commit()

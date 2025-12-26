@@ -97,6 +97,7 @@ def init_db():
         tipo_comprobante TEXT,
         nro_comprobante TEXT,
         metodo_pago TEXT,
+        placa_vehiculo TEXT,
         FOREIGN KEY (id_cliente) REFERENCES cliente(id)
     )
     ''')
@@ -543,3 +544,10 @@ def select_cliente(label="👤 Cliente"):
 
     cliente_nombre = st.selectbox(label, list(cliente_map.keys()))
     return cliente_map[cliente_nombre]
+
+def obtener_cliente_por_id(cliente_id):
+    df = query_df(
+        "SELECT id, nombre, dni_ruc FROM cliente WHERE id = %s",
+        [cliente_id]
+    )
+    return None if df.empty else df.iloc[0]
