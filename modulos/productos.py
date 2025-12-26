@@ -12,6 +12,12 @@ from db import (
     insertar_producto, mostrar_todos, existe_codigo, actualizar_producto
 )
 
+from services.producto_service import (
+    obtener_valores_unicos,
+    buscar_producto_avanzado,
+    contar_productos
+)
+
 @st.cache_data(ttl=300)
 def cargar_categorias():
     return obtener_categorias()
@@ -31,13 +37,6 @@ def productos_app():
     with tab_search:
         st.subheader("🔍 Buscar Producto")
         
-        @st.cache_data(ttl=60)
-        def obtener_valores_unicos(columna):
-            conn = get_connection()
-            df = pd.read_sql_query(f"SELECT DISTINCT {columna} FROM producto WHERE {columna} IS NOT NULL", conn)
-            conn.close()
-            return df[columna].dropna().sort_values().tolist()
-
         col1, col2, col3 = st.columns(3)
         with col1:
             filtro_marca = st.selectbox("Marca", ["Todos"] + obtener_valores_unicos("marca"))
@@ -61,98 +60,6 @@ def productos_app():
             filtro_categoria != "Todos",
             filtro_stock != "Todos"
         ])
-        
-        def buscar_producto_avanzado(criterio, marca=None, categoria=None, stock=None, limit=20):
-            conn = get_connection()
-            cursor = conn.cursor()
-
-            query = """
-                SELECT p.id, p.descripcion, p.id_categoria, c.nombre as categoria, 
-                       p.catalogo, p.marca, p.modelo, p.ubicacion, 
-                       p.precio_venta, p.stock_actual, p.imagen, p.activo, p.unidad_base
-                FROM producto p 
-                LEFT JOIN categoria c ON p.id_categoria = c.id 
-                WHERE 1=1
-            """
-            params = []
-
-            if criterio:
-                criterio = f"%{criterio.lower()}%"
-                query += """
-                    AND (
-                        LOWER(p.id) LIKE %s OR
-                        LOWER(p.descripcion) LIKE %s OR
-                        LOWER(p.catalogo) LIKE %s OR
-                        LOWER(p.marca) LIKE %s OR
-                        LOWER(p.modelo) LIKE %s
-                    )
-                """
-                params.extend([criterio] * 5)
-
-            if marca and marca != "Todos":
-                query += " AND p.marca = %s"
-                params.append(marca)
-
-            if categoria and categoria != "Todos":
-                query += " AND c.nombre = %s"
-                params.append(categoria)
-
-            if stock == "Con stock":
-                query += " AND p.stock_actual > 0"
-            elif stock == "Sin stock":
-                query += " AND p.stock_actual = 0"
-                
-            query += " ORDER BY p.id LIMIT %s"
-            params.append(limit)
-
-            cursor.execute(query, params)
-            rows = cursor.fetchall()
-            df = pd.DataFrame(rows, columns=[col[0] for col in cursor.description])
-            conn.close()
-            return df
-
-        def contar_productos(criterio, marca=None, categoria=None, stock=None):
-            conn = get_connection()
-            cursor = conn.cursor()
-
-            query = """
-                SELECT COUNT(*)
-                FROM producto p
-                LEFT JOIN categoria c ON p.id_categoria = c.id
-                WHERE 1=1
-            """
-            params = []
-
-            if criterio:
-                criterio = f"%{criterio.lower()}%"
-                query += """
-                    AND (
-                        LOWER(p.id) LIKE %s OR
-                        LOWER(p.descripcion) LIKE %s OR
-                        LOWER(p.catalogo) LIKE %s OR
-                        LOWER(p.marca) LIKE %s OR
-                        LOWER(p.modelo) LIKE %s
-                    )
-                """
-                params.extend([criterio] * 5)
-
-            if marca and marca != "Todos":
-                query += " AND p.marca = %s"
-                params.append(marca)
-
-            if categoria and categoria != "Todos":
-                query += " AND c.nombre = %s"
-                params.append(categoria)
-
-            if stock == "Con stock":
-                query += " AND p.stock_actual > 0"
-            elif stock == "Sin stock":
-                query += " AND p.stock_actual = 0"
-
-            cursor.execute(query, params)
-            total = cursor.fetchone()[0]
-            conn.close()
-            return total
 
         df = pd.DataFrame()
         total = 0
