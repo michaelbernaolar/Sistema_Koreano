@@ -51,17 +51,16 @@ def ventas_app():
             else:
                 nro_comprobante = st.text_input("📑 N° Documento")
         with col3:
+            fecha = st.date_input("📅 Fecha", datetime.today())
+
+        # --- Datos del comprobante ---
+        col1, col2, col3 = st.columns(3)
+        with col1:
             metodo_pago = st.selectbox(
                 "💳 Método de pago",
                 ["Efectivo", "Tarjeta", "Transferencia"],
                 key="metodo_pago_select"
             )
-
-        # --- Datos del comprobante ---
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            fecha = st.date_input("📅 Fecha", datetime.today())
-        
         with col2:
             tipo_comprobante = st.selectbox("📄 Tipo de comprobante", ["Boleta", "Factura"])
         with col3:
