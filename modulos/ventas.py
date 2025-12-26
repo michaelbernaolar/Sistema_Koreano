@@ -58,7 +58,7 @@ def ventas_app():
         with col1:
             metodo_pago = st.selectbox(
                 "💳 Método de pago",
-                ["Efectivo", "Tarjeta", "Transferencia"],
+                ["Efectivo", "Tarjeta", "Transferencia", "Yape", "Plin"],
                 key="metodo_pago_select"
             )
         with col2:
