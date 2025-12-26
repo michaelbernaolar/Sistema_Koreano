@@ -31,7 +31,7 @@ def ventas_app():
             regimen = configuracion.get("regimen", "Nuevo RUS")  # Valor por defecto
 
         # --- Cliente, Régimen y Método de Pago ---
-        col1, col2 = st.columns([5, 1])
+        col1, col2, col3 = st.columns([4, 4, 1])
         with col1:
             cliente_id = select_cliente()
 
@@ -40,18 +40,6 @@ def ventas_app():
 
         cliente = obtener_cliente_por_id(cliente_id)
         es_varios = cliente["dni_ruc"] == "99999999"
-
-        with col2:
-            metodo_pago = st.selectbox(
-                "💳 Método de pago",
-                ["Efectivo", "Tarjeta", "Transferencia"],
-                key="metodo_pago_select"
-            )
-
-        # --- Datos del comprobante ---
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            fecha = st.date_input("📅 Fecha", datetime.today())
         with col2:
             if es_varios:
                 nro_comprobante = cliente["dni_ruc"]  # 99999999
@@ -63,18 +51,28 @@ def ventas_app():
             else:
                 nro_comprobante = st.text_input("📑 N° Documento")
         with col3:
+            metodo_pago = st.selectbox(
+                "💳 Método de pago",
+                ["Efectivo", "Tarjeta", "Transferencia"],
+                key="metodo_pago_select"
+            )
+
+        # --- Datos del comprobante ---
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            fecha = st.date_input("📅 Fecha", datetime.today())
+        
+        with col2:
             tipo_comprobante = st.selectbox("📄 Tipo de comprobante", ["Boleta", "Factura"])
-
-        placa_vehiculo = None
-
-        if es_varios:
-            placa_vehiculo = st.text_input(
-                "🚗 Placa del vehículo (obligatoria)",
-                max_chars=10
-            ).upper()
-
-            if not placa_vehiculo:
-                st.warning("⚠️ Para cliente VARIOS debe ingresar la placa del vehículo")
+        with col3:
+            placa_vehiculo = None
+            if es_varios:
+                placa_vehiculo = st.text_input(
+                    "🚗 Placa del vehículo (obligatoria)",
+                    max_chars=10
+                ).upper()
+                if not placa_vehiculo:
+                    st.warning("⚠️ Para cliente VARIOS debe ingresar la placa del vehículo")
 
         # --- Carrito en sesión ---
         if "carrito_ventas" not in st.session_state:
