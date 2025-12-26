@@ -165,6 +165,10 @@ def productos_app():
                 filtro_categoria,
                 filtro_stock
             )
+            
+            LIMITE_INICIAL = 20
+            ver_mas = st.checkbox(f"📄 Ver todos los resultados ({total})")
+            limite = total if ver_mas else LIMITE_INICIAL
 
             df = buscar_producto_avanzado(
                 criterio,
