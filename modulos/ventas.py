@@ -6,6 +6,12 @@ from db import registrar_salida_por_venta, obtener_configuracion
 from modulos.impresion import generar_html_comprobante
 from db import get_connection, query_df
 
+from services.producto_service import (
+    buscar_producto_avanzado,
+    contar_productos,
+    obtener_valores_unicos
+)
+
 def ventas_app():
     st.title("🛒 Registro y Consulta de Ventas")
 
@@ -76,39 +82,55 @@ def ventas_app():
         with col4:
             filtro_catalogo = st.text_input("🔍Catálogo")
 
-        query_prod = "SELECT id, descripcion, marca, catalogo, precio_venta, stock_actual, costo_promedio, margen_utilidad FROM producto WHERE activo=1"
-        params = []
+        # 🔎 Búsqueda avanzada desde service
+        if not any([filtro_codigo, filtro_desc, filtro_marca, filtro_catalogo]):
+            st.info("🔍 Ingresa al menos un filtro para buscar productos")
+            df_prod = pd.DataFrame()
+        else:
+            df_prod = buscar_producto_avanzado(
+                codigo=filtro_codigo,
+                descripcion=filtro_desc,
+                marca=filtro_marca,
+                catalogo=filtro_catalogo,
+                solo_con_stock=True,
+                limite=50
+            )
 
-        if filtro_codigo:
-            # Elimina espacios y formatea el número
-            codigo_num = ''.join(filter(str.isdigit, filtro_codigo))  # extrae solo números
-            if codigo_num.isdigit():
-                # Formatea con 5 dígitos y agrega el prefijo P
-                codigo_formateado = f"P{int(codigo_num):05d}"
-                query_prod += " AND id = %s"
-                params.append(codigo_formateado)
-            else:
-                # Si el usuario escribe P00016 completo, también funciona
-                query_prod += " AND id LIKE %s"
-                params.append(f"%{filtro_codigo.strip()}%")
+        if any([filtro_codigo, filtro_desc, filtro_marca, filtro_catalogo]):
+            total_productos = contar_productos(
+                codigo=filtro_codigo,
+                descripcion=filtro_desc,
+                marca=filtro_marca,
+                catalogo=filtro_catalogo,
+                solo_con_stock=True
+            )
 
-        if filtro_desc:
-            query_prod += " AND descripcion LIKE %s"
-            params.append(f"%{filtro_desc}%")
-        if filtro_marca:
-            query_prod += " AND marca LIKE %s"
-            params.append(f"%{filtro_marca}%")
-        if filtro_catalogo:
-            query_prod += " AND catalogo LIKE %s"
-            params.append(f"%{filtro_catalogo}%")
+            if total_productos > len(df_prod):
+                st.info(f"Mostrando {len(df_prod)} de {total_productos} productos encontrados")
 
-        df_prod = query_df(query_prod + " ORDER BY descripcion", params)
+        ver_todos = st.checkbox("🔽 Ver todos los productos encontrados")
+
+        if ver_todos:
+            df_prod = buscar_producto_avanzado(
+                codigo=filtro_codigo,
+                descripcion=filtro_desc,
+                marca=filtro_marca,
+                catalogo=filtro_catalogo,
+                solo_con_stock=True,
+                limite=None
+            )
 
         if df_prod.empty:
             st.warning("⚠️ No hay productos disponibles con esos filtros.")
         else:
-            productos_dict = {row['descripcion']: row for _, row in df_prod.iterrows()}
-            producto_sel = st.selectbox("📦 Selecciona un producto", list(productos_dict.keys()))
+            productos_dict = {
+                f"{row['id']} | {row['descripcion']}": row
+                for _, row in df_prod.iterrows()
+            }
+            producto_sel = st.selectbox(
+                "📦 Selecciona un producto",
+                list(productos_dict.keys())
+            )
             row = productos_dict[producto_sel]
             id_producto = row['id']
             desc_producto = row['descripcion']
@@ -217,6 +239,7 @@ def ventas_app():
             # ============================
             vuelto = 0.0  # valor por defecto
             boton_guardar = False
+            pago_cliente = None
 
             if metodo_pago == "Efectivo":
                 st.subheader("💵 Pago en efectivo")
@@ -240,15 +263,12 @@ def ventas_app():
                 # Métodos de pago no efectivo
                 boton_guardar = True
 
-
             # ============================
             # TODO EN UNA SOLA FILA
             # ============================
             col1, col2, col3 = st.columns([1, 1, 1])
 
-                        # 🗑 Vaciar carrito
             with col1:
-                st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
                 if st.button("🗑 Vaciar carrito", type="secondary"):
                     st.session_state.carrito_ventas = []
 
@@ -266,13 +286,16 @@ def ventas_app():
                             tipo_comprobante, metodo_pago, nro_comprobante, pago_cliente, vuelto
                         )
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id
                     """, (
                         fecha, cliente_id, suma_total, op_gravada, igv, total,
                         tipo_comprobante, metodo_pago, nro_comprobante,
                         pago_cliente if metodo_pago == "Efectivo" else None,
                         vuelto if metodo_pago == "Efectivo" else None
                     ))
+
                     id_venta = cursor.fetchone()[0]
+
                     st.session_state["venta_actual_id"] = id_venta
 
                     # 2) Guardar detalles
