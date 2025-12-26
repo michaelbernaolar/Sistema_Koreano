@@ -59,8 +59,6 @@ def ventas_app():
 
         st.markdown("### ➕ Agregar productos a la venta")
 
-        st.markdown("### 🔍 Buscar producto")
-
         col1, col2, col3 = st.columns(3)
         with col1:
             filtro_marca = st.selectbox(
