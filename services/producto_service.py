@@ -24,8 +24,8 @@ def buscar_producto_avanzado(
 
     query = """
         SELECT p.id, p.descripcion, p.id_categoria, c.nombre as categoria, 
-               p.catalogo, p.marca, p.modelo, p.ubicacion, 
-               p.precio_venta, p.stock_actual, p.imagen, p.activo, p.unidad_base
+               p.catalogo, p.marca, p.modelo, p.ubicacion, p.precio_venta,
+               p.costo_promedio,p.margen_utilidad, p.stock_actual, p.imagen, p.activo, p.unidad_base
         FROM producto p 
         LEFT JOIN categoria c ON p.id_categoria = c.id 
         WHERE 1=1

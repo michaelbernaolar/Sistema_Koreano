@@ -59,53 +59,63 @@ def ventas_app():
 
         st.markdown("### ➕ Agregar productos a la venta")
 
-        # --- Filtros ---
-        col1, col2, col3, col4 = st.columns([1, 3, 3 ,3])
+        st.markdown("### 🔍 Buscar producto")
+
+        col1, col2, col3 = st.columns(3)
         with col1:
-            filtro_codigo = st.text_input("🔍Código")
+            filtro_marca = st.selectbox(
+                "Marca",
+                ["Todos"] + obtener_valores_unicos("marca")
+            )
+
         with col2:
-            filtro_desc = st.text_input("🔍Descripción")
+            categorias_df = query_df("SELECT nombre FROM categoria ORDER BY nombre")
+            lista_categorias = ["Todos"] + categorias_df["nombre"].tolist()
+            filtro_categoria = st.selectbox("Categoría", lista_categorias)
+
         with col3:
-            filtro_marca = st.text_input("🔍Marca")
-        with col4:
-            filtro_catalogo = st.text_input("🔍Catálogo")
-
-        # 🔎 Búsqueda avanzada desde service
-        if not any([filtro_codigo, filtro_desc, filtro_marca, filtro_catalogo]):
-            st.info("🔍 Ingresa al menos un filtro para buscar productos")
-            df_prod = pd.DataFrame()
-        else:
-            df_prod = buscar_producto_avanzado(
-                codigo=filtro_codigo,
-                descripcion=filtro_desc,
-                marca=filtro_marca,
-                catalogo=filtro_catalogo,
-                solo_con_stock=True,
-                limite=50
+            filtro_stock = st.selectbox(
+                "Stock",
+                ["Todos", "Con stock", "Sin stock"]
             )
 
-        if any([filtro_codigo, filtro_desc, filtro_marca, filtro_catalogo]):
+        criterio = st.text_input(
+            "Buscar por palabra clave (código, descripción, modelo, etc.)"
+        )
+
+
+        LIMITE_INICIAL = 20
+
+        hay_filtros = any([
+            bool(criterio),
+            filtro_marca != "Todos",
+            filtro_categoria != "Todos",
+            filtro_stock != "Todos"
+        ])
+
+        df_prod = pd.DataFrame()
+        total_productos = 0
+
+        if hay_filtros:
             total_productos = contar_productos(
-                codigo=filtro_codigo,
-                descripcion=filtro_desc,
-                marca=filtro_marca,
-                catalogo=filtro_catalogo,
-                solo_con_stock=True
+                criterio,
+                filtro_marca,
+                filtro_categoria,
+                filtro_stock
             )
 
-            if total_productos > len(df_prod):
-                st.info(f"Mostrando {len(df_prod)} de {total_productos} productos encontrados")
+            ver_todos = st.checkbox(
+                f"📄 Ver todos los resultados ({total_productos})"
+            )
 
-        ver_todos = st.checkbox("🔽 Ver todos los productos encontrados")
+            limite = total_productos if ver_todos else LIMITE_INICIAL
 
-        if ver_todos:
             df_prod = buscar_producto_avanzado(
-                codigo=filtro_codigo,
-                descripcion=filtro_desc,
-                marca=filtro_marca,
-                catalogo=filtro_catalogo,
-                solo_con_stock=True,
-                limite=None
+                criterio,
+                filtro_marca,
+                filtro_categoria,
+                filtro_stock,
+                limit=limite
             )
 
         if df_prod.empty:
