@@ -62,7 +62,18 @@ def ventas_app():
                 key="metodo_pago_select"
             )
         with col2:
-            tipo_comprobante = st.selectbox("📄 Tipo de comprobante", ["Boleta", "Factura"])
+            if "Nuevo RUS" in regimen:
+                tipo_comprobante = "Ticket"
+                st.text_input(
+                    "📄 Tipo de comprobante",
+                    value="Ticket (RUS)",
+                    disabled=True
+                )
+            else:
+                tipo_comprobante = st.selectbox(
+                    "📄 Tipo de comprobante",
+                    ["Boleta", "Factura"]
+                )
         with col3:
             placa_vehiculo = None
             if es_varios:
