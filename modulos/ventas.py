@@ -31,7 +31,7 @@ def ventas_app():
             regimen = configuracion.get("regimen", "Nuevo RUS")  # Valor por defecto
 
         # --- Cliente, Régimen y Método de Pago ---
-        col1, col2, col3 = st.columns([4, 4, 1])
+        col1, col2, col3 = st.columns([5, 2, 1])
         with col1:
             cliente_id = select_cliente()
 
