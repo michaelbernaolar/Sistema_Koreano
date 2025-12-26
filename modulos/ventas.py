@@ -5,7 +5,7 @@ from datetime import datetime
 from db import registrar_salida_por_venta, obtener_configuracion
 from modulos.impresion import generar_html_comprobante
 from db import get_connection, query_df
-
+from db import select_cliente
 from services.producto_service import (
     buscar_producto_avanzado,
     contar_productos,
@@ -30,24 +30,12 @@ def ventas_app():
             regimen = configuracion.get("regimen", "Nuevo RUS")  # Valor por defecto
 
         # --- Cliente, Régimen y Método de Pago ---
-        df_cli = query_df("SELECT id, nombre FROM cliente ORDER BY nombre")
         col1, col2 = st.columns([5, 1])
         with col1:
-            if df_cli.empty:
-                st.warning("⚠️ No hay clientes registrados")
-                cliente_id = None
-            else:
-                cliente_map = {
-                    row["nombre"]: row["id"]
-                    for _, row in df_cli.iterrows()
-                }
+            cliente_id = select_cliente()
 
-                cliente_nombre = st.selectbox(
-                    "👤 Cliente",
-                    list(cliente_map.keys())
-                )
-
-                cliente_id = cliente_map[cliente_nombre]
+        if cliente_id is None:
+            st.stop()
 
         with col2:
             metodo_pago = st.selectbox(

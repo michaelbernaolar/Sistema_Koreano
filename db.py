@@ -3,7 +3,7 @@ import psycopg2
 import pandas as pd
 from datetime import datetime
 import os
-
+import streamlit as st
 
 if os.getenv("STREAMLIT_ENV") != "cloud":
     from dotenv import load_dotenv
@@ -526,3 +526,20 @@ def query_df(sql, params=None):
 
 def to_float(value, default=0.0):
     return float(value) if value is not None else default
+
+def select_cliente(label="👤 Cliente"):
+    from db import query_df  # evita imports circulares
+
+    df_cli = query_df("SELECT id, nombre FROM cliente ORDER BY nombre")
+
+    if df_cli.empty:
+        st.warning("⚠️ No hay clientes registrados")
+        return None
+
+    cliente_map = {
+        row["nombre"]: row["id"]
+        for _, row in df_cli.iterrows()
+    }
+
+    cliente_nombre = st.selectbox(label, list(cliente_map.keys()))
+    return cliente_map[cliente_nombre]
