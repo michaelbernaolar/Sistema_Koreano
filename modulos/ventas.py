@@ -27,11 +27,21 @@ def ventas_app():
         df_cli = query_df("SELECT id, nombre FROM cliente ORDER BY nombre")
         col1, col2 = st.columns([5, 1])
         with col1:
-            cliente_sel = st.selectbox(
-                "👤 Cliente",
-                [f"{row['id']} | {row['nombre']}" for _, row in df_cli.iterrows()] if not df_cli.empty else ["Sin clientes"]
-            )
-            cliente_id = int(cliente_sel.split(" | ")[0]) if not df_cli.empty else None
+            if df_cli.empty:
+                st.warning("⚠️ No hay clientes registrados")
+                cliente_id = None
+            else:
+                cliente_map = {
+                    row["nombre"]: row["id"]
+                    for _, row in df_cli.iterrows()
+                }
+
+                cliente_nombre = st.selectbox(
+                    "👤 Cliente",
+                    list(cliente_map.keys())
+                )
+
+                cliente_id = cliente_map[cliente_nombre]
 
         with col2:
             metodo_pago = st.selectbox(
