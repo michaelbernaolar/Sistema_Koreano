@@ -52,7 +52,11 @@ def productos_app():
 
         criterio = st.text_input("Buscar por palabra clave (código, descripción, modelo, etc.)")
 
-        def buscar_producto_avanzado(criterio, marca=None, categoria=None, stock=None):
+        LIMITE_INICIAL = 20
+        ver_mas = st.checkbox("📄 Ver más resultados")
+        limite = 100 if ver_mas else LIMITE_INICIAL
+
+        def buscar_producto_avanzado(criterio, marca=None, categoria=None, stock=None, limit=20):
             conn = get_connection()
             cursor = conn.cursor()
 
@@ -92,7 +96,8 @@ def productos_app():
             elif stock == "Sin stock":
                 query += " AND p.stock_actual = 0"
                 
-            query += " ORDER BY p.id LIMIT 20"
+            query += " ORDER BY p.id LIMIT %s"
+            params.append(limit)
 
             cursor.execute(query, params)
             rows = cursor.fetchall()
@@ -100,17 +105,91 @@ def productos_app():
             conn.close()
             return df
 
-        df = pd.DataFrame()
-        
-        if criterio or filtro_marca != "Todos" or filtro_categoria != "Todos" or filtro_stock != "Todos":
-            df = buscar_producto_avanzado(criterio, filtro_marca, filtro_categoria, filtro_stock)
-        
+        def contar_productos(criterio, marca=None, categoria=None, stock=None):
+            conn = get_connection()
+            cursor = conn.cursor()
+
+            query = """
+                SELECT COUNT(*)
+                FROM producto p
+                LEFT JOIN categoria c ON p.id_categoria = c.id
+                WHERE 1=1
+            """
+            params = []
+
+            if criterio:
+                criterio = f"%{criterio.lower()}%"
+                query += """
+                    AND (
+                        LOWER(p.id) LIKE %s OR
+                        LOWER(p.descripcion) LIKE %s OR
+                        LOWER(p.catalogo) LIKE %s OR
+                        LOWER(p.marca) LIKE %s OR
+                        LOWER(p.modelo) LIKE %s
+                    )
+                """
+                params.extend([criterio] * 5)
+
+            if marca and marca != "Todos":
+                query += " AND p.marca = %s"
+                params.append(marca)
+
+            if categoria and categoria != "Todos":
+                query += " AND c.nombre = %s"
+                params.append(categoria)
+
+            if stock == "Con stock":
+                query += " AND p.stock_actual > 0"
+            elif stock == "Sin stock":
+                query += " AND p.stock_actual = 0"
+
+            cursor.execute(query, params)
+            total = cursor.fetchone()[0]
+            conn.close()
+            return total
+
         hay_filtros = any([
             bool(criterio),
             filtro_marca != "Todos",
             filtro_categoria != "Todos",
             filtro_stock != "Todos"
         ])
+
+        df = pd.DataFrame()
+        total = 0
+
+        if hay_filtros:
+            total = contar_productos(
+                criterio,
+                filtro_marca,
+                filtro_categoria,
+                filtro_stock
+            )
+
+            df = buscar_producto_avanzado(
+                criterio,
+                filtro_marca,
+                filtro_categoria,
+                filtro_stock,
+                limit=limite
+            )
+
+        hay_filtros = any([
+            bool(criterio),
+            filtro_marca != "Todos",
+            filtro_categoria != "Todos",
+            filtro_stock != "Todos"
+        ])
+
+        LIMITE_INICIAL = 20
+        ver_mas = st.checkbox("📄 Ver más resultados")
+        limite = 100 if ver_mas else LIMITE_INICIAL
+
+        if total > 0:
+            if total > len(df):
+                st.info(f"🔎 Resultados encontrados: {total} | Mostrando {len(df)}")
+            else:
+                st.info(f"🔎 Resultados encontrados: {total}")
 
         if not df.empty:
             st.markdown("### 🧾 Resultados")
