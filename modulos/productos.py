@@ -5,15 +5,16 @@ import os
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
-from db import to_float
-from db import get_connection
 from db import (
+    get_connection, to_float,
     generar_codigo_correlativo, obtener_categorias,
     agregar_categoria, editar_categoria, eliminar_categoria,
-    insertar_producto, mostrar_todos, existe_codigo, actualizar_producto,
-    get_connection
+    insertar_producto, mostrar_todos, existe_codigo, actualizar_producto
 )
 
+@st.cache_data(ttl=300)
+def cargar_categorias():
+    return obtener_categorias()
 
 def productos_app():
     st.title("📦 Gestión de Productos")
@@ -41,7 +42,7 @@ def productos_app():
         with col1:
             filtro_marca = st.selectbox("Marca", ["Todos"] + obtener_valores_unicos("marca"))
         with col2:
-            categorias_df = obtener_categorias()
+            categorias_df = cargar_categorias()
             lista_categorias = ["Todos"] + categorias_df["nombre"].tolist()
             filtro_categoria = st.selectbox("Categoría", lista_categorias)
         with col3:
@@ -53,8 +54,6 @@ def productos_app():
         criterio = st.text_input("Buscar por palabra clave (código, descripción, modelo, etc.)")
 
         LIMITE_INICIAL = 20
-        ver_mas = st.checkbox("📄 Ver más resultados")
-        limite = 100 if ver_mas else LIMITE_INICIAL
 
         def buscar_producto_avanzado(criterio, marca=None, categoria=None, stock=None, limit=20):
             conn = get_connection()
@@ -148,13 +147,6 @@ def productos_app():
             conn.close()
             return total
 
-        hay_filtros = any([
-            bool(criterio),
-            filtro_marca != "Todos",
-            filtro_categoria != "Todos",
-            filtro_stock != "Todos"
-        ])
-
         df = pd.DataFrame()
         total = 0
 
@@ -166,7 +158,6 @@ def productos_app():
                 filtro_stock
             )
             
-            LIMITE_INICIAL = 20
             ver_mas = st.checkbox(f"📄 Ver todos los resultados ({total})")
             limite = total if ver_mas else LIMITE_INICIAL
 
@@ -206,7 +197,7 @@ def productos_app():
 
             row = df[df["id"] == producto_seleccionado].iloc[0]
 
-            categorias_df = obtener_categorias()
+            categorias_df = cargar_categorias()
             opciones_cat = categorias_df["nombre"].tolist()
 
             cat_actual = row["categoria"] if row["categoria"] in opciones_cat else opciones_cat[0]
@@ -389,7 +380,7 @@ def productos_app():
                     st.text_input("Código (autogenerado)", value=id, disabled=True)
                     descripcion = st.text_input("Descripción", max_chars=100)
 
-                    categorias_df = obtener_categorias()
+                    categorias_df = cargar_categorias()
                     lista_categorias = categorias_df["nombre"].tolist()
                     categoria = st.selectbox("Categoría", lista_categorias if lista_categorias else ["(Sin categorías)"])
                     unidad_base = st.selectbox("Unidad de medida", ["unidad", "caja", "litro", "kg"])
@@ -473,6 +464,7 @@ def productos_app():
             if st.button("Agregar categoría", key="btn_agregar_cat"):
                 if nueva.strip():
                     agregar_categoria(nueva.strip())
+                    st.cache_data.clear()
                     st.success("✅ Categoría agregada correctamente")
                     st.rerun()
                 else:
@@ -480,7 +472,7 @@ def productos_app():
 
         with tab2:
             st.markdown("### ✏️ Buscar y gestionar categorías")
-            categorias_df = obtener_categorias()
+            categorias_df = cargar_categorias()
 
             busqueda = st.text_input("🔍 Buscar categoría", key="buscar_cat")
             if busqueda:
@@ -504,6 +496,7 @@ def productos_app():
                     if st.button("💾 Guardar cambios", key="btn_guardar_cat"):
                         id_cat = int(categorias_df[categorias_df["nombre"] == seleccion]["id"].iloc[0])
                         editar_categoria(id_cat, nuevo_nombre.strip())
+                        st.cache_data.clear()
                         st.success("✅ Categoría actualizada")
                         st.rerun()
 
@@ -511,6 +504,7 @@ def productos_app():
                     if st.button("🗑️ Eliminar categoría", key="btn_eliminar_cat"):
                         id_cat = int(categorias_df[categorias_df["nombre"] == seleccion]["id"].iloc[0])
                         eliminar_categoria(id_cat)
+                        st.cache_data.clear()
                         st.warning("⚠️ Categoría eliminada")
                         st.rerun()
     
