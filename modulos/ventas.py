@@ -334,7 +334,11 @@ def ventas_app():
             with col1:
                 if st.button("🗑 Vaciar carrito", type="secondary"):
                     st.session_state.carrito_ventas = []
-
+            
+            modo_prueba = st.checkbox(
+                "Modo prueba (no guarda en la base de datos)",
+                value=True
+            )
             # 💾 Guardar venta
             with col2:
                 st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
@@ -344,27 +348,39 @@ def ventas_app():
                     type="primary",
                     disabled=not boton_guardar
                 ):
-                    id_venta = guardar_venta(
-                        fecha=fecha,
-                        cliente=cliente,
-                        regimen=regimen,
-                        tipo_comprobante=tipo_comprobante,
-                        metodo_pago=metodo_pago,
-                        nro_comprobante=nro_comprobante,
-                        placa_vehiculo=placa_vehiculo,
-                        pago_cliente=pago_cliente,
-                        vuelto=vuelto,
-                        carrito=st.session_state.carrito_ventas
-                    )
+                    if modo_prueba:
+                        # =========================
+                        # MODO PRUEBA (NO BD)
+                        # =========================
+                        id_venta = 0  # ID ficticio, NO existe en BD
 
-                    st.session_state["venta_actual_id"] = id_venta
+                        st.info("🧪 MODO PRUEBA: la venta NO fue guardada")
 
-                    # Vaciar carrito
-                    st.session_state.carrito_ventas = []
+                    else:
+                        # =========================
+                        # MODO REAL (BD)
+                        # =========================
+                        id_venta = guardar_venta(
+                            fecha=fecha,
+                            cliente=cliente,
+                            regimen=regimen,
+                            tipo_comprobante=tipo_comprobante,
+                            metodo_pago=metodo_pago,
+                            nro_comprobante=nro_comprobante,
+                            placa_vehiculo=placa_vehiculo,
+                            pago_cliente=pago_cliente,
+                            vuelto=vuelto,
+                            carrito=st.session_state.carrito_ventas
+                        )
 
-                    # Generar comprobante SIN rerun
+                        st.session_state["venta_actual_id"] = id_venta
+                        st.session_state.carrito_ventas = []
+                        st.success(f"✅ Venta registrada correctamente (ID: {id_venta})")
+
+                    # =========================
+                    # IMPRESIÓN (COMÚN)
+                    # =========================
                     comprobante_html = generar_html_comprobante(id_venta)
-                    st.success(f"✅ Venta registrada correctamente (ID: {id_venta})")
                     st.markdown(comprobante_html, unsafe_allow_html=True)
 
 
