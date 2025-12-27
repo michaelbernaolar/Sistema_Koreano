@@ -1,3 +1,4 @@
+from datetime import datetime, date
 from db import get_connection, registrar_salida_por_venta
 
 # services/venta_service.py
@@ -32,12 +33,26 @@ def guardar_venta(
     vuelto,
     carrito
 ):
+    if isinstance(fecha, date):
+        fecha = datetime.combine(fecha, datetime.min.time())
+
     conn = get_connection()
     cursor = conn.cursor()
 
     valor_venta = sum(i["Subtotal"] for i in carrito)
     totales = calcular_totales(valor_venta, regimen)
 
+    print("DEBUG → valores guardar_venta:")
+    print("fecha:", fecha)
+    print("cliente:", cliente)
+    print("regimen:", regimen)
+    print("tipo:", tipo_comprobante)
+    print("metodo:", metodo_pago)
+    print("nro:", nro_comprobante)
+    print("placa:", placa_vehiculo)
+    print("pago:", pago_cliente)
+    print("vuelto:", vuelto)
+ 
     cursor.execute("""
         INSERT INTO public.venta (
             fecha, id_cliente, suma_total, op_gravada, igv, total,
