@@ -21,12 +21,16 @@ from services.venta_service import (
 )
 
 @st.cache_data(ttl=300)
-def marcas_cache():
-    return obtener_valores_unicos("marca")
-
-@st.cache_data(ttl=300)
-def categorias_cache():
-    return query_df("SELECT nombre FROM categoria ORDER BY nombre")
+def productos_para_filtros():
+    query = """
+        SELECT
+            p.marca,
+            c.nombre AS categoria,
+            p.stock_actual
+        FROM producto p
+        LEFT JOIN categoria c ON p.id_categoria = c.id
+    """
+    return query_df(query)
 
 def ventas_app():
     st.title("🛒 Registro y Consulta de Ventas")
@@ -103,27 +107,44 @@ def ventas_app():
         st.session_state.setdefault("carrito_ventas", [])
 
         st.markdown("### ➕ Agregar productos a la venta")
+        df_filtros = productos_para_filtros()
 
         col1, col2, col3 = st.columns(3)
-        with col1:
-            filtro_marca = st.selectbox(
-                "Marca",
-                ["Todos"] + marcas_cache()
-            )
+
+        # --- CATEGORÍA (primer filtro) ---
         with col2:
-            categorias_df = categorias_cache()
-            lista_categorias = ["Todos"] + categorias_df["nombre"].tolist()
-            filtro_categoria = st.selectbox("Categoría", lista_categorias)
+            categorias = ["Todos"] + sorted(
+                df_filtros["categoria"].dropna().unique().tolist()
+            )
+            filtro_categoria = st.selectbox("Categoría", categorias)
+
+            if filtro_categoria != "Todos":
+                df_filtros = df_filtros[df_filtros["categoria"] == filtro_categoria]
+
+        # --- MARCA (depende de categoría) ---
+        with col1:
+            marcas = ["Todos"] + sorted(
+                df_filtros["marca"].dropna().unique().tolist()
+            )
+            filtro_marca = st.selectbox("Marca", marcas)
+
+            if filtro_marca != "Todos":
+                df_filtros = df_filtros[df_filtros["marca"] == filtro_marca]
+
+        # --- STOCK (depende de los dos anteriores) ---
         with col3:
             filtro_stock = st.selectbox(
                 "Stock",
                 ["Todos", "Con stock", "Sin stock"]
             )
+            if filtro_stock == "Con stock":
+                df_filtros = df_filtros[df_filtros["stock_actual"] > 0]
+            elif filtro_stock == "Sin stock":
+                df_filtros = df_filtros[df_filtros["stock_actual"] <= 0]
 
         criterio = st.text_input(
             "Buscar por palabra clave (código, descripción, modelo, etc.)"
         )
-
 
         LIMITE_INICIAL = 20
 
