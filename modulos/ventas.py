@@ -2,16 +2,31 @@ import pandas as pd
 import streamlit as st
 
 from datetime import datetime
-from db import registrar_salida_por_venta, obtener_configuracion
 from modulos.impresion import generar_html_comprobante
-from db import get_connection, query_df
-from db import select_cliente
-from db import obtener_cliente_por_id
+
+from db import (
+    get_connection, query_df,
+    select_cliente, obtener_cliente_por_id,
+    registrar_salida_por_venta, obtener_configuracion
+)
+
 from services.producto_service import (
     buscar_producto_avanzado,
     contar_productos,
     obtener_valores_unicos
 )
+from services.venta_service import (
+    calcular_totales,
+    guardar_venta
+)
+
+@st.cache_data(ttl=300)
+def marcas_cache():
+    return obtener_valores_unicos("marca")
+
+@st.cache_data(ttl=300)
+def categorias_cache():
+    return query_df("SELECT nombre FROM categoria ORDER BY nombre")
 
 def ventas_app():
     st.title("🛒 Registro y Consulta de Ventas")
@@ -66,7 +81,7 @@ def ventas_app():
                 tipo_comprobante = "Ticket"
                 st.text_input(
                     "📄 Tipo de comprobante",
-                    value="Ticket (RUS)",
+                    value="Ticket",
                     disabled=True
                 )
             else:
@@ -85,8 +100,7 @@ def ventas_app():
                     st.warning("⚠️ Para cliente VARIOS debe ingresar la placa del vehículo")
 
         # --- Carrito en sesión ---
-        if "carrito_ventas" not in st.session_state:
-            st.session_state.carrito_ventas = []
+        st.session_state.setdefault("carrito_ventas", [])
 
         st.markdown("### ➕ Agregar productos a la venta")
 
@@ -94,14 +108,12 @@ def ventas_app():
         with col1:
             filtro_marca = st.selectbox(
                 "Marca",
-                ["Todos"] + obtener_valores_unicos("marca")
+                ["Todos"] + marcas_cache()
             )
-
         with col2:
-            categorias_df = query_df("SELECT nombre FROM categoria ORDER BY nombre")
+            categorias_df = categorias_cache()
             lista_categorias = ["Todos"] + categorias_df["nombre"].tolist()
             filtro_categoria = st.selectbox("Categoría", lista_categorias)
-
         with col3:
             filtro_stock = st.selectbox(
                 "Stock",
@@ -147,7 +159,7 @@ def ventas_app():
                 limit=limite
             )
 
-        if df_prod.empty:
+        if hay_filtros and df_prod.empty:
             st.warning("⚠️ No hay productos disponibles con esos filtros.")
         else:
             productos_dict = {
@@ -237,18 +249,12 @@ def ventas_app():
             # --- Calcular totales ---
             valor_venta = df_carrito["Subtotal"].sum()
 
-            if "Nuevo RUS" in regimen:
-                # En el RUS no se calcula IGV
-                suma_total = valor_venta
-                op_gravada = valor_venta
-                igv = 0.00
-                total = valor_venta
-            else:
-                # En el régimen general los precios incluyen IGV
-                suma_total = round(valor_venta / 1.18, 2)
-                op_gravada = round(valor_venta / 1.18, 2)
-                igv = round(op_gravada * 0.18, 2)
-                total = round(op_gravada + igv, 2)
+            totales = calcular_totales(valor_venta, regimen)
+
+            op_gravada = totales["op_gravada"]
+            igv = totales["igv"]
+            total = totales["total"]
+            suma_total = totales["valor_venta"]
 
             # Mostrar métricas
             col1, col2, col3, col4 = st.columns(4)
@@ -302,64 +308,34 @@ def ventas_app():
             # 💾 Guardar venta
             with col2:
                 st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-                if st.button("💾 Guardar e imprimir comprobante", type="primary", disabled=not boton_guardar):
 
-                    # 1) Guardar venta
-                    conn = get_connection()
-                    cursor = conn.cursor()
-                    cursor.execute("""
-                        INSERT INTO venta (
-                            fecha, id_cliente, suma_total, op_gravada, igv, total,
-                            tipo_comprobante, metodo_pago, nro_comprobante,
-                            placa_vehiculo, pago_cliente, vuelto
-                        )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id
-                    """, (
-                        fecha, cliente_id, suma_total, op_gravada, igv, total,
-                        tipo_comprobante, metodo_pago, nro_comprobante,
-                        placa_vehiculo,
-                        pago_cliente if metodo_pago == "Efectivo" else None,
-                        vuelto if metodo_pago == "Efectivo" else None
-                    ))
-
-                    id_venta = cursor.fetchone()[0]
+                if st.button(
+                    "💾 Guardar e imprimir comprobante",
+                    type="primary",
+                    disabled=not boton_guardar
+                ):
+                    id_venta = guardar_venta(
+                        fecha=fecha,
+                        cliente=cliente,
+                        regimen=regimen,
+                        tipo_comprobante=tipo_comprobante,
+                        metodo_pago=metodo_pago,
+                        nro_comprobante=nro_comprobante,
+                        placa_vehiculo=placa_vehiculo,
+                        pago_cliente=pago_cliente,
+                        vuelto=vuelto,
+                        carrito=st.session_state.carrito_ventas
+                    )
 
                     st.session_state["venta_actual_id"] = id_venta
-
-                    # 2) Guardar detalles
-                    for item in st.session_state.carrito_ventas:
-                        if "Nuevo RUS" in regimen:
-                            precio_sin_igv = item["Precio Unitario"]
-                            subtotal_sin_igv = item["Subtotal"]
-                        else:
-                            precio_sin_igv = round(item["Precio Unitario"] / 1.18, 2)
-                            subtotal_sin_igv = round(precio_sin_igv * item["Cantidad"], 2)
-
-                        cursor.execute("""
-                            INSERT INTO venta_detalle (id_venta, id_producto, cantidad, precio_unitario, sub_total, precio_final)
-                            VALUES (%s, %s, %s, %s, %s, %s)
-                        """, (id_venta, item["ID Producto"], item["Cantidad"], precio_sin_igv, subtotal_sin_igv, subtotal_sin_igv))
-
-                        registrar_salida_por_venta(
-                            cursor,
-                            id_producto=item["ID Producto"],
-                            cantidad_salida=item["Cantidad"],
-                            fecha=fecha,
-                            referencia=f"Venta {cliente['nombre']} - {nro_comprobante} - {placa_vehiculo or ''}"
-                        )
-
-                    conn.commit()
-                    conn.close()
 
                     # Vaciar carrito
                     st.session_state.carrito_ventas = []
 
-                    # 3) GENERAR COMPROBANTE SIN RERUN
+                    # Generar comprobante SIN rerun
                     comprobante_html = generar_html_comprobante(id_venta)
                     st.success(f"✅ Venta registrada correctamente (ID: {id_venta})")
                     st.markdown(comprobante_html, unsafe_allow_html=True)
-
 
 
     # ========================
