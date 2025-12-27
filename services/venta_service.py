@@ -41,17 +41,6 @@ def guardar_venta(
 
     valor_venta = sum(i["Subtotal"] for i in carrito)
     totales = calcular_totales(valor_venta, regimen)
-
-    print("DEBUG → valores guardar_venta:")
-    print("fecha:", fecha)
-    print("cliente:", cliente)
-    print("regimen:", regimen)
-    print("tipo:", tipo_comprobante)
-    print("metodo:", metodo_pago)
-    print("nro:", nro_comprobante)
-    print("placa:", placa_vehiculo)
-    print("pago:", pago_cliente)
-    print("vuelto:", vuelto)
  
     cursor.execute("""
         INSERT INTO public.venta (
