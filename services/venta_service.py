@@ -41,7 +41,10 @@ def guardar_venta(
 
     valor_venta = sum(i["Subtotal"] for i in carrito)
     totales = calcular_totales(valor_venta, regimen)
- 
+    
+    cursor.execute("SHOW search_path")
+    print("SEARCH_PATH:", cursor.fetchone())
+
     cursor.execute("""
         INSERT INTO public.venta (
             fecha, id_cliente, suma_total, op_gravada, igv, total,
