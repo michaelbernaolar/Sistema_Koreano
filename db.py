@@ -98,6 +98,8 @@ def init_db():
         nro_comprobante TEXT,
         metodo_pago TEXT,
         placa_vehiculo TEXT,
+        pago_cliente NUMERIC(14,2),
+        vuelto NUMERIC(14,2),
         FOREIGN KEY (id_cliente) REFERENCES cliente(id)
     )
     ''')
