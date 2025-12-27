@@ -5,6 +5,8 @@ from datetime import datetime
 import os
 import streamlit as st
 
+from decimal import Decimal
+
 if os.getenv("STREAMLIT_ENV") != "cloud":
     from dotenv import load_dotenv
     load_dotenv()
@@ -383,16 +385,16 @@ def registrar_salida_por_venta(cursor, id_producto, cantidad_salida, fecha, refe
         return
 
     stock_actual, costo_promedio = fila
-    stock_actual = stock_actual or 0
-    costo_promedio = costo_promedio or 0
 
-    # Calcular nuevo stock
+    stock_actual = Decimal(stock_actual or 0)
+    costo_promedio = Decimal(costo_promedio or 0)
+    cantidad_salida = Decimal(str(cantidad_salida))
+
     nuevo_stock = stock_actual - cantidad_salida
     if nuevo_stock < 0:
-        nuevo_stock = 0  # evitar negativos
+        nuevo_stock = Decimal("0")
 
-    # Valor de salida (para movimientos)
-    valor_total = round(cantidad_salida * costo_promedio, 2)
+    valor_total = (cantidad_salida * costo_promedio).quantize(Decimal("0.01"))
 
     # Actualizar producto
     cursor.execute("""
@@ -401,16 +403,25 @@ def registrar_salida_por_venta(cursor, id_producto, cantidad_salida, fecha, refe
         WHERE id = %s
     """, (
         nuevo_stock,
-        round(nuevo_stock * costo_promedio, 2),
+        (nuevo_stock * costo_promedio).quantize(Decimal("0.01")),
         id_producto
     ))
 
     # Registrar movimiento
     cursor.execute("""
-        INSERT INTO public.movimientos (id_producto, tipo, cantidad, fecha, motivo, referencia, costo_unitario, valor_total)
+        INSERT INTO public.movimientos (
+            id_producto, tipo, cantidad, fecha, motivo, referencia, costo_unitario, valor_total
+        )
         VALUES (%s, 'salida', %s, %s, %s, %s, %s, %s)
-    """, (id_producto, cantidad_salida, fecha, "Venta", referencia, costo_promedio, valor_total))
-
+    """, (
+        id_producto,
+        cantidad_salida,
+        fecha,
+        "Venta",
+        referencia,
+        costo_promedio,
+        valor_total
+    ))
 
 def redondear_050(valor):
     """Redondea hacia el múltiplo más cercano de 0.50."""
