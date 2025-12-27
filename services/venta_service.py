@@ -1,6 +1,9 @@
 from datetime import datetime, date
 from db import get_connection, registrar_salida_por_venta
 
+def f(value):
+    return float(value) if value is not None else None
+
 # services/venta_service.py
 def calcular_totales(valor_venta: float, regimen: str):
     if "Nuevo RUS" in regimen:
@@ -39,11 +42,15 @@ def guardar_venta(
     conn = get_connection()
     cursor = conn.cursor()
 
-    valor_venta = sum(i["Subtotal"] for i in carrito)
+    valor_venta = f(sum(i["Subtotal"] for i in carrito))
     totales = calcular_totales(valor_venta, regimen)
-    
-    cursor.execute("SHOW search_path")
-    print("SEARCH_PATH:", cursor.fetchone())
+
+    totales = {
+        "valor_venta": f(totales["valor_venta"]),
+        "op_gravada": f(totales["op_gravada"]),
+        "igv": f(totales["igv"]),
+        "total": f(totales["total"]),
+    }
 
     cursor.execute("""
         INSERT INTO public.venta (
@@ -54,13 +61,18 @@ def guardar_venta(
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         RETURNING id
     """, (
-        fecha, cliente["id"],
-        totales["valor_venta"], totales["op_gravada"],
-        totales["igv"], totales["total"],
-        tipo_comprobante, metodo_pago, nro_comprobante,
+        fecha,
+        cliente["id"],
+        f(totales["valor_venta"]),
+        f(totales["op_gravada"]),
+        f(totales["igv"]),
+        f(totales["total"]),
+        tipo_comprobante,
+        metodo_pago,
+        nro_comprobante,
         placa_vehiculo,
-        pago_cliente if metodo_pago == "Efectivo" else None,
-        vuelto if metodo_pago == "Efectivo" else None
+        f(pago_cliente) if metodo_pago == "Efectivo" else None,
+        f(vuelto) if metodo_pago == "Efectivo" else None
     ))
 
     id_venta = cursor.fetchone()[0]
@@ -78,8 +90,12 @@ def guardar_venta(
             (id_venta, id_producto, cantidad, precio_unitario, sub_total, precio_final)
             VALUES (%s,%s,%s,%s,%s,%s)
         """, (
-            id_venta, item["ID Producto"], item["Cantidad"],
-            precio_unit, subtotal, subtotal
+            int(id_venta),
+            item["ID Producto"],
+            f(item["Cantidad"]),
+            f(precio_unit),
+            f(subtotal),
+            f(subtotal)
         ))
 
         registrar_salida_por_venta(
