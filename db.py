@@ -567,3 +567,64 @@ def obtener_cliente_por_id(cliente_id):
         [cliente_id]
     )
     return None if df.empty else df.iloc[0]
+
+def obtener_venta_por_id(id_venta):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            v.id,
+            v.fecha,
+            c.nombre,
+            c.dni_ruc,
+            v.total,
+            v.metodo_pago,
+            v.tipo_comprobante
+        FROM public.venta v
+        LEFT JOIN public.cliente c ON c.id = v.id_cliente
+        WHERE v.id = %s
+    """, (id_venta,))
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return None
+
+    return {
+        "id": row[0],
+        "fecha": row[1],
+        "cliente": row[2] or "CLIENTE VARIOS",
+        "documento": row[3] or "",
+        "total": float(row[4]),
+        "metodo_pago": row[5],
+        "tipo_comprobante": row[6],
+    }
+
+def obtener_detalle_venta(id_venta):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            p.descripcion,
+            d.cantidad,
+            d.precio_final
+        FROM public.venta_detalle d
+        JOIN public.producto p ON p.id = d.id_producto
+        WHERE d.id_venta = %s
+        ORDER BY d.id
+    """, (id_venta,))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return [
+        {
+            "producto": r[0],
+            "cantidad": float(r[1]),
+            "subtotal": float(r[2]),
+        }
+        for r in rows
+    ]

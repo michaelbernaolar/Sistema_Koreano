@@ -1,8 +1,8 @@
 import pandas as pd
 import streamlit as st
+import os
 
 from datetime import datetime
-from modulos.impresion import generar_html_comprobante
 
 from db import (
     get_connection, query_df,
@@ -19,6 +19,8 @@ from services.venta_service import (
     calcular_totales,
     guardar_venta
 )
+
+from services.comprobante_service import generar_ticket_pdf
 
 @st.cache_data(ttl=300)
 def productos_para_filtros():
@@ -340,7 +342,7 @@ def ventas_app():
                 st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 
                 if st.button(
-                    "💾 Guardar e imprimir comprobante",
+                    "💾 Guardar venta",
                     type="primary",
                     disabled=not boton_guardar
                 ):
@@ -358,14 +360,31 @@ def ventas_app():
                     )
 
                     st.session_state["venta_actual_id"] = id_venta
-
-                    # Vaciar carrito
                     st.session_state.carrito_ventas = []
 
-                    # Generar comprobante SIN rerun
-                    comprobante_html = generar_html_comprobante(id_venta)
                     st.success(f"✅ Venta registrada correctamente (ID: {id_venta})")
-                    st.markdown(comprobante_html, unsafe_allow_html=True)
+
+        # ============================
+        # COMPROBANTE / IMPRESIÓN
+        # ============================
+        if "venta_actual_id" in st.session_state:
+            st.divider()
+            st.subheader("🧾 Comprobante de venta")
+
+            if st.button("🧾 Ver comprobante"):
+                venta_id = st.session_state["venta_actual_id"]
+                ruta_pdf = f"ticket_{venta_id}.pdf"
+
+                generar_ticket_pdf(venta_id, ruta_pdf)
+
+                with open(ruta_pdf, "rb") as f:
+                    st.download_button(
+                        "🖨️ Imprimir / Descargar",
+                        f,
+                        file_name=ruta_pdf,
+                        mime="application/pdf"
+                    )    
+                st.session_state.pop("venta_actual_id", None)
 
 
     # ========================
