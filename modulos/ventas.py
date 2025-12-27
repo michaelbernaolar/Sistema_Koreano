@@ -159,17 +159,26 @@ def ventas_app():
                 limit=limite
             )
 
-        if hay_filtros and df_prod.empty:
+        if df_prod.empty: 
             st.warning("⚠️ No hay productos disponibles con esos filtros.")
         else:
             productos_dict = {
                 f"{row['id']} | {row['descripcion']}": row
                 for _, row in df_prod.iterrows()
             }
+            
+            opciones = list(productos_dict.keys())
+
             producto_sel = st.selectbox(
                 "📦 Selecciona un producto",
-                list(productos_dict.keys())
+                opciones,
+                index=0 if opciones else None
             )
+
+            if producto_sel not in productos_dict:
+                st.warning("🔄 La selección cambió, vuelve a elegir el producto.")
+                st.stop()
+
             row = productos_dict[producto_sel]
             id_producto = row['id']
             desc_producto = row['descripcion']
