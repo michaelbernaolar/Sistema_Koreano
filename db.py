@@ -15,11 +15,14 @@ if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL no está definida")
 
 def get_connection():
-    return psycopg2.connect(
+    conn = psycopg2.connect(
         DATABASE_URL,
         sslmode="require"
     )
-
+    cur = conn.cursor()
+    cur.execute("SET search_path TO public;")
+    cur.close()
+    return conn
 # -------------------------
 # Inicialización de la BD
 # -------------------------
@@ -307,7 +310,7 @@ def actualizar_producto(data):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('''
-    UPDATE producto SET
+    UPDATE public.producto SET
         descripcion = %s,
         id_categoria = %s,
         catalogo = %s,
@@ -354,7 +357,7 @@ def actualizar_costo_promedio(cursor, id_producto, cantidad_entrada, costo_unita
     nuevo_stock = stock_actual + cantidad_entrada
 
     cursor.execute("""
-        UPDATE producto
+        UPDATE public.producto
         SET 
             stock_actual = %s, 
             costo_promedio = %s, 
@@ -393,7 +396,7 @@ def registrar_salida_por_venta(cursor, id_producto, cantidad_salida, fecha, refe
 
     # Actualizar producto
     cursor.execute("""
-        UPDATE producto
+        UPDATE public.producto
         SET stock_actual = %s, valor_inventario = %s
         WHERE id = %s
     """, (
@@ -404,7 +407,7 @@ def registrar_salida_por_venta(cursor, id_producto, cantidad_salida, fecha, refe
 
     # Registrar movimiento
     cursor.execute("""
-        INSERT INTO movimientos (id_producto, tipo, cantidad, fecha, motivo, referencia, costo_unitario, valor_total)
+        INSERT INTO public.movimientos (id_producto, tipo, cantidad, fecha, motivo, referencia, costo_unitario, valor_total)
         VALUES (%s, 'salida', %s, %s, %s, %s, %s, %s)
     """, (id_producto, cantidad_salida, fecha, "Venta", referencia, costo_promedio, valor_total))
 
@@ -445,7 +448,7 @@ def recalcular_precios_producto(cursor, id_producto):
 
     # Guardar en BD
     cursor.execute("""
-        UPDATE producto
+        UPDATE public.producto
         SET valor_venta = %s, precio_venta = %s
         WHERE id = %s
     """, (round(valor_venta, 2), round(precio_nuevo, 2), id_producto))

@@ -52,7 +52,7 @@ def actualizar_precio_producto(producto_id, nuevo_precio):
     fila = cursor.fetchone()
     precio_anterior = fila[0] if fila and fila[0] is not None else None
 
-    cursor.execute("UPDATE producto SET precio_venta = %s WHERE id = %s", (nuevo_precio, producto_id))
+    cursor.execute("UPDATE public.producto SET precio_venta = %s WHERE id = %s", (nuevo_precio, producto_id))
 
     conn.commit()
     conn.close()
@@ -62,7 +62,7 @@ def actualizar_precio_producto(producto_id, nuevo_precio):
 def actualizar_margen_producto(producto_id, nuevo_margen):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE producto SET margen_utilidad = %s WHERE id = %s", (nuevo_margen, producto_id))
+    cursor.execute("UPDATE public.producto SET margen_utilidad = %s WHERE id = %s", (nuevo_margen, producto_id))
     conn.commit()
     conn.close()
 
@@ -73,7 +73,7 @@ def actualizar_valor_venta(pid, precio_venta):
     valor_venta = precio_venta / 1.18  # cálculo solicitado
 
     cursor.execute("""
-        UPDATE producto
+        UPDATE public.producto
         SET valor_venta = %s
         WHERE id = %s
     """, (valor_venta, pid))

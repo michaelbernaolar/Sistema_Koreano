@@ -43,7 +43,7 @@ def guardar_venta(
     totales = calcular_totales(valor_venta, regimen)
  
     cursor.execute("""
-        INSERT INTO venta (
+        INSERT INTO public.venta (
             fecha, id_cliente, suma_total, op_gravada, igv, total,
             tipo_comprobante, metodo_pago, nro_comprobante,
             placa_vehiculo, pago_cliente, vuelto
@@ -71,7 +71,7 @@ def guardar_venta(
             subtotal = round(precio_unit * item["Cantidad"], 2)
 
         cursor.execute("""
-            INSERT INTO venta_detalle
+            INSERT INTO public.venta_detalle
             (id_venta, id_producto, cantidad, precio_unitario, sub_total, precio_final)
             VALUES (%s,%s,%s,%s,%s,%s)
         """, (

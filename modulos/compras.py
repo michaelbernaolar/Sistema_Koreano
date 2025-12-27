@@ -263,7 +263,7 @@ def compras_app():
 
                             # 🔹 Registrar movimiento de entrada con costos
                             cursor.execute("""
-                                INSERT INTO movimientos (
+                                INSERT INTO public.movimientos (
                                     id_producto, tipo, cantidad, fecha, motivo, referencia, 
                                     costo_unitario, valor_total
                                 )
