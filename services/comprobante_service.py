@@ -1,6 +1,11 @@
 from reportlab.lib.pagesizes import mm
 from reportlab.pdfgen import canvas
 from db import get_connection
+from db import obtener_configuracion
+import streamlit as st
+
+config = obtener_configuracion()
+usuario = st.session_state.get("usuario", {})
 
 def generar_ticket_pdf(venta_id, ruta):
     venta, detalle = obtener_venta_completa(venta_id)
@@ -16,30 +21,57 @@ def generar_ticket_pdf(venta_id, ruta):
         c.drawString(5, y, txt)
         y -= size + 4
 
-    draw("MI NEGOCIO", 11)
-    draw("RUC: 10999999999")
+    draw(config["nombre_comercial"], 11)
+    draw(config["razon_social"])
+    draw(f"RUC: {config['ruc']}")
+    draw(config["direccion"])
+    draw(f"Cel: {config['celular']}")
     draw("-" * 32)
 
-    draw("TICKET DE VENTA", 10)
-    draw(f"N° {venta['id']}")
+    draw(venta["tipo_comprobante"].upper(), 10)
+    draw(f"N° {venta['nro_comprobante']}")
     draw(venta["fecha"].strftime("%d/%m/%Y %H:%M"))
+    draw(f"Atendido por: {usuario.get('nombre', '')}")
     draw("-" * 32)
 
     draw(f"Cliente: {venta['cliente']}")
-    draw(f"Doc: {venta['documento']}")
+    if venta["documento"]:
+        draw(f"Doc: {venta['documento']}")
+    if venta["placa"]:
+        draw(f"Placa: {venta['placa']}")
     draw("-" * 32)
 
-    draw("Producto        Cant  Subt", 8)
+    draw("Prod.      Cant  P.Unit  Total", 8)
+
+    total_cantidad = 0
 
     for d in detalle:
-        nombre = d["producto"][:14]
-        draw(f"{nombre:<14} {d['cantidad']:>4} {d['subtotal']:>7.2f}", 8)
+        nombre = d["producto"][:10]
+        total_cantidad += d["cantidad"]
+
+        draw(
+            f"{nombre:<10}"
+            f"{d['cantidad']:>5.2f}"
+            f"{d['precio_unitario']:>8.2f}"
+            f"{d['total']:>8.2f}",
+            8
+        )
 
     draw("-" * 32)
-    draw(f"TOTAL S/. {venta['total']:.2f}", 10)
+    draw(f"Total ítems: {total_cantidad:.2f}")
+
+    if venta["igv"] > 0:
+        draw(f"Op. Gravada: S/. {venta['op_gravada']:.2f}")
+        draw(f"IGV (18%):   S/. {venta['igv']:.2f}")
+
+    draw(f"TOTAL:       S/. {venta['total']:.2f}", 10)
     draw("-" * 32)
 
     draw(f"Pago: {venta['metodo_pago']}")
+    if venta["metodo_pago"] == "Efectivo":
+        draw(f"Entregado: S/. {venta['pago_cliente']:.2f}")
+        draw(f"Vuelto:    S/. {venta['vuelto']:.2f}")
+
     draw("Gracias por su compra")
 
     c.showPage()
@@ -56,11 +88,18 @@ def obtener_venta_completa(venta_id):
             SELECT
                 v.id,
                 v.fecha,
+                v.suma_total,
+                v.op_gravada,
+                v.igv,
                 v.total,
                 v.metodo_pago,
                 v.tipo_comprobante,
-                COALESCE(c.nombre, 'CLIENTE VARIOS'),
-                COALESCE(c.dni_ruc, '')
+                v.nro_comprobante,
+                v.placa_vehiculo,
+                v.pago_cliente,
+                v.vuelto,
+                c.nombre,
+                c.dni_ruc
             FROM venta v
             LEFT JOIN cliente c ON c.id = v.id_cliente
             WHERE v.id = %s
@@ -69,18 +108,26 @@ def obtener_venta_completa(venta_id):
 
         venta = {
             "id": v[0],
-            "fecha": v[1],
-            "total": float(v[2]),
-            "metodo_pago": v[3],
-            "tipo_comprobante": v[4],
-            "cliente": v[5],
-            "documento": v[6],
+            "fecha": v[1],                      # ya incluye hora
+            "suma_total": float(v[2]),
+            "op_gravada": float(v[3]),
+            "igv": float(v[4]),
+            "total": float(v[5]),
+            "metodo_pago": v[6],
+            "tipo_comprobante": v[7],
+            "nro_comprobante": v[8],
+            "placa": v[9],
+            "pago_cliente": v[10],
+            "vuelto": v[11],
+            "cliente": v[12] or "CLIENTE VARIOS",
+            "documento": v[13] or ""
         }
-
+        
         cursor.execute("""
             SELECT
                 p.descripcion,
                 d.cantidad,
+                d.precio_unitario,
                 d.sub_total
             FROM venta_detalle d
             JOIN producto p ON p.id = d.id_producto
@@ -92,7 +139,8 @@ def obtener_venta_completa(venta_id):
             {
                 "producto": r[0],
                 "cantidad": float(r[1]),
-                "subtotal": float(r[2]),
+                "precio_unitario": float(r[2]),
+                "total": float(r[3]),
             }
             for r in cursor.fetchall()
         ]

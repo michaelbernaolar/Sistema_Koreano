@@ -50,7 +50,7 @@ def obtener_usuario_sesion(cookies):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
-        SELECT id, username, rol, login_time, password_updated_at
+        SELECT id, username, rol, nombre, login_time, password_updated_at
         FROM usuarios
         WHERE token_sesion = %s
     """, (token,))
@@ -60,7 +60,7 @@ def obtener_usuario_sesion(cookies):
     if not row:
         return None
 
-    id_user, username, rol, login_time, pwd_updated = row
+    id_user, username, rol, nombre, login_time, pwd_updated = row
 
     if time.time() - login_time > SESSION_EXPIRATION:
         cerrar_sesion(id_user, cookies)
@@ -73,9 +73,9 @@ def obtener_usuario_sesion(cookies):
     st.session_state["usuario"] = {
         "id": id_user,
         "username": username,
+        "nombre": nombre,
         "rol": rol
     }
-
     return st.session_state["usuario"]
 
 

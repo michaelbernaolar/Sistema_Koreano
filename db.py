@@ -488,24 +488,38 @@ def recalcular_todos_los_precios():
 def obtener_configuracion():
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT tipo_regimen, igv, margen_utilidad, incluir_igv_en_precio FROM configuracion WHERE id = 1")
+    cursor.execute("""
+        SELECT
+            tipo_regimen,
+            igv,
+            margen_utilidad,
+            incluir_igv_en_precio,
+            razon_social,
+            nombre_comercial,
+            ruc,
+            direccion,
+            celular
+        FROM configuracion
+        WHERE id = 1
+    """)
     fila = cursor.fetchone()
     conn.close()
 
-    if fila:
-        return {
-            "regimen": fila[0],
-            "igv": fila[1],
-            "margen_utilidad": fila[2],
-            "incluir_igv_en_precio": bool(fila[3])
-        }
-    else:
-        return {
-            "regimen": "Régimen General",
-            "igv": 0.18,
-            "margen_utilidad": 0.25,
-            "incluir_igv_en_precio": True
-        }
+    if not fila:
+        return {}
+
+    return {
+        "regimen": fila[0],
+        "igv": fila[1],
+        "margen_utilidad": fila[2],
+        "incluir_igv_en_precio": bool(fila[3]),
+        "razon_social": fila[4],
+        "nombre_comercial": fila[5],
+        "ruc": fila[6],
+        "direccion": fila[7],
+        "celular": fila[8],
+    }
+
 
 def actualizar_configuracion(nuevo_regimen=None, nuevo_igv=None, nuevo_margen=None, incluir_igv=None):
     conn = get_connection()
