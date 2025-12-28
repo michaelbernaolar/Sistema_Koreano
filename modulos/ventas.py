@@ -74,7 +74,7 @@ def ventas_app():
             else:
                 nro_comprobante = st.text_input("📑 N° Documento")
         with col4:
-            fecha = st.date_input("📅 Fecha", datetime.today())
+            fecha = datetime.combine(st.date_input("📅 Fecha", datetime.today()), datetime.now().time())
 
         # --- Cliente, Régimen y Método de Pago ---
         col1, col2, col3 = st.columns([5, 2, 2])

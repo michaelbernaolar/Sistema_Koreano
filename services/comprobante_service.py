@@ -112,6 +112,8 @@ def generar_ticket_pdf(venta_id, ruta):
         c.drawRightString(width - 5, y, linea_der)
         y -= 13
 
+        total_cantidad += d["cantidad"] 
+
     draw_left("-" * 32)
     draw_left(f"Total ítems: {total_cantidad:.2f}")
 
