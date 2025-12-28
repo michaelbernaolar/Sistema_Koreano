@@ -53,7 +53,7 @@ def ventas_app():
             regimen = configuracion.get("regimen", "Nuevo RUS")  # Valor por defecto
 
         # --- Cliente, Régimen y Método de Pago ---
-        col1, col2, col3, col4 = st.columns([5, 2, 1, 1])
+        col1, col2, col3 = st.columns([5, 2, 1])
         with col1:
             cliente_id = select_cliente()
 
@@ -74,9 +74,9 @@ def ventas_app():
                 nro_comprobante = st.text_input("📑 N° Documento")
         with col3:
             fecha = st.date_input("📅 Fecha", datetime.today())
-        with col4:
-            if tipo_comprobante == "Ticket":
-                st.info(f"🧾 Correlativo: {nro_comprobante}")
+        # with col4:
+        #     if tipo_comprobante == "Ticket":
+        #         st.info(f"🧾 Correlativo: {nro_comprobante}")
 
         # --- Datos del comprobante ---
         col1, col2, col3 = st.columns(3)
