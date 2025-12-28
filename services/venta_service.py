@@ -36,7 +36,7 @@ def guardar_venta(
     vuelto,
     carrito
 ):
-    if isinstance(fecha, date):
+    if isinstance(fecha, date) and not isinstance(fecha, datetime):
         fecha = datetime.combine(fecha, datetime.min.time())
 
     conn = get_connection()
