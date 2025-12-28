@@ -104,8 +104,6 @@ def ventas_app():
                     "🚗 Placa del vehículo (obligatoria)",
                     max_chars=10
                 ).upper()
-                if not placa_vehiculo:
-                    st.warning("⚠️ Para cliente VARIOS debe ingresar la placa del vehículo")
 
         # --- Carrito en sesión ---
         st.session_state.setdefault("carrito_ventas", [])
