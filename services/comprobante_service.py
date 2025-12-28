@@ -233,63 +233,82 @@ def obtener_venta_completa(venta_id):
 def generar_ticket_html(venta_id: int) -> str:
     venta, detalle = obtener_venta_completa(venta_id)
 
-    filas = ""
+    total_items = sum(d["cantidad"] for d in detalle)
+    usuario_nombre = usuario.get("nombre", "")
+
+    detalle_html = ""
     for d in detalle:
-        filas += f"""
-        <tr>
-            <td>{d['producto']}</td>
-            <td style="text-align:right">{d['cantidad']:.2f}</td>
-            <td style="text-align:right">{d['precio_unitario']:.2f}</td>
-            <td style="text-align:right">{d['total']:.2f}</td>
-        </tr>
+        detalle_html += f"""
+        {d['producto']}<br>
+        {d['cantidad']:.2f} x {d['precio_unitario']:.2f}
+        <span style="float:right">S/. {d['total']:.2f}</span><br>
+        -----------------------------------------<br>
         """
+
+    entregado = venta["pago_cliente"] or venta["total"]
+    vuelto = venta["vuelto"] or 0
 
     return f"""
     <html>
     <head>
+        <meta charset="utf-8">
         <style>
             body {{
                 font-family: monospace;
                 width: 80mm;
                 margin: auto;
-            }}
-            h2, p {{
-                text-align: center;
-                margin: 4px 0;
-            }}
-            table {{
-                width: 100%;
                 font-size: 12px;
-                border-collapse: collapse;
             }}
-            td {{
-                padding: 2px 0;
-            }}
-            .total {{
-                border-top: 1px dashed #000;
-                margin-top: 6px;
-                padding-top: 6px;
-                text-align: right;
-                font-weight: bold;
-            }}
+            .center {{ text-align: center; }}
+            .line {{ text-align: center; }}
+            .right {{ text-align: right; }}
             @media print {{
                 button {{ display: none; }}
             }}
         </style>
     </head>
     <body>
-        <h2>{config["nombre_comercial"]}</h2>
-        <p>{venta['tipo_comprobante']} Nº {venta['nro_comprobante']}</p>
-        <p>{venta['fecha'].strftime("%d/%m/%Y %H:%M")}</p>
 
-        <table width="100%">
-            {filas}
-        </table>
-
-        <div class="total">
-            TOTAL: S/. {venta['total']:.2f}
+        <div class="center">
+            <b>{config["nombre_comercial"]}</b><br>
+            {config["razon_social"]}<br>
+            RUC: {config["ruc"]}<br>
+            {config["direccion"]}<br>
+            Cel: {config["celular"]}
         </div>
 
+        <div class="line">-----------------------------------------</div>
+        <div class="center"><b>TICKET</b></div>
+        <div class="line">-----------------------------------------</div>
+
+        N° {venta["nro_comprobante"]}<br>
+        {venta["fecha"].strftime("%d/%m/%Y %H:%M")}<br>
+
+        <div class="line">-----------------------------------------</div>
+        Atendido por: {usuario_nombre}<br>
+
+        <div class="line">-----------------------------------------</div>
+        Cliente: {venta["cliente"]}<br>
+        Doc: {venta["documento"]}<br>
+        Placa: {venta["placa"] or "-"}<br>
+
+        <div class="line">-----------------------------------------</div>
+
+        {detalle_html}
+
+        Total ítems: {total_items:.2f}<br>
+        <b>TOTAL: S/. {venta["total"]:.2f}</b>
+
+        <div class="line">-----------------------------------------</div>
+        Pago: {venta["metodo_pago"]}<br>
+        Entregado: S/. {entregado:.2f}<br>
+        Vuelto: S/. {vuelto:.2f}
+
+        <div class="line">-----------------------------------------</div>
+        <div class="center">NO OTORGA CRÉDITO FISCAL</div>
+        <div class="center">Gracias por su compra</div>
+
+        <br>
         <button onclick="window.print()">🖨 Imprimir</button>
     </body>
     </html>
