@@ -1,5 +1,6 @@
 from datetime import datetime, date
 from db import get_connection, registrar_salida_por_venta
+import pytz
 
 def f(value):
     return float(value) if value is not None else None
@@ -36,9 +37,12 @@ def guardar_venta(
     vuelto,
     carrito
 ):
+    lima = pytz.timezone("America/Lima")
     if isinstance(fecha, date) and not isinstance(fecha, datetime):
         fecha = datetime.combine(fecha, datetime.min.time())
-
+    # Asegurarse que sea timezone-aware en Lima
+    fecha = lima.localize(fecha) if fecha.tzinfo is None else fecha
+    
     conn = get_connection()
     cursor = conn.cursor()
 

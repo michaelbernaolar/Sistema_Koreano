@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 import os
-
+import pytz
 from datetime import datetime
 
 from db import (
@@ -344,7 +344,10 @@ def ventas_app():
                     type="primary",
                     disabled=not boton_guardar
                 ):
-                    fecha = datetime.now()  # Fecha y hora exacta al guardar
+                    # Hora actual en Lima
+                    lima = pytz.timezone("America/Lima")
+                    fecha = datetime.now(lima)
+
                     if tipo_comprobante == "Ticket":
                         nro_comprobante = obtener_siguiente_correlativo_ticket()
 
