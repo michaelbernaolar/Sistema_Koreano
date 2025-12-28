@@ -236,6 +236,8 @@ def generar_ticket_html(venta_id: int, ancho_mm: int = 80) -> str:
     total_items = sum(d["cantidad"] for d in detalle)
     usuario_nombre = usuario.get("nombre", "")
 
+    sep = "-" * (32 if ancho_mm == 58 else 41)
+
     detalle_html = ""
     for d in detalle:
         detalle_html += f"""
@@ -248,7 +250,6 @@ def generar_ticket_html(venta_id: int, ancho_mm: int = 80) -> str:
     entregado = venta["pago_cliente"] or venta["total"]
     vuelto = venta["vuelto"] or 0
 
-    sep = "-" * (32 if ancho_mm == 58 else 41)
     return f"""
     <html>
     <head>
