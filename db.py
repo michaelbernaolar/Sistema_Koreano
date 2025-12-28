@@ -704,24 +704,18 @@ def obtener_siguiente_correlativo_ticket():
     return f"T-{nuevo:06d}"
 
 def obtener_fecha_lima(fecha=None):
-    """
-    Devuelve un datetime timezone-aware en Lima.
-    Si no se pasa fecha, se toma datetime.now().
-    """
     lima = pytz.timezone("America/Lima")
 
     if fecha is None:
-        fecha = datetime.now()
-    
-    # Si es solo date, pasar a datetime
+        return datetime.now(lima).replace(tzinfo=None)
+
+    # Si viene date (sin hora)
     if isinstance(fecha, date) and not isinstance(fecha, datetime):
         fecha = datetime.combine(fecha, datetime.min.time())
-    
-    # Si es naive, se localiza a Lima
-    if fecha.tzinfo is None:
-        fecha = lima.localize(fecha)
-    else:
-        # Si ya tiene tz, convertir a Lima
+
+    # Si viene con zona horaria → convertir a Lima
+    if fecha.tzinfo is not None:
         fecha = fecha.astimezone(lima)
 
-    return fecha
+    # Quitar tzinfo antes de guardar
+    return fecha.replace(tzinfo=None)

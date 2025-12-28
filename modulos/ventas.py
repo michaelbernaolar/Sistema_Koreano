@@ -8,7 +8,7 @@ from db import (
     get_connection, query_df,
     select_cliente, obtener_cliente_por_id,
     registrar_salida_por_venta, obtener_configuracion,
-    obtener_siguiente_correlativo_ticket
+    obtener_siguiente_correlativo_ticket,obtener_fecha_lima
 )
 
 from services.producto_service import (
@@ -345,8 +345,7 @@ def ventas_app():
                     disabled=not boton_guardar
                 ):
                     # Hora actual en Lima
-                    lima = pytz.timezone("America/Lima")
-                    fecha = datetime.now(lima)
+                    fecha = obtener_fecha_lima()
 
                     if tipo_comprobante == "Ticket":
                         nro_comprobante = obtener_siguiente_correlativo_ticket()
