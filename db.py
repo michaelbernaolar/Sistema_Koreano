@@ -199,7 +199,16 @@ def init_db():
         tipo_regimen TEXT DEFAULT 'Régimen General',
         igv NUMERIC(5,4) DEFAULT 0.18,
         margen_utilidad NUMERIC(5,4) DEFAULT 0.25,
-        incluir_igv_en_precio INTEGER DEFAULT 1
+        incluir_igv_en_precio INTEGER DEFAULT 1,
+        -- Datos de la empresa
+        razon_social TEXT,
+        nombre_comercial TEXT,
+        ruc TEXT,
+        direccion TEXT,
+        celular TEXT,
+        -- Control
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP
     )
     ''')
 
@@ -521,20 +530,48 @@ def obtener_configuracion():
     }
 
 
-def actualizar_configuracion(nuevo_regimen=None, nuevo_igv=None, nuevo_margen=None, incluir_igv=None):
+def actualizar_configuracion(
+    nuevo_regimen=None,
+    nuevo_igv=None,
+    nuevo_margen=None,
+    incluir_igv=None,
+    razon_social=None,
+    nombre_comercial=None,
+    ruc=None,
+    direccion=None,
+    celular=None
+):
     conn = get_connection()
     cursor = conn.cursor()
-    if nuevo_regimen is not None:
-        cursor.execute("UPDATE configuracion SET tipo_regimen = %s WHERE id = 1", (nuevo_regimen,))
-    if nuevo_igv is not None:
-        cursor.execute("UPDATE configuracion SET igv = %s WHERE id = 1", (nuevo_igv,))
-    if nuevo_margen is not None:
-        cursor.execute("UPDATE configuracion SET margen_utilidad = %s WHERE id = 1", (nuevo_margen,))
-    if incluir_igv is not None:
-        cursor.execute("UPDATE configuracion SET incluir_igv_en_precio = %s WHERE id = 1", (1 if incluir_igv else 0,))
+
+    cursor.execute("""
+        UPDATE configuracion
+        SET
+            tipo_regimen = COALESCE(%s, tipo_regimen),
+            igv = COALESCE(%s, igv),
+            margen_utilidad = COALESCE(%s, margen_utilidad),
+            incluir_igv_en_precio = COALESCE(%s, incluir_igv_en_precio),
+            razon_social = COALESCE(%s, razon_social),
+            nombre_comercial = COALESCE(%s, nombre_comercial),
+            ruc = COALESCE(%s, ruc),
+            direccion = COALESCE(%s, direccion),
+            celular = COALESCE(%s, celular),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = 1
+    """, (
+        nuevo_regimen,
+        nuevo_igv,
+        nuevo_margen,
+        1 if incluir_igv else None if incluir_igv is None else 0,
+        razon_social,
+        nombre_comercial,
+        ruc,
+        direccion,
+        celular
+    ))
+
     conn.commit()
     conn.close()
-
 
 def registrar_historial_precio(cursor, producto_id, precio_anterior, precio_nuevo, margen_usado, costo_promedio):
     fecha = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

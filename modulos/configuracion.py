@@ -32,9 +32,28 @@ def configuracion_app():
         index=opciones.index(regimen_actual) if regimen_actual in opciones else 0
     )
 
+    # -------------------------
+    # Datos de la Empresa
+    # -------------------------
+    st.markdown("---")
+    st.subheader("🏢 Datos de la Empresa")
+
+    razon_social = st.text_input("Razón Social", value=config.get("razon_social", ""))
+    nombre_comercial = st.text_input("Nombre Comercial", value=config.get("nombre_comercial", ""))
+    ruc = st.text_input("RUC", value=config.get("ruc", ""))
+    direccion = st.text_input("Dirección", value=config.get("direccion", ""))
+    celular = st.text_input("Celular", value=config.get("celular", ""))
+
     if st.button("💾 Guardar Cambios"):
-        actualizar_configuracion(nuevo_regimen=nuevo_regimen)
-        st.success(f"✅ Régimen actualizado a: {nuevo_regimen}")
+        actualizar_configuracion(
+            nuevo_regimen=nuevo_regimen,
+            razon_social=razon_social,
+            nombre_comercial=nombre_comercial,
+            ruc=ruc,
+            direccion=direccion,
+            celular=celular
+        )
+        st.success("✅ Configuración actualizada correctamente")
 
     st.info(f"**Régimen actual:** {obtener_configuracion()['regimen']}")
 
