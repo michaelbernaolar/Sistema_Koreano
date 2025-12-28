@@ -75,7 +75,8 @@ def ventas_app():
                 )
         with col3:
             if tipo_comprobante == "Ticket":
-                st.info(f"🧾 Correlativo: {nro_comprobante}")
+                # Si aún no hay nro_comprobante, mostrar mensaje temporal
+                st.info(f"🧾 Correlativo: {nro_comprobante or 'Pendiente'}")
         with col4:
             fecha = st.date_input("📅 Fecha", datetime.today())
 
