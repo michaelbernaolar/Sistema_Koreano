@@ -20,9 +20,10 @@ from services.venta_service import (
     calcular_totales,
     guardar_venta
 )
-
-from services.comprobante_service import generar_ticket_pdf
-from services.comprobante_html_service import generar_ticket_html
+from services.comprobante_service import (
+    generar_ticket_html,
+    generar_ticket_pdf
+)
 
 @st.cache_data(ttl=300)
 def productos_para_filtros():

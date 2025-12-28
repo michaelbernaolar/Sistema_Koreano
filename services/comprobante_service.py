@@ -1,7 +1,9 @@
 from reportlab.lib.pagesizes import mm
 from reportlab.pdfgen import canvas
-from db import get_connection
-from db import obtener_configuracion
+from db import (
+    get_connection, obtener_configuracion,
+    obtener_venta_por_id, obtener_detalle_venta
+)
 import streamlit as st
 
 config = obtener_configuracion()
@@ -225,6 +227,66 @@ def obtener_venta_completa(venta_id):
     finally:
         conn.close()
 
+# ============================
+# HTML
+# ============================
+def generar_ticket_html(venta_id: int) -> str:
+    venta = obtener_venta_por_id(venta_id)
+    detalle = obtener_detalle_venta(venta_id)
 
+    filas = ""
+    for d in detalle:
+        filas += f"""
+        <tr>
+            <td>{d['nombre_producto']}</td>
+            <td style="text-align:right">{d['cantidad']:.2f}</td>
+            <td style="text-align:right">{d['precio_unitario']:.2f}</td>
+            <td style="text-align:right">{d['total']:.2f}</td>
+        </tr>
+        """
 
+    return f"""
+    <html>
+    <head>
+        <style>
+            body {{
+                font-family: monospace;
+                width: 80mm;
+                margin: auto;
+            }}
+            h2, p {{
+                text-align: center;
+                margin: 4px 0;
+            }}
+            table {{
+                width: 100%;
+                font-size: 12px;
+                border-collapse: collapse;
+            }}
+            .total {{
+                border-top: 1px dashed #000;
+                margin-top: 6px;
+                padding-top: 6px;
+                text-align: right;
+                font-weight: bold;
+            }}
+            @media print {{
+                button {{ display: none; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <h2>MI NEGOCIO</h2>
+        <p>{venta['tipo_comprobante']} Nº {venta['nro_comprobante']}</p>
+        <p>{venta['fecha']}</p>
 
+        <table>{filas}</table>
+
+        <div class="total">
+            TOTAL: S/. {venta['total']:.2f}
+        </div>
+
+        <button onclick="window.print()">🖨 Imprimir</button>
+    </body>
+    </html>
+    """
