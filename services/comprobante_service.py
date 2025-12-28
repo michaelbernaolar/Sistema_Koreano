@@ -279,8 +279,6 @@ def generar_ticket_html(venta_id: int) -> str:
 
         <div class="line">-----------------------------------------</div>
         <div class="center"><b>TICKET</b></div>
-        <div class="line">-----------------------------------------</div>
-
         N° {venta["nro_comprobante"]}<br>
         {venta["fecha"].strftime("%d/%m/%Y %H:%M")}<br>
 
