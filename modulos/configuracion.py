@@ -6,7 +6,8 @@ from auth import (
     obtener_todos_los_usuarios,
     cambiar_estado_usuario,
     crear_usuario,
-    resetear_password_admin
+    resetear_password_admin,
+    actualizar_nombre_usuario
 )
 
 def configuracion_app():
@@ -87,10 +88,23 @@ def configuracion_app():
         return
 
     for u in usuarios:
-        col1, col2, col3, col4 = st.columns([3, 2, 2, 2])
+        col1, col2, col3, col4, col5 = st.columns([2, 3, 2, 2, 2])
 
         col1.write(f"👤 {u['username']}")
-        col2.write(u["rol"])
+
+        nuevo_nombre = col2.text_input(
+            "Nombre",
+            value=u["nombre"] or "",
+            key=f"nombre_{u['id']}"
+        )
+
+        if nuevo_nombre != (u["nombre"] or ""):
+            if col2.button("💾", key=f"save_{u['id']}"):
+                actualizar_nombre_usuario(u["id"], nuevo_nombre)
+                st.success("Nombre actualizado")
+                st.rerun()
+
+        col3.write(u["rol"])
 
         if usuario_actual and usuario_actual["id"] == u["id"]:
             col3.write("—")  # No permitir auto-desactivarse

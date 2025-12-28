@@ -140,7 +140,7 @@ def obtener_todos_los_usuarios():
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
-        SELECT id, username, rol, activo
+        SELECT id, username, nombre, rol, activo
         FROM usuarios
         ORDER BY username
     """)
@@ -151,8 +151,20 @@ def obtener_todos_los_usuarios():
         {
             "id": r[0],
             "username": r[1],
-            "rol": r[2],
-            "activo": r[3]
+            "nombre": r[2],
+            "rol": r[3],
+            "activo": r[4]
         }
         for r in rows
     ]
+
+def actualizar_nombre_usuario(user_id, nuevo_nombre):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE usuarios
+        SET nombre = %s
+        WHERE id = %s
+    """, (nuevo_nombre, user_id))
+    conn.commit()
+    conn.close()
