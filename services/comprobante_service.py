@@ -230,7 +230,7 @@ def obtener_venta_completa(venta_id):
 # ============================
 # HTML
 # ============================
-def generar_ticket_html(venta_id: int) -> str:
+def generar_ticket_html(venta_id: int, ancho_mm: int = 80) -> str:
     venta, detalle = obtener_venta_completa(venta_id)
 
     total_items = sum(d["cantidad"] for d in detalle)
@@ -242,33 +242,40 @@ def generar_ticket_html(venta_id: int) -> str:
         {d['producto']}<br>
         {d['cantidad']:.2f} x {d['precio_unitario']:.2f}
         <span style="float:right">S/. {d['total']:.2f}</span><br>
-        -----------------------------------------<br>
+        {sep}<br>
         """
 
     entregado = venta["pago_cliente"] or venta["total"]
     vuelto = venta["vuelto"] or 0
 
+    sep = "-" * (32 if ancho_mm == 58 else 41)
     return f"""
     <html>
     <head>
         <meta charset="utf-8">
         <style>
-            body {{
-                font-family: monospace;
-                width: 80mm;
-                margin: auto;
-                font-size: 12px;
-            }}
-            .center {{ text-align: center; }}
-            .line {{ text-align: center; }}
-            .right {{ text-align: right; }}
-            @media print {{
-                button {{ display: none; }}
-            }}
+        @page {{
+            size: {ancho_mm}mm auto;
+            margin: 4mm;
+        }}
+
+        body {{
+            font-family: monospace;
+            width: {ancho_mm}mm;
+            margin: 0 auto;
+            font-size: 12px;
+        }}
+
+        .center {{ text-align: center; }}
+        .line {{ text-align: center; }}
+        .right {{ text-align: right; }}
+
+        @media print {{
+            button {{ display: none; }}
+        }}
         </style>
     </head>
     <body>
-
         <div class="center">
             <b>{config["nombre_comercial"]}</b><br>
             {config["razon_social"]}<br>
@@ -277,7 +284,7 @@ def generar_ticket_html(venta_id: int) -> str:
             Cel: {config["celular"]}
         </div>
 
-        <div class="line">-----------------------------------------</div>
+        <div class="line">{sep}</div>
 
         <div class="center">
             <b>TICKET</b><br>
@@ -285,28 +292,28 @@ def generar_ticket_html(venta_id: int) -> str:
             {venta["fecha"].strftime("%d/%m/%Y %H:%M")}
         </div>
 
-        <div class="line">-----------------------------------------</div>
+        <div class="line">{sep}</div>
 
         Atendido por: {usuario_nombre}<br>
 
-        <div class="line">-----------------------------------------</div>
+        <div class="line">{sep}</div>
         Cliente: {venta["cliente"]}<br>
         Doc: {venta["documento"]}<br>
         Placa: {venta["placa"] or "-"}<br>
 
-        <div class="line">-----------------------------------------</div>
+        <div class="line">{sep}</div>
 
         {detalle_html}
 
         Total ítems: {total_items:.2f}<br>
         <b>TOTAL: S/. {venta["total"]:.2f}</b>
 
-        <div class="line">-----------------------------------------</div>
+        <div class="line">{sep}</div>
         Pago: {venta["metodo_pago"]}<br>
         Entregado: S/. {entregado:.2f}<br>
         Vuelto: S/. {vuelto:.2f}
 
-        <div class="line">-----------------------------------------</div>
+        <div class="line">{sep}</div>
         <div class="center">NO OTORGA CRÉDITO FISCAL</div>
         <div class="center">Gracias por su compra</div>
 
