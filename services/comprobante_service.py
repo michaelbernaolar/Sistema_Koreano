@@ -40,7 +40,7 @@ def generar_ticket_pdf(venta_id, ruta):
     y -= 6
     draw_left("-" * 32)
 
-    # -------------------------
+    # ------------------------
     # Título del comprobante
     # -------------------------
     draw_center("TICKET", 11)
