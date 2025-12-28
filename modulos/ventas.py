@@ -67,12 +67,9 @@ def ventas_app():
                 tipo_comprobante = "Ticket"
                 # Obtener correlativo desde el inicio
                 nro_comprobante = obtener_siguiente_correlativo_ticket()
-                # Mostrar como input bloqueado (igual que N° Documento)
-                st.text_input(
-                    "📑 N° Comprobante",
-                    value=nro_comprobante,
-                    disabled=True
-                )
+                # Mostrar como input bloqueado 
+                st.text_input("📄 Tipo de comprobante", value=tipo_comprobante, disabled=True)
+                st.text_input("📑 N° Comprobante", value=nro_comprobante, disabled=True)
             else:
                 tipo_comprobante = st.selectbox(
                     "📄 Tipo de comprobante",
