@@ -1,9 +1,10 @@
 # db.py
 import psycopg2
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, date
 import os
 import streamlit as st
+import pytz
 
 from decimal import Decimal
 
@@ -701,3 +702,26 @@ def obtener_siguiente_correlativo_ticket():
     ultimo = row[0].replace("T-", "")
     nuevo = int(ultimo) + 1
     return f"T-{nuevo:06d}"
+
+def obtener_fecha_lima(fecha=None):
+    """
+    Devuelve un datetime timezone-aware en Lima.
+    Si no se pasa fecha, se toma datetime.now().
+    """
+    lima = pytz.timezone("America/Lima")
+
+    if fecha is None:
+        fecha = datetime.now()
+    
+    # Si es solo date, pasar a datetime
+    if isinstance(fecha, date) and not isinstance(fecha, datetime):
+        fecha = datetime.combine(fecha, datetime.min.time())
+    
+    # Si es naive, se localiza a Lima
+    if fecha.tzinfo is None:
+        fecha = lima.localize(fecha)
+    else:
+        # Si ya tiene tz, convertir a Lima
+        fecha = fecha.astimezone(lima)
+
+    return fecha

@@ -1,5 +1,5 @@
 from datetime import datetime, date
-from db import get_connection, registrar_salida_por_venta
+from db import get_connection, registrar_salida_por_venta, obtener_fecha_lima
 import pytz
 
 def f(value):
@@ -37,15 +37,7 @@ def guardar_venta(
     vuelto,
     carrito
 ):
-    lima = pytz.timezone("America/Lima")
-    if isinstance(fecha, date) and not isinstance(fecha, datetime):
-        fecha = datetime.combine(fecha, datetime.min.time())
-    # Asegurarse de que la fecha tenga timezone
-    if fecha.tzinfo is None:
-        fecha = lima.localize(fecha)
-
-    # Convertir a UTC antes de guardar en DB
-    fecha_utc = fecha.astimezone(pytz.UTC)
+    fecha = obtener_fecha_lima(fecha)
 
     conn = get_connection()
     cursor = conn.cursor()
@@ -69,7 +61,7 @@ def guardar_venta(
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         RETURNING id
     """, (
-        fecha_utc,
+        fecha,
         cliente["id"],
         f(totales["valor_venta"]),
         f(totales["op_gravada"]),
