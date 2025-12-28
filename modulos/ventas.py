@@ -61,27 +61,25 @@ def ventas_app():
                 ["Efectivo", "Yape", "Plin", "Tarjeta", "Transferencia"],
                 key="metodo_pago_select"
             )
+
         with col2:
             if "Nuevo RUS" in regimen:
                 tipo_comprobante = "Ticket"
-                # Asignar el siguiente correlativo desde el inicio
+                # Obtener correlativo desde el inicio
                 nro_comprobante = obtener_siguiente_correlativo_ticket()
+                # Mostrar como input bloqueado (igual que N° Documento)
                 st.text_input(
-                    "📄 Tipo de comprobante",
-                    value="Ticket",
+                    "📑 N° Comprobante",
+                    value=nro_comprobante,
                     disabled=True
                 )
-                st.info(f"🧾 Correlativo: {nro_comprobante}")
             else:
                 tipo_comprobante = st.selectbox(
                     "📄 Tipo de comprobante",
                     ["Boleta", "Factura"]
                 )
                 nro_comprobante = st.text_input("📑 N° Documento")
-        with col3:
-            if tipo_comprobante == "Ticket":
-                # Si aún no hay nro_comprobante, mostrar mensaje temporal
-                st.info(f"🧾 Correlativo: {nro_comprobante or 'Pendiente'}")
+                
         with col4:
             fecha = st.date_input("📅 Fecha", datetime.today())
 
