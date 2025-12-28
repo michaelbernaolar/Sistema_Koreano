@@ -227,7 +227,7 @@ def obtener_venta_completa(venta_id):
     finally:
         conn.close()
 
-# ============================
+# ===========================
 # HTML
 # ============================
 def generar_ticket_html(venta_id: int) -> str:
