@@ -47,17 +47,25 @@ def generar_ticket_pdf(venta_id, ruta):
         c.drawCentredString(width / 2, y, txt)
         y -= size + 4
 
+    def draw_separator():
+        nonlocal y
+        c.setFont("Courier", 9)
+        sep = "-" * int((width - 10) / 5)
+        c.drawString(5, y, sep)
+        y -= 13
+
     # -------------------------
     # Encabezado – Empresa
     # -------------------------
     draw_center(config["nombre_comercial"], 11)
     draw_center(config["razon_social"])
     draw_center(f"RUC: {config['ruc']}")
-    draw_center(config["direccion"])
-    draw_center(f"Cel: {config['celular']}")
+    for linea in wrap_text(c, config["direccion"], width - 10, "Courier", 9):
+        draw_center(linea, 9)
+    draw_center(f"Cel: {config['celular']}", 9)
 
     y -= 6
-    draw_left("-" * 32)
+    draw_separator()
 
     # ------------------------
     # Título del comprobante
@@ -66,10 +74,10 @@ def generar_ticket_pdf(venta_id, ruta):
     draw_center(f"N° {venta['nro_comprobante']}")
     draw_center(venta["fecha"].strftime("%d/%m/%Y %H:%M"))
 
-    draw_left("-" * 32)
+    draw_separator()
     draw_left(f"Atendido por: {usuario.get('nombre', '')}")
 
-    draw_left("-" * 32)
+    draw_separator()
 
     # -------------------------
     # Cliente
@@ -80,7 +88,7 @@ def generar_ticket_pdf(venta_id, ruta):
     if venta["placa"]:
         draw_left(f"Placa: {venta['placa']}")
 
-    draw_left("-" * 32)
+    draw_separator()
 
     # -------------------------
     # Detalle
@@ -103,18 +111,19 @@ def generar_ticket_pdf(venta_id, ruta):
         for linea in lineas_desc:
             draw_left(linea, 9)
 
-        # Fila 2: cantidad x precio unitario | total
-        linea_izq = f"{d['cantidad']:.2f} x {d['precio_unitario']:.2f}"
-        linea_der = f"S/. {d['total']:.2f}"
+        # Cant | PU | Total
+        cant = f"{d['cantidad']:.2f}"
+        pu = f"{d['precio_unitario']:.2f}"
+        tot = f"{d['total']:.2f}"
 
         c.setFont("Courier", 9)
-        c.drawString(5, y, linea_izq)
-        c.drawRightString(width - 5, y, linea_der)
-        y -= 13
+        c.drawString(5, y, f"{cant} x {pu}")
+        c.drawRightString(width - 5, y, f"S/. {tot}")
+        y -= 12
 
         total_cantidad += d["cantidad"] 
 
-    draw_left("-" * 32)
+    draw_separator()
     draw_left(f"Total ítems: {total_cantidad:.2f}")
 
     # -------------------------
@@ -122,8 +131,7 @@ def generar_ticket_pdf(venta_id, ruta):
     # -------------------------
     draw_left(f"TOTAL:       S/. {venta['total']:.2f}", 10)
 
-    draw_left("-" * 32)
-
+    draw_separator()
     # -------------------------
     # Pago
     # -------------------------
