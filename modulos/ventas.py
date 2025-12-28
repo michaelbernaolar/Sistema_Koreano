@@ -54,6 +54,7 @@ def ventas_app():
 
         # --- Datos del comprobante ---
         col1, col2, col3, col4 = st.columns(4)
+        nro_comprobante = ""  
         with col1:
             metodo_pago = st.selectbox(
                 "💳 Método de pago",
