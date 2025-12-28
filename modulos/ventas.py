@@ -22,6 +22,7 @@ from services.venta_service import (
 )
 
 from services.comprobante_service import generar_ticket_pdf
+from services.comprobante_html_service import generar_ticket_html
 
 @st.cache_data(ttl=300)
 def productos_para_filtros():
@@ -375,21 +376,38 @@ def ventas_app():
             st.divider()
             st.subheader("🧾 Comprobante de venta")
 
-            if st.button("🧾 Ver comprobante"):
-                venta_id = st.session_state["venta_actual_id"]
-                ruta_pdf = f"ticket_{venta_id}.pdf"
+            venta_id = st.session_state["venta_actual_id"]
 
-                generar_ticket_pdf(venta_id, ruta_pdf)
+            col1, col2 = st.columns([2, 1])
 
-                with open(ruta_pdf, "rb") as f:
-                    st.download_button(
-                        "🖨️ Imprimir / Descargar",
-                        f,
-                        file_name=ruta_pdf,
-                        mime="application/pdf"
-                    )    
+            # ===== HTML (principal) =====
+            with col1:
+                if st.button("🧾 Ver / Imprimir comprobante"):
+                    html = generar_ticket_html(venta_id)
+
+                    st.components.v1.html(
+                        html,
+                        height=600,
+                        scrolling=True
+                    )
+
+            # ===== PDF (opcional) =====
+            with col2:
+                if st.button("📄 Descargar PDF"):
+                    ruta_pdf = f"ticket_{venta_id}.pdf"
+                    generar_ticket_pdf(venta_id, ruta_pdf)
+
+                    with open(ruta_pdf, "rb") as f:
+                        st.download_button(
+                            "⬇️ Descargar PDF",
+                            f,
+                            file_name=ruta_pdf,
+                            mime="application/pdf"
+                        )
+
+            # limpiar estado solo cuando ya se mostró algo
+            if st.button("✔️ Finalizar"):
                 st.session_state.pop("venta_actual_id", None)
-
 
     # ========================
     # TAB 2: Consultar Ventas
