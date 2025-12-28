@@ -679,3 +679,25 @@ def obtener_detalle_venta(id_venta):
         }
         for r in rows
     ]
+
+def obtener_siguiente_correlativo_ticket():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT nro_comprobante
+        FROM venta
+        WHERE tipo_comprobante = 'Ticket'
+        ORDER BY id DESC
+        LIMIT 1
+    """)
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row or not row[0]:
+        return "T-000001"
+
+    ultimo = row[0].replace("T-", "")
+    nuevo = int(ultimo) + 1
+    return f"T-{nuevo:06d}"

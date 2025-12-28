@@ -7,6 +7,25 @@ import streamlit as st
 config = obtener_configuracion()
 usuario = st.session_state.get("usuario", {})
 
+def wrap_text(c, text, max_width, font="Courier", size=9):
+    c.setFont(font, size)
+    words = text.split(" ")
+    lines = []
+    current = ""
+
+    for w in words:
+        test = f"{current} {w}".strip()
+        if c.stringWidth(test, font, size) <= max_width:
+            current = test
+        else:
+            lines.append(current)
+            current = w
+
+    if current:
+        lines.append(current)
+
+    return lines
+
 def generar_ticket_pdf(venta_id, ruta):
     venta, detalle = obtener_venta_completa(venta_id)
 
@@ -71,7 +90,18 @@ def generar_ticket_pdf(venta_id, ruta):
 
     for d in detalle:
         # Fila 1: descripción (completa)
-        draw_left(d["producto"], 9)
+        max_width = width - 10  # margen izquierdo + derecho
+
+        lineas_desc = wrap_text(
+            c,
+            d["producto"],
+            max_width,
+            "Courier",
+            9
+        )
+
+        for linea in lineas_desc:
+            draw_left(linea, 9)
 
         # Fila 2: cantidad x precio unitario | total
         linea_izq = f"{d['cantidad']:.2f} x {d['precio_unitario']:.2f}"

@@ -7,7 +7,8 @@ from datetime import datetime
 from db import (
     get_connection, query_df,
     select_cliente, obtener_cliente_por_id,
-    registrar_salida_por_venta, obtener_configuracion
+    registrar_salida_por_venta, obtener_configuracion,
+    obtener_siguiente_correlativo_ticket
 )
 
 from services.producto_service import (
@@ -52,7 +53,7 @@ def ventas_app():
             regimen = configuracion.get("regimen", "Nuevo RUS")  # Valor por defecto
 
         # --- Cliente, Régimen y Método de Pago ---
-        col1, col2, col3 = st.columns([5, 2, 1])
+        col1, col2, col3, col4 = st.columns([5, 2, 1, 1])
         with col1:
             cliente_id = select_cliente()
 
@@ -73,6 +74,9 @@ def ventas_app():
                 nro_comprobante = st.text_input("📑 N° Documento")
         with col3:
             fecha = st.date_input("📅 Fecha", datetime.today())
+        with col4:
+            if tipo_comprobante == "Ticket":
+                st.info(f"🧾 Correlativo: {nro_comprobante}")
 
         # --- Datos del comprobante ---
         col1, col2, col3 = st.columns(3)
@@ -346,6 +350,9 @@ def ventas_app():
                     type="primary",
                     disabled=not boton_guardar
                 ):
+                    if tipo_comprobante == "Ticket":
+                        nro_comprobante = obtener_siguiente_correlativo_ticket()
+
                     id_venta = guardar_venta(
                         fecha=fecha,
                         cliente=cliente,
