@@ -52,34 +52,8 @@ def ventas_app():
             configuracion = obtener_configuracion()
             regimen = configuracion.get("regimen", "Nuevo RUS")  # Valor por defecto
 
-        # --- Cliente, Régimen y Método de Pago ---
-        col1, col2, col3 = st.columns([5, 2, 1])
-        with col1:
-            cliente_id = select_cliente()
-
-        if cliente_id is None:
-            st.stop()
-
-        cliente = obtener_cliente_por_id(cliente_id)
-        es_varios = cliente["dni_ruc"] == "99999999"
-        with col2:
-            if es_varios:
-                nro_comprobante = cliente["dni_ruc"]  # 99999999
-                st.text_input(
-                    "📑 N° Documento",
-                    value=nro_comprobante,
-                    disabled=True
-                )
-            else:
-                nro_comprobante = st.text_input("📑 N° Documento")
-        with col3:
-            fecha = st.date_input("📅 Fecha", datetime.today())
-        # with col4:
-        #     if tipo_comprobante == "Ticket":
-        #         st.info(f"🧾 Correlativo: {nro_comprobante}")
-
         # --- Datos del comprobante ---
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         with col1:
             metodo_pago = st.selectbox(
                 "💳 Método de pago",
@@ -99,6 +73,33 @@ def ventas_app():
                     "📄 Tipo de comprobante",
                     ["Boleta", "Factura"]
                 )
+        with col3:
+            if tipo_comprobante == "Ticket":
+                st.info(f"🧾 Correlativo: {nro_comprobante}")
+        with col4:
+            fecha = st.date_input("📅 Fecha", datetime.today())
+
+        # --- Cliente, Régimen y Método de Pago ---
+        col1, col2, col3 = st.columns([5, 2, 2])
+        with col1:
+            cliente_id = select_cliente()
+
+        if cliente_id is None:
+            st.stop()
+
+        cliente = obtener_cliente_por_id(cliente_id)
+        es_varios = cliente["dni_ruc"] == "99999999"
+        with col2:
+            if es_varios:
+                nro_comprobante = cliente["dni_ruc"]  # 99999999
+                st.text_input(
+                    "📑 N° Documento",
+                    value=nro_comprobante,
+                    disabled=True
+                )
+            else:
+                nro_comprobante = st.text_input("📑 N° Documento")
+
         with col3:
             placa_vehiculo = None
             if es_varios:
