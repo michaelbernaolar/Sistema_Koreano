@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import datetime, date
 from db import get_connection, registrar_salida_por_venta
 
 def f(value):
@@ -36,7 +36,7 @@ def guardar_venta(
     vuelto,
     carrito
 ):
-    if isinstance(fecha, date) and not isinstance(fecha, datetime):
+    if isinstance(fecha, date):
         fecha = datetime.combine(fecha, datetime.min.time())
 
     conn = get_connection()
