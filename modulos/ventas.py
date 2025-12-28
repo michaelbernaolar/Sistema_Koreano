@@ -53,7 +53,7 @@ def ventas_app():
             regimen = configuracion.get("regimen", "Nuevo RUS")  # Valor por defecto
 
         # --- Datos del comprobante ---
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3 = st.columns(3)
         nro_comprobante = ""  
         with col1:
             metodo_pago = st.selectbox(
@@ -73,8 +73,8 @@ def ventas_app():
                 st.text_input("📑 N° Comprobante", value=nro_comprobante, disabled=True)
             else:
                 nro_comprobante = st.text_input("📑 N° Documento")
-        with col4:
-            fecha = datetime.combine(st.date_input("📅 Fecha", datetime.today()), datetime.now().time())
+        # with col4:
+        #     fecha = datetime.combine(st.date_input("📅 Fecha", datetime.today()), datetime.now().time())
 
         # --- Cliente, Régimen y Método de Pago ---
         col1, col2, col3 = st.columns([5, 2, 2])
@@ -346,6 +346,7 @@ def ventas_app():
                     type="primary",
                     disabled=not boton_guardar
                 ):
+                    fecha = datetime.now()  # Fecha y hora exacta al guardar
                     if tipo_comprobante == "Ticket":
                         nro_comprobante = obtener_siguiente_correlativo_ticket()
 
