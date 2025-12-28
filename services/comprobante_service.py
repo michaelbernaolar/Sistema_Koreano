@@ -9,39 +9,64 @@ usuario = st.session_state.get("usuario", {})
 
 def generar_ticket_pdf(venta_id, ruta):
     venta, detalle = obtener_venta_completa(venta_id)
+
     width = 80 * mm
     height = 200 * mm
 
     c = canvas.Canvas(ruta, pagesize=(width, height))
     y = height - 10
 
-    def draw(txt, size=9):
+    def draw_left(txt, size=9):
         nonlocal y
         c.setFont("Courier", size)
         c.drawString(5, y, txt)
         y -= size + 4
 
-    draw(config["nombre_comercial"], 11)
-    draw(config["razon_social"])
-    draw(f"RUC: {config['ruc']}")
-    draw(config["direccion"])
-    draw(f"Cel: {config['celular']}")
-    draw("-" * 32)
+    def draw_center(txt, size=9):
+        nonlocal y
+        c.setFont("Courier", size)
+        c.drawCentredString(width / 2, y, txt)
+        y -= size + 4
 
-    draw(venta["tipo_comprobante"].upper(), 10)
-    draw(f"N° {venta['nro_comprobante']}")
-    draw(venta["fecha"].strftime("%d/%m/%Y %H:%M"))
-    draw(f"Atendido por: {usuario.get('nombre', '')}")
-    draw("-" * 32)
+    # -------------------------
+    # Encabezado – Empresa
+    # -------------------------
+    draw_center(config["nombre_comercial"], 11)
+    draw_center(config["razon_social"])
+    draw_center(f"RUC: {config['ruc']}")
+    draw_center(config["direccion"])
+    draw_center(f"Cel: {config['celular']}")
 
-    draw(f"Cliente: {venta['cliente']}")
+    y -= 6
+    draw_left("-" * 32)
+
+    # -------------------------
+    # Título del comprobante
+    # -------------------------
+    draw_center("TICKET", 11)
+    draw_center(f"N° {venta['nro_comprobante']}")
+    draw_center(venta["fecha"].strftime("%d/%m/%Y %H:%M"))
+
+    draw_left("-" * 32)
+    draw_left(f"Atendido por: {usuario.get('nombre', '')}")
+
+    draw_left("-" * 32)
+
+    # -------------------------
+    # Cliente
+    # -------------------------
+    draw_left(f"Cliente: {venta['cliente']}")
     if venta["documento"]:
-        draw(f"Doc: {venta['documento']}")
+        draw_left(f"Doc: {venta['documento']}")
     if venta["placa"]:
-        draw(f"Placa: {venta['placa']}")
-    draw("-" * 32)
+        draw_left(f"Placa: {venta['placa']}")
 
-    draw("Prod.      Cant  P.Unit  Total", 8)
+    draw_left("-" * 32)
+
+    # -------------------------
+    # Detalle
+    # -------------------------
+    draw_left("Prod.      Cant  P.Unit  Total", 8)
 
     total_cantidad = 0
 
@@ -49,7 +74,7 @@ def generar_ticket_pdf(venta_id, ruta):
         nombre = d["producto"][:10]
         total_cantidad += d["cantidad"]
 
-        draw(
+        draw_left(
             f"{nombre:<10}"
             f"{d['cantidad']:>5.2f}"
             f"{d['precio_unitario']:>8.2f}"
@@ -57,22 +82,33 @@ def generar_ticket_pdf(venta_id, ruta):
             8
         )
 
-    draw("-" * 32)
-    draw(f"Total ítems: {total_cantidad:.2f}")
+    draw_left("-" * 32)
+    draw_left(f"Total ítems: {total_cantidad:.2f}")
 
-    if venta["igv"] > 0:
-        draw(f"Op. Gravada: S/. {venta['op_gravada']:.2f}")
-        draw(f"IGV (18%):   S/. {venta['igv']:.2f}")
+    # -------------------------
+    # Totales (sin IGV visible)
+    # -------------------------
+    draw_left(f"TOTAL:       S/. {venta['total']:.2f}", 10)
 
-    draw(f"TOTAL:       S/. {venta['total']:.2f}", 10)
-    draw("-" * 32)
+    draw_left("-" * 32)
 
-    draw(f"Pago: {venta['metodo_pago']}")
+    # -------------------------
+    # Pago
+    # -------------------------
+    draw_left(f"Pago: {venta['metodo_pago']}")
     if venta["metodo_pago"] == "Efectivo":
-        draw(f"Entregado: S/. {venta['pago_cliente']:.2f}")
-        draw(f"Vuelto:    S/. {venta['vuelto']:.2f}")
+        draw_left(f"Entregado: S/. {venta['pago_cliente']:.2f}")
+        draw_left(f"Vuelto:    S/. {venta['vuelto']:.2f}")
 
-    draw("Gracias por su compra")
+    y -= 6
+
+    # -------------------------
+    # Frase SUNAT obligatoria
+    # -------------------------
+    draw_center("NO OTORGA CRÉDITO FISCAL", 8)
+
+    y -= 6
+    draw_center("Gracias por su compra", 8)
 
     c.showPage()
     c.save()
