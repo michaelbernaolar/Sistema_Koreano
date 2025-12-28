@@ -227,7 +227,7 @@ def obtener_venta_completa(venta_id):
     finally:
         conn.close()
 
-# ===========================
+# ============================
 # HTML
 # ============================
 def generar_ticket_html(venta_id: int) -> str:
@@ -278,11 +278,15 @@ def generar_ticket_html(venta_id: int) -> str:
         </div>
 
         <div class="line">-----------------------------------------</div>
-        <div class="center"><b>TICKET</b></div>
-        N° {venta["nro_comprobante"]}<br>
-        {venta["fecha"].strftime("%d/%m/%Y %H:%M")}<br>
+
+        <div class="center">
+            <b>TICKET</b><br>
+            N° {venta["nro_comprobante"]}<br>
+            {venta["fecha"].strftime("%d/%m/%Y %H:%M")}
+        </div>
 
         <div class="line">-----------------------------------------</div>
+
         Atendido por: {usuario_nombre}<br>
 
         <div class="line">-----------------------------------------</div>
