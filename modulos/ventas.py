@@ -73,8 +73,6 @@ def ventas_app():
                 st.text_input("📑 N° Comprobante", value=nro_comprobante, disabled=True)
             else:
                 nro_comprobante = st.text_input("📑 N° Documento")
-        # with col4:
-        #     fecha = datetime.combine(st.date_input("📅 Fecha", datetime.today()), datetime.now().time())
 
         # --- Cliente, Régimen y Método de Pago ---
         col1, col2, col3 = st.columns([5, 2, 2])
@@ -408,7 +406,7 @@ def ventas_app():
             SELECT v.id, v.fecha, c.nombre AS cliente, v.nro_comprobante, v.tipo_comprobante, v.metodo_pago, v.total
             FROM venta v
             LEFT JOIN cliente c ON v.id_cliente = c.id
-            WHERE date(v.fecha) BETWEEN %s AND %s
+            WHERE v.fecha BETWEEN %s AND %s
         """
         params = [fecha_ini, fecha_fin]
         if cliente_filtro:
