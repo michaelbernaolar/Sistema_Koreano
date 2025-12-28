@@ -64,16 +64,20 @@ def ventas_app():
         with col2:
             if "Nuevo RUS" in regimen:
                 tipo_comprobante = "Ticket"
+                # Asignar el siguiente correlativo desde el inicio
+                nro_comprobante = obtener_siguiente_correlativo_ticket()
                 st.text_input(
                     "📄 Tipo de comprobante",
                     value="Ticket",
                     disabled=True
                 )
+                st.info(f"🧾 Correlativo: {nro_comprobante}")
             else:
                 tipo_comprobante = st.selectbox(
                     "📄 Tipo de comprobante",
                     ["Boleta", "Factura"]
                 )
+                nro_comprobante = st.text_input("📑 N° Documento")
         with col3:
             if tipo_comprobante == "Ticket":
                 # Si aún no hay nro_comprobante, mostrar mensaje temporal
