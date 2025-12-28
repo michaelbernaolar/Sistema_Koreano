@@ -231,14 +231,13 @@ def obtener_venta_completa(venta_id):
 # HTML
 # ============================
 def generar_ticket_html(venta_id: int) -> str:
-    venta = obtener_venta_por_id(venta_id)
-    detalle = obtener_detalle_venta(venta_id)
+    venta, detalle = obtener_venta_completa(venta_id)
 
     filas = ""
     for d in detalle:
         filas += f"""
         <tr>
-            <td>{d['nombre_producto']}</td>
+            <td>{d['producto']}</td>
             <td style="text-align:right">{d['cantidad']:.2f}</td>
             <td style="text-align:right">{d['precio_unitario']:.2f}</td>
             <td style="text-align:right">{d['total']:.2f}</td>
@@ -263,6 +262,9 @@ def generar_ticket_html(venta_id: int) -> str:
                 font-size: 12px;
                 border-collapse: collapse;
             }}
+            td {{
+                padding: 2px 0;
+            }}
             .total {{
                 border-top: 1px dashed #000;
                 margin-top: 6px;
@@ -276,11 +278,13 @@ def generar_ticket_html(venta_id: int) -> str:
         </style>
     </head>
     <body>
-        <h2>MI NEGOCIO</h2>
+        <h2>{config["nombre_comercial"]}</h2>
         <p>{venta['tipo_comprobante']} Nº {venta['nro_comprobante']}</p>
-        <p>{venta['fecha']}</p>
+        <p>{venta['fecha'].strftime("%d/%m/%Y %H:%M")}</p>
 
-        <table>{filas}</table>
+        <table width="100%">
+            {filas}
+        </table>
 
         <div class="total">
             TOTAL: S/. {venta['total']:.2f}
