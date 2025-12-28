@@ -40,9 +40,13 @@ def guardar_venta(
     lima = pytz.timezone("America/Lima")
     if isinstance(fecha, date) and not isinstance(fecha, datetime):
         fecha = datetime.combine(fecha, datetime.min.time())
-    # Asegurarse que sea timezone-aware en Lima
-    fecha = lima.localize(fecha) if fecha.tzinfo is None else fecha
-    
+    # Asegurarse de que la fecha tenga timezone
+    if fecha.tzinfo is None:
+        fecha = lima.localize(fecha)
+
+    # Convertir a UTC antes de guardar en DB
+    fecha_utc = fecha.astimezone(pytz.UTC)
+
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -65,7 +69,7 @@ def guardar_venta(
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         RETURNING id
     """, (
-        fecha,
+        fecha_utc,
         cliente["id"],
         f(totales["valor_venta"]),
         f(totales["op_gravada"]),
