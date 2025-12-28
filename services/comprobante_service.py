@@ -66,21 +66,21 @@ def generar_ticket_pdf(venta_id, ruta):
     # -------------------------
     # Detalle
     # -------------------------
-    draw_left("Prod.      Cant  P.Unit  Total", 8)
 
     total_cantidad = 0
 
     for d in detalle:
-        nombre = d["producto"][:10]
-        total_cantidad += d["cantidad"]
+        # Fila 1: descripción (completa)
+        draw_left(d["producto"], 9)
 
-        draw_left(
-            f"{nombre:<10}"
-            f"{d['cantidad']:>5.2f}"
-            f"{d['precio_unitario']:>8.2f}"
-            f"{d['total']:>8.2f}",
-            8
-        )
+        # Fila 2: cantidad x precio unitario | total
+        linea_izq = f"{d['cantidad']:.2f} x {d['precio_unitario']:.2f}"
+        linea_der = f"S/. {d['total']:.2f}"
+
+        c.setFont("Courier", 9)
+        c.drawString(5, y, linea_izq)
+        c.drawRightString(width - 5, y, linea_der)
+        y -= 13
 
     draw_left("-" * 32)
     draw_left(f"Total ítems: {total_cantidad:.2f}")
