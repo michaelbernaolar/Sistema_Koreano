@@ -329,6 +329,8 @@ def ventas_app():
                 boton_guardar = True
             
             st.session_state.setdefault("venta_guardada", False)
+            st.session_state.setdefault("pdf_generado", False)
+            st.session_state.setdefault("ruta_pdf", None)
 
             # ============================
             # BOTONES EN UNA SOLA FILA
@@ -377,27 +379,31 @@ def ventas_app():
                         st.warning("Primero guarda la venta")
 
             with col4:
-                if st.button("📄 PDF"):
-                    if "venta_actual_id" in st.session_state:
-                        ruta_pdf = f"ticket_{st.session_state['venta_actual_id']}.pdf"
-                        generar_ticket_pdf(st.session_state["venta_actual_id"], ruta_pdf)
+                if not st.session_state["pdf_generado"]:
+                    if st.button("📄 Generar PDF"):
+                        if "venta_actual_id" in st.session_state:
+                            ruta_pdf = f"ticket_{st.session_state['venta_actual_id']}.pdf"
+                            generar_ticket_pdf(st.session_state["venta_actual_id"], ruta_pdf)
 
-                        with open(ruta_pdf, "rb") as f:
-                            st.download_button(
-                                "⬇️ Descargar PDF",
-                                f,
-                                file_name=ruta_pdf,
-                                mime="application/pdf"
-                            )
-                    else:
-                        st.warning("Primero guarda la venta")
-
+                            st.session_state["ruta_pdf"] = ruta_pdf
+                            st.session_state["pdf_generado"] = True
+                        else:
+                            st.warning("Primero guarda la venta")
+                else:
+                    with open(st.session_state["ruta_pdf"], "rb") as f:
+                        st.download_button(
+                            "⬇️ Descargar PDF",
+                            f,
+                            file_name=st.session_state["ruta_pdf"],
+                            mime="application/pdf"
+                        )
             with col5:
                 if st.button("✔️ Finalizar"):
                     st.session_state.carrito_ventas = []
                     st.session_state["venta_guardada"] = False
+                    st.session_state["pdf_generado"] = False
+                    st.session_state["ruta_pdf"] = None
                     st.session_state.pop("venta_actual_id", None)
-
 
     # ========================
     # TAB 2: Consultar Ventas
