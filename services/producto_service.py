@@ -126,7 +126,7 @@ def obtener_filtros_productos():
             c.nombre AS categoria
         FROM producto p
         LEFT JOIN categoria c ON p.id_categoria = c.id
-        WHERE p.activo = true
+        WHERE p.activo = 1
     """, conn)
     conn.close()
     return df
