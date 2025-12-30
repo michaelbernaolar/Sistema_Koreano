@@ -12,45 +12,21 @@ from db import (
 )
 
 from services.producto_service import (
-    buscar_producto_avanzado,
-    contar_productos,
-    obtener_valores_unicos
+    buscar_producto_avanzado, contar_productos,
+    obtener_filtros_productos
 )
 from services.venta_service import (
-    calcular_totales,
-    guardar_venta
+    calcular_totales, guardar_venta,
+    inicializar_estado_venta, resetear_venta, precio_valido
 )
 from services.comprobante_service import (
     generar_ticket_html,
     generar_ticket_pdf
 )
 
-@st.cache_data(ttl=300)
-def productos_para_filtros():
-    query = """
-        SELECT
-            p.marca,
-            c.nombre AS categoria,
-            p.stock_actual
-        FROM producto p
-        LEFT JOIN categoria c ON p.id_categoria = c.id
-    """
-    return query_df(query)
-
-def reset_venta():
-    # Limpieza lógica (datos)
-    st.session_state["carrito_ventas"] = []
-    st.session_state["venta_guardada"] = False
-    st.session_state["pdf_generado"] = False
-    st.session_state["ruta_pdf"] = None
-    st.session_state.pop("venta_actual_id", None)
-
-    # Marcar reset visual
-    st.session_state["reset_en_progreso"] = True
-
 def ventas_app():
     st.title("🛒 Registro y Consulta de Ventas")
-
+    inicializar_estado_venta(st.session_state)
     tabs = st.tabs(["📝 Registrar Venta", "📋 Consultar Ventas", "📊 Reportes"])
 
     # ========================
@@ -121,7 +97,7 @@ def ventas_app():
         st.session_state.setdefault("carrito_ventas", [])
 
         st.markdown("### ➕ Agregar productos a la venta")
-        df_filtros = productos_para_filtros()
+        df_filtros = obtener_filtros_productos()
 
         col1, col2, col3 = st.columns(3)
 
@@ -151,10 +127,6 @@ def ventas_app():
                 "Stock",
                 ["Todos", "Con stock", "Sin stock"]
             )
-            if filtro_stock == "Con stock":
-                df_filtros = df_filtros[df_filtros["stock_actual"] > 0]
-            elif filtro_stock == "Sin stock":
-                df_filtros = df_filtros[df_filtros["stock_actual"] <= 0]
 
         criterio = st.text_input(
             "Buscar por palabra clave (código, descripción, modelo, etc.)"
@@ -198,8 +170,8 @@ def ventas_app():
             st.warning("⚠️ No hay productos disponibles con esos filtros.")
         else:
             productos_dict = {
-                f"{row['id']} | {row['descripcion']}": row
-                for _, row in df_prod.iterrows()
+                f"{row.id} | {row.descripcion}": row
+                for row in df_prod.itertuples()
             }
             
             opciones = list(productos_dict.keys())
@@ -215,20 +187,20 @@ def ventas_app():
                 st.stop()
 
             row = productos_dict[producto_sel]
-            id_producto = row['id']
-            desc_producto = row['descripcion']
-            stock_disp = float(row['stock_actual'])
-            costo = float(row['costo_promedio'])
-            margen = float(row['margen_utilidad'])*100
+            id_producto = row.id
+            desc_producto = row.descripcion
+            stock_disp = float(row.stock_actual)
+            costo = float(row.costo_promedio)
+            margen = float(row.margen_utilidad) * 100
 
             st.write("### 📋 Detalles del producto")
             st.write(f"🔢 Código: {id_producto}")
-            st.write(f"🏭 Marca: {row['marca']}")
-            st.write(f"📖 Catálogo: {row['catalogo']}")
+            st.write(f"🏭 Marca: {row.marca}")
+            st.write(f"📖 Catálogo: {row.catalogo}")
 
             # --- Validar y asegurar precio base correcto ---
             try:
-                precio_base = float(row['precio_venta'])
+                precio_base = float(row.precio_venta)
                 if precio_base <= 0:
                     precio_base = 0.01
             except (ValueError, TypeError):
@@ -267,7 +239,7 @@ def ventas_app():
             # --- Validación del precio respecto al costo ---
             # Validación para agregar al carrito
             boton_carrito = True
-            if precio_unit < costo:
+            if not precio_valido(precio_unit, costo):
                 st.warning(f"⚠️ El precio ingresado ({precio_unit:.2f}) es menor al costo ({costo:.2f}).")
                 boton_carrito = False
             else:
@@ -425,11 +397,8 @@ def ventas_app():
                             mime="application/pdf"
                         )
             with col5:
-                if st.button(
-                    "✔️ Finalizar",
-                    disabled=not st.session_state["venta_guardada"]
-                ):
-                    reset_venta()
+                if st.button("✔️ Finalizar"):
+                    resetear_venta(st.session_state)
 
             # -------- LIMPIAR BANDERA DE RESET VISUAL --------
             if st.session_state.get("reset_en_progreso"):

@@ -1,6 +1,6 @@
 import pandas as pd
 from db import get_connection
-
+from streamlit import cache_data
 
 def obtener_valores_unicos(columna):
     conn = get_connection()
@@ -116,3 +116,17 @@ def contar_productos(
     total = cursor.fetchone()[0]
     conn.close()
     return total
+
+@cache_data(ttl=300)
+def obtener_filtros_productos():
+    conn = get_connection()
+    df = pd.read_sql_query("""
+        SELECT DISTINCT
+            p.marca,
+            c.nombre AS categoria
+        FROM producto p
+        LEFT JOIN categoria c ON p.id_categoria = c.id
+        WHERE p.activo = true
+    """, conn)
+    conn.close()
+    return df
