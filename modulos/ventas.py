@@ -46,6 +46,17 @@ def ventas_app():
     # TAB 1: Registrar Venta
     # ========================
     with tabs[0]:
+        VENTA_CERRADA = st.session_state.get("venta_guardada", False)
+        # =========================
+        # ESTADO GLOBAL DE VENTA
+        # =========================
+        st.session_state.setdefault("venta_guardada", False)
+        st.session_state.setdefault("carrito_ventas", [])
+        st.session_state.setdefault("pdf_generado", False)
+        st.session_state.setdefault("ruta_pdf", None)
+
+        VENTA_CERRADA = st.session_state["venta_guardada"]
+
         col1, col2 = st.columns([3, 1])
         with col1:
             st.subheader("📝 Registrar nueva venta")
@@ -263,7 +274,7 @@ def ventas_app():
 
             if st.button(
                 "➕ Agregar al carrito",
-                disabled=not boton_carrito or st.session_state.get("venta_guardada", False)
+                disabled=VENTA_CERRADA or not boton_carrito
             ):
                 subtotal = float(cantidad) * float(precio_unit)
                 st.session_state.carrito_ventas.append({
@@ -343,14 +354,14 @@ def ventas_app():
             with col1:
                 if st.button(
                     "🗑 Vaciar carrito",
-                    disabled=st.session_state.get("venta_guardada", False)
+                    disabled=VENTA_CERRADA
                 ):
                     st.session_state.carrito_ventas = []
             with col2:
                 if st.button(
                     "💾 Guardar venta",
                     type="primary",
-                    disabled=not boton_guardar or st.session_state["venta_guardada"]
+                    disabled=VENTA_CERRADA or not boton_guardar
                 ):
                     fecha = obtener_fecha_lima()
 
@@ -378,7 +389,7 @@ def ventas_app():
             with col3:
                 if st.button(
                     "🧾 Imprimir",
-                    disabled=not st.session_state["venta_guardada"]
+                    disabled=not VENTA_CERRADA
                 ):
                     if "venta_actual_id" in st.session_state:
                         html = generar_ticket_html(st.session_state["venta_actual_id"])
@@ -390,16 +401,13 @@ def ventas_app():
                 if not st.session_state["pdf_generado"]:
                     if st.button(
                         "📄 Generar PDF",
-                        disabled=not st.session_state["venta_guardada"]
+                        disabled=not VENTA_CERRADA
                     ):
-                        if "venta_actual_id" in st.session_state:
-                            ruta_pdf = f"ticket_{st.session_state['venta_actual_id']}.pdf"
-                            generar_ticket_pdf(st.session_state["venta_actual_id"], ruta_pdf)
-
-                            st.session_state["ruta_pdf"] = ruta_pdf
-                            st.session_state["pdf_generado"] = True
-                        else:
-                            st.warning("Primero guarda la venta")
+                        ruta_pdf = f"ticket_{st.session_state['venta_actual_id']}.pdf"
+                        generar_ticket_pdf(st.session_state["venta_actual_id"], ruta_pdf)
+                        st.session_state["ruta_pdf"] = ruta_pdf
+                        st.session_state["pdf_generado"] = True
+                        st.rerun()
                 else:
                     with open(st.session_state["ruta_pdf"], "rb") as f:
                         st.download_button(
@@ -408,29 +416,31 @@ def ventas_app():
                             file_name=st.session_state["ruta_pdf"],
                             mime="application/pdf"
                         )
+
             with col5:
                 if st.button(
                     "✔️ Finalizar",
-                    disabled=not st.session_state.get("venta_guardada", False)
+                    disabled=not VENTA_CERRADA
                 ):
-                    # Vaciar carrito y estados de venta
-                    st.session_state.carrito_ventas = []
+                    # Reset de venta
                     st.session_state["venta_guardada"] = False
                     st.session_state["pdf_generado"] = False
                     st.session_state["ruta_pdf"] = None
                     st.session_state.pop("venta_actual_id", None)
 
-                    # Limpiar filtros y búsquedas
+                    # Vaciar carrito
+                    st.session_state["carrito_ventas"] = []
+
+                    # Limpiar inputs de producto / filtros
                     for key in list(st.session_state.keys()):
-                        if key.startswith(("filtro_", "buscar_", "producto_", "criterio")):
+                        if key.startswith(("filtro_", "criterio", "producto_", "ver_todos")):
                             st.session_state.pop(key, None)
 
                     # NO tocar:
-                    # - cliente
-                    # - metodo_pago_select (Efectivo)
+                    # cliente (Cliente Varios)
+                    # metodo_pago_select (Efectivo)
 
                     st.rerun()
-
     # ========================
     # TAB 2: Consultar Ventas
     # ========================
