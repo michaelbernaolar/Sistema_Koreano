@@ -331,7 +331,7 @@ def ventas_app():
             # ============================
             # TODO EN UNA SOLA FILA
             # ============================
-            col1, col2, col3 = st.columns([1, 1, 1])
+            col1, col2, col3, col4, col5 = st.columns(5)
 
             with col1:
                 if st.button("🗑 Vaciar carrito", type="secondary"):
@@ -370,45 +370,41 @@ def ventas_app():
 
                     st.success(f"✅ Venta registrada correctamente (ID: {id_venta})")
 
-        # ============================
-        # COMPROBANTE / IMPRESIÓN
-        # ============================
-        if "venta_actual_id" in st.session_state:
-            st.divider()
-            st.subheader("🧾 Comprobante de venta")
-
-            venta_id = st.session_state["venta_actual_id"]
-
-            col1, col2 = st.columns([2, 1])
-
-            # ===== HTML (principal) =====
-            with col1:
-                if st.button("🧾 Ver / Imprimir comprobante"):
+            # 🧾 Ver / Imprimir
+            with col3:
+                if st.button(
+                    "🧾 Imprimir",
+                    disabled="venta_actual_id" not in st.session_state
+                ):
+                    venta_id = st.session_state["venta_actual_id"]
                     html = generar_ticket_html(venta_id)
+                    st.components.v1.html(html, height=600, scrolling=True)
 
-                    st.components.v1.html(
-                        html,
-                        height=600,
-                        scrolling=True
-                    )
-
-            # ===== PDF (opcional) =====
-            with col2:
-                if st.button("📄 Descargar PDF"):
+            # 📄 PDF
+            with col4:
+                if st.button(
+                    "📄 PDF",
+                    disabled="venta_actual_id" not in st.session_state
+                ):
+                    venta_id = st.session_state["venta_actual_id"]
                     ruta_pdf = f"ticket_{venta_id}.pdf"
                     generar_ticket_pdf(venta_id, ruta_pdf)
 
                     with open(ruta_pdf, "rb") as f:
                         st.download_button(
-                            "⬇️ Descargar PDF",
+                            "⬇️ Descargar",
                             f,
                             file_name=ruta_pdf,
                             mime="application/pdf"
                         )
 
-            # limpiar estado solo cuando ya se mostró algo
-            if st.button("✔️ Finalizar"):
-                st.session_state.pop("venta_actual_id", None)
+            # ✔️ Finalizar
+            with col5:
+                if st.button(
+                    "✔️ Finalizar",
+                    disabled="venta_actual_id" not in st.session_state
+                ):
+                    st.session_state.pop("venta_actual_id", None)
 
     # ========================
     # TAB 2: Consultar Ventas
