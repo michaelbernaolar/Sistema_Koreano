@@ -5,7 +5,7 @@ import pytz
 def f(value):
     return float(value) if value is not None else None
 
-# services/venta_service.py
+#services/venta_service.py
 def calcular_totales(valor_venta: float, regimen: str):
     if "Nuevo RUS" in regimen:
         return {
@@ -122,6 +122,7 @@ def resetear_venta(state):
     state["pdf_generado"] = False
     state["ruta_pdf"] = None
     state.pop("venta_actual_id", None)
+    state.pop("criterio_busqueda", None)
 
 def precio_valido(precio, costo):
     return precio >= costo
