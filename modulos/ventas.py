@@ -42,6 +42,8 @@ def ventas_app():
 
     tabs = st.tabs(["📝 Registrar Venta", "📋 Consultar Ventas", "📊 Reportes"])
 
+    st.session_state.setdefault("venta_guardada", False)
+    st.session_state.setdefault("venta_actual_id", None)
     # ========================
     # TAB 1: Registrar Venta
     # ========================
@@ -331,20 +333,18 @@ def ventas_app():
             # ============================
             # TODO EN UNA SOLA FILA
             # ============================
-            col1, col2, col3 = st.columns([1, 1, 1])
+            col1, col2, col3, col4, col5 = st.columns(5)
 
             with col1:
-                if st.button("🗑 Vaciar carrito", type="secondary"):
+                if st.button("🗑 Vaciar carrito", disabled=st.session_state.venta_guardada):
                     st.session_state.carrito_ventas = []
             
             # 💾 Guardar venta
             with col2:
-                st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
-
                 if st.button(
-                    "💾 Guardar venta",
+                    "💾 Guardar",
                     type="primary",
-                    disabled=not boton_guardar
+                    disabled=st.session_state.venta_guardada or not boton_guardar
                 ):
                     # Hora actual en Lima
                     fecha = obtener_fecha_lima()
@@ -365,50 +365,51 @@ def ventas_app():
                         carrito=st.session_state.carrito_ventas
                     )
 
-                    st.session_state["venta_actual_id"] = id_venta
+                    st.session_state.venta_actual_id = id_venta
+                    st.session_state.venta_guardada = True
                     st.session_state.carrito_ventas = []
 
                     st.success(f"✅ Venta registrada correctamente (ID: {id_venta})")
-
-        # ============================
-        # COMPROBANTE / IMPRESIÓN
-        # ============================
-        if "venta_actual_id" in st.session_state:
-            st.divider()
-            st.subheader("🧾 Comprobante de venta")
-
-            venta_id = st.session_state["venta_actual_id"]
-
-            col1, col2 = st.columns([2, 1])
-
-            # ===== HTML (principal) =====
-            with col1:
-                if st.button("🧾 Ver / Imprimir comprobante"):
-                    html = generar_ticket_html(venta_id)
-
-                    st.components.v1.html(
-                        html,
-                        height=600,
-                        scrolling=True
-                    )
-
-            # ===== PDF (opcional) =====
-            with col2:
-                if st.button("📄 Descargar PDF"):
+            # 🖨 Imprimir
+            with col3:
+                if st.button(
+                    "🖨 Imprimir",
+                    disabled=not st.session_state.venta_guardada
+                ):
+                    html = generar_ticket_html(st.session_state.venta_actual_id)
+                    st.components.v1.html(html, height=600, scrolling=True)
+            # 📄 PDF (descarga directa)
+            with col4:
+                if st.button(
+                    "📄 PDF",
+                    disabled=not st.session_state.venta_guardada
+                ):
+                    venta_id = st.session_state.venta_actual_id
                     ruta_pdf = f"ticket_{venta_id}.pdf"
                     generar_ticket_pdf(venta_id, ruta_pdf)
 
                     with open(ruta_pdf, "rb") as f:
                         st.download_button(
-                            "⬇️ Descargar PDF",
+                            "⬇️ Descargar",
                             f,
                             file_name=ruta_pdf,
                             mime="application/pdf"
                         )
 
-            # limpiar estado solo cuando ya se mostró algo
-            if st.button("✔️ Finalizar"):
-                st.session_state.pop("venta_actual_id", None)
+            # ✔️ Finalizar (reset controlado)
+            with col5:
+                if st.button(
+                    "✔️ Finalizar",
+                    disabled=not st.session_state.venta_guardada
+                ):
+                    for key in [
+                        "venta_guardada",
+                        "venta_actual_id",
+                        "carrito_ventas"
+                    ]:
+                        st.session_state.pop(key, None)
+
+                    st.experimental_rerun()
 
     # ========================
     # TAB 2: Consultar Ventas
