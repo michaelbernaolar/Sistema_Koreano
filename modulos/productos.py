@@ -50,7 +50,7 @@ def productos_app():
                 ["Todos", "Con stock", "Sin stock"]
            )
 
-        criterio = st.text_input("Buscar por palabra clave (código, descripción, modelo, etc.)")
+        criterio = st.text_input("Buscar por palabra clave (código, descripción, modelo, etc.)", key="criterio_busqueda")
         
         LIMITE_INICIAL = 20
 

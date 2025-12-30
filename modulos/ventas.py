@@ -399,6 +399,7 @@ def ventas_app():
             with col5:
                 if st.button("✔️ Finalizar"):
                     resetear_venta(st.session_state)
+                    st.rerun()
 
             # -------- LIMPIAR BANDERA DE RESET VISUAL --------
             if st.session_state.get("reset_en_progreso"):
