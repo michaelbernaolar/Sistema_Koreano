@@ -38,31 +38,15 @@ def productos_para_filtros():
     return query_df(query)
 
 def reset_venta():
-    claves_a_eliminar = [
-        # Venta
-        "carrito_ventas",
-        "venta_guardada",
-        "venta_actual_id",
-        "pdf_generado",
-        "ruta_pdf",
+    # Limpieza lógica (datos)
+    st.session_state["carrito_ventas"] = []
+    st.session_state["venta_guardada"] = False
+    st.session_state["pdf_generado"] = False
+    st.session_state["ruta_pdf"] = None
+    st.session_state.pop("venta_actual_id", None)
 
-        # Inputs de producto / filtros
-        "criterio",
-        "ver_todos",
-    ]
-
-    for key in list(st.session_state.keys()):
-        # Limpieza directa
-        if key in claves_a_eliminar:
-            st.session_state.pop(key, None)
-
-        # Limpieza por prefijo (filtros, selects dinámicos)
-        if key.startswith(("filtro_", "producto_")):
-            st.session_state.pop(key, None)
-
-    # NO tocar:
-    # metodo_pago_select (Efectivo)
-    # cliente (Cliente Varios)
+    # Marcar reset visual
+    st.session_state["reset_en_progreso"] = True
 
 def ventas_app():
     st.title("🛒 Registro y Consulta de Ventas")
@@ -74,10 +58,6 @@ def ventas_app():
     # ========================
     with tabs[0]:
         st.session_state.setdefault("carrito_ventas", [])
-        st.session_state.setdefault("venta_guardada", False)
-        st.session_state.setdefault("pdf_generado", False)
-        st.session_state.setdefault("ruta_pdf", None)
-
         col1, col2 = st.columns([3, 1])
         with col1:
             st.subheader("📝 Registrar nueva venta")
@@ -308,7 +288,11 @@ def ventas_app():
                 st.success(f"✅ {cantidad} x {desc_producto} agregado al carrito")
 
         # --- Mostrar carrito ---
-        if st.session_state.carrito_ventas or st.session_state.get("venta_guardada"):
+        if (
+            st.session_state.carrito_ventas
+            or st.session_state.get("venta_guardada")
+            or st.session_state.get("reset_en_progreso")
+        ):
             df_carrito = pd.DataFrame(st.session_state.carrito_ventas)
             st.subheader("🛒 Carrito de Venta")
             st.dataframe(df_carrito, width="stretch", hide_index=True)
@@ -373,9 +357,11 @@ def ventas_app():
             col1, col2, col3, col4, col5 = st.columns([1, 1.4, 1.4, 1.4, 1])
 
             with col1:
-                if st.button("🗑 Vaciar carrito"):
+                if st.button(
+                    "🗑 Vaciar carrito",
+                    disabled=st.session_state["venta_guardada"]
+                ):
                     st.session_state.carrito_ventas = []
-
             with col2:
                 if st.button(
                     "💾 Guardar venta",
@@ -444,7 +430,10 @@ def ventas_app():
                     disabled=not st.session_state["venta_guardada"]
                 ):
                     reset_venta()
-                    st.rerun()
+
+            # -------- LIMPIAR BANDERA DE RESET VISUAL --------
+            if st.session_state.get("reset_en_progreso"):
+                st.session_state.pop("reset_en_progreso")
 
     # ========================
     # TAB 2: Consultar Ventas
