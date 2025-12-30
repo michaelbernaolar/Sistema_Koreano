@@ -345,7 +345,7 @@ def ventas_app():
                 if st.button(
                     "💾 Guardar venta",
                     type="primary",
-                    disabled=not boton_guardar
+                    disabled=not boton_guardar or st.session_state["venta_guardada"]
                 ):
                     fecha = obtener_fecha_lima()
 
@@ -371,7 +371,10 @@ def ventas_app():
                     st.success(f"✅ Venta registrada correctamente (ID: {id_venta})")
 
             with col3:
-                if st.button("🧾 Imprimir"):
+                if st.button(
+                    "🧾 Imprimir",
+                    disabled=not st.session_state["venta_guardada"]
+                ):
                     if "venta_actual_id" in st.session_state:
                         html = generar_ticket_html(st.session_state["venta_actual_id"])
                         st.components.v1.html(html, height=600, scrolling=True)
@@ -380,7 +383,10 @@ def ventas_app():
 
             with col4:
                 if not st.session_state["pdf_generado"]:
-                    if st.button("📄 Generar PDF"):
+                    if st.button(
+                        "📄 Generar PDF",
+                        disabled=not st.session_state["venta_guardada"]
+                    ):
                         if "venta_actual_id" in st.session_state:
                             ruta_pdf = f"ticket_{st.session_state['venta_actual_id']}.pdf"
                             generar_ticket_pdf(st.session_state["venta_actual_id"], ruta_pdf)
@@ -398,7 +404,10 @@ def ventas_app():
                             mime="application/pdf"
                         )
             with col5:
-                if st.button("✔️ Finalizar"):
+                if st.button(
+                    "✔️ Finalizar",
+                    disabled=not st.session_state["venta_guardada"]
+                ):
                     st.session_state.carrito_ventas = []
                     st.session_state["venta_guardada"] = False
                     st.session_state["pdf_generado"] = False
