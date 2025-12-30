@@ -37,6 +37,33 @@ def productos_para_filtros():
     """
     return query_df(query)
 
+def reset_venta():
+    claves_a_eliminar = [
+        # Venta
+        "carrito_ventas",
+        "venta_guardada",
+        "venta_actual_id",
+        "pdf_generado",
+        "ruta_pdf",
+
+        # Inputs de producto / filtros
+        "criterio",
+        "ver_todos",
+    ]
+
+    for key in list(st.session_state.keys()):
+        # Limpieza directa
+        if key in claves_a_eliminar:
+            st.session_state.pop(key, None)
+
+        # Limpieza por prefijo (filtros, selects dinámicos)
+        if key.startswith(("filtro_", "producto_")):
+            st.session_state.pop(key, None)
+
+    # NO tocar:
+    # metodo_pago_select (Efectivo)
+    # cliente (Cliente Varios)
+
 def ventas_app():
     st.title("🛒 Registro y Consulta de Ventas")
 
@@ -46,6 +73,11 @@ def ventas_app():
     # TAB 1: Registrar Venta
     # ========================
     with tabs[0]:
+        st.session_state.setdefault("carrito_ventas", [])
+        st.session_state.setdefault("venta_guardada", False)
+        st.session_state.setdefault("pdf_generado", False)
+        st.session_state.setdefault("ruta_pdf", None)
+
         col1, col2 = st.columns([3, 1])
         with col1:
             st.subheader("📝 Registrar nueva venta")
@@ -411,11 +443,8 @@ def ventas_app():
                     "✔️ Finalizar",
                     disabled=not st.session_state["venta_guardada"]
                 ):
-                    st.session_state.carrito_ventas = []
-                    st.session_state["venta_guardada"] = False
-                    st.session_state["pdf_generado"] = False
-                    st.session_state["ruta_pdf"] = None
-                    st.session_state.pop("venta_actual_id", None)
+                    reset_venta()
+                    st.rerun()
 
     # ========================
     # TAB 2: Consultar Ventas
