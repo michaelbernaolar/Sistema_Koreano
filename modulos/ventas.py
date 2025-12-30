@@ -329,24 +329,20 @@ def ventas_app():
                 boton_guardar = True
 
             # ============================
-            # TODO EN UNA SOLA FILA
+            # BOTONES EN UNA SOLA FILA
             # ============================
-            col1, col2, col3, col4, col5 = st.columns(5)
+            col1, col2, col3, col4, col5 = st.columns([1, 1.4, 1.4, 1.4, 1])
 
             with col1:
-                if st.button("🗑 Vaciar carrito", type="secondary"):
+                if st.button("🗑 Vaciar carrito"):
                     st.session_state.carrito_ventas = []
-            
-            # 💾 Guardar venta
-            with col2:
-                st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
 
+            with col2:
                 if st.button(
                     "💾 Guardar venta",
                     type="primary",
                     disabled=not boton_guardar
                 ):
-                    # Hora actual en Lima
                     fecha = obtener_fecha_lima()
 
                     if tipo_comprobante == "Ticket":
@@ -370,41 +366,34 @@ def ventas_app():
 
                     st.success(f"✅ Venta registrada correctamente (ID: {id_venta})")
 
-            # 🧾 Ver / Imprimir
             with col3:
-                if st.button(
-                    "🧾 Imprimir",
-                    disabled="venta_actual_id" not in st.session_state
-                ):
-                    venta_id = st.session_state["venta_actual_id"]
-                    html = generar_ticket_html(venta_id)
-                    st.components.v1.html(html, height=600, scrolling=True)
+                if st.button("🧾 Imprimir"):
+                    if "venta_actual_id" in st.session_state:
+                        html = generar_ticket_html(st.session_state["venta_actual_id"])
+                        st.components.v1.html(html, height=600, scrolling=True)
+                    else:
+                        st.warning("Primero guarda la venta")
 
-            # 📄 PDF
             with col4:
-                if st.button(
-                    "📄 PDF",
-                    disabled="venta_actual_id" not in st.session_state
-                ):
-                    venta_id = st.session_state["venta_actual_id"]
-                    ruta_pdf = f"ticket_{venta_id}.pdf"
-                    generar_ticket_pdf(venta_id, ruta_pdf)
+                if st.button("📄 PDF"):
+                    if "venta_actual_id" in st.session_state:
+                        ruta_pdf = f"ticket_{st.session_state['venta_actual_id']}.pdf"
+                        generar_ticket_pdf(st.session_state["venta_actual_id"], ruta_pdf)
 
-                    with open(ruta_pdf, "rb") as f:
-                        st.download_button(
-                            "⬇️ Descargar",
-                            f,
-                            file_name=ruta_pdf,
-                            mime="application/pdf"
-                        )
+                        with open(ruta_pdf, "rb") as f:
+                            st.download_button(
+                                "⬇️ Descargar PDF",
+                                f,
+                                file_name=ruta_pdf,
+                                mime="application/pdf"
+                            )
+                    else:
+                        st.warning("Primero guarda la venta")
 
-            # ✔️ Finalizar
             with col5:
-                if st.button(
-                    "✔️ Finalizar",
-                    disabled="venta_actual_id" not in st.session_state
-                ):
+                if st.button("✔️ Finalizar"):
                     st.session_state.pop("venta_actual_id", None)
+
 
     # ========================
     # TAB 2: Consultar Ventas
