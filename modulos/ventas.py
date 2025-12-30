@@ -273,7 +273,7 @@ def ventas_app():
                 st.success(f"✅ {cantidad} x {desc_producto} agregado al carrito")
 
         # --- Mostrar carrito ---
-        if st.session_state.carrito_ventas:
+        if st.session_state.carrito_ventas or st.session_state.get("venta_guardada"):
             df_carrito = pd.DataFrame(st.session_state.carrito_ventas)
             st.subheader("🛒 Carrito de Venta")
             st.dataframe(df_carrito, width="stretch", hide_index=True)
@@ -327,6 +327,8 @@ def ventas_app():
             else:
                 # Métodos de pago no efectivo
                 boton_guardar = True
+            
+            st.session_state.setdefault("venta_guardada", False)
 
             # ============================
             # BOTONES EN UNA SOLA FILA
@@ -362,7 +364,7 @@ def ventas_app():
                     )
 
                     st.session_state["venta_actual_id"] = id_venta
-                    st.session_state.carrito_ventas = []
+                    st.session_state["venta_guardada"] = True
 
                     st.success(f"✅ Venta registrada correctamente (ID: {id_venta})")
 
@@ -392,6 +394,8 @@ def ventas_app():
 
             with col5:
                 if st.button("✔️ Finalizar"):
+                    st.session_state.carrito_ventas = []
+                    st.session_state["venta_guardada"] = False
                     st.session_state.pop("venta_actual_id", None)
 
 
