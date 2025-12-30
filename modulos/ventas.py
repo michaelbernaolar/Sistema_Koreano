@@ -261,7 +261,10 @@ def ventas_app():
             else:
                 boton_carrito = True
 
-            if st.button("➕ Agregar al carrito", disabled=not boton_carrito):
+            if st.button(
+                "➕ Agregar al carrito",
+                disabled=not boton_carrito or st.session_state.get("venta_guardada", False)
+            ):
                 subtotal = float(cantidad) * float(precio_unit)
                 st.session_state.carrito_ventas.append({
                     "ID Producto": id_producto,
@@ -338,9 +341,11 @@ def ventas_app():
             col1, col2, col3, col4, col5 = st.columns([1, 1.4, 1.4, 1.4, 1])
 
             with col1:
-                if st.button("🗑 Vaciar carrito"):
+                if st.button(
+                    "🗑 Vaciar carrito",
+                    disabled=st.session_state.get("venta_guardada", False)
+                ):
                     st.session_state.carrito_ventas = []
-
             with col2:
                 if st.button(
                     "💾 Guardar venta",
@@ -406,13 +411,25 @@ def ventas_app():
             with col5:
                 if st.button(
                     "✔️ Finalizar",
-                    disabled=not st.session_state["venta_guardada"]
+                    disabled=not st.session_state.get("venta_guardada", False)
                 ):
+                    # Vaciar carrito y estados de venta
                     st.session_state.carrito_ventas = []
                     st.session_state["venta_guardada"] = False
                     st.session_state["pdf_generado"] = False
                     st.session_state["ruta_pdf"] = None
                     st.session_state.pop("venta_actual_id", None)
+
+                    # Limpiar filtros y búsquedas
+                    for key in list(st.session_state.keys()):
+                        if key.startswith(("filtro_", "buscar_", "producto_", "criterio")):
+                            st.session_state.pop(key, None)
+
+                    # NO tocar:
+                    # - cliente
+                    # - metodo_pago_select (Efectivo)
+
+                    st.rerun()
 
     # ========================
     # TAB 2: Consultar Ventas
