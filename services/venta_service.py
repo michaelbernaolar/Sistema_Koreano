@@ -109,3 +109,19 @@ def guardar_venta(
     conn.commit()
     conn.close()
     return id_venta
+
+def inicializar_estado_venta(state):
+    state.setdefault("carrito_ventas", [])
+    state.setdefault("venta_guardada", False)
+    state.setdefault("pdf_generado", False)
+    state.setdefault("ruta_pdf", None)
+
+def resetear_venta(state):
+    state["carrito_ventas"] = []
+    state["venta_guardada"] = False
+    state["pdf_generado"] = False
+    state["ruta_pdf"] = None
+    state.pop("venta_actual_id", None)
+
+def precio_valido(precio, costo):
+    return precio >= costo
