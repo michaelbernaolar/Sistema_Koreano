@@ -397,10 +397,8 @@ def ventas_app():
                             mime="application/pdf"
                         )
             with col5:
-                if st.button("✔️ Finalizar", type="primary"):
+                if st.button("✔️ Finalizar"):
                     resetear_venta(st.session_state)
-                    st.experimental_set_query_params()  # fuerza limpieza UI
-                    st.rerun()
 
             # -------- LIMPIAR BANDERA DE RESET VISUAL --------
             if st.session_state.get("reset_en_progreso"):
