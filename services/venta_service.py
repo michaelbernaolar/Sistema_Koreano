@@ -117,26 +117,21 @@ def inicializar_estado_venta(state):
     state.setdefault("ruta_pdf", None)
 
 def resetear_venta(state):
-    # -------------------------
-    # Reset lógico de la venta
-    # -------------------------
+    # Reset lógico
     state["carrito_ventas"] = []
     state["venta_guardada"] = False
     state["pdf_generado"] = False
     state["ruta_pdf"] = None
     state.pop("venta_actual_id", None)
 
-    # -------------------------
-    # Limpiar widgets (keys)
-    # -------------------------
+    # Limpiar widgets
     keys_a_borrar = [
         "placa_vehiculo",
-        "criterio",
-        "pago_cliente",
     ]
 
     for k in keys_a_borrar:
         state.pop(k, None)
+
 
 def precio_valido(precio, costo):
     return precio >= costo

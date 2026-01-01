@@ -90,7 +90,8 @@ def ventas_app():
             if es_varios:
                 placa_vehiculo = st.text_input(
                     "🚗 Placa del vehículo (obligatoria)",
-                    max_chars=10
+                    max_chars=10,
+                    key="placa_vehiculo"
                 ).upper()
 
         # --- Carrito en sesión ---
