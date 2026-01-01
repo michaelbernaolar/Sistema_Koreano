@@ -88,13 +88,10 @@ def ventas_app():
         with col3:
             placa_vehiculo = None
             if es_varios:
-                with st.form("form_placa"):
-                    placa_vehiculo = st.text_input(
-                        "🚗 Placa del vehículo (obligatoria)",
-                        max_chars=10,
-                        key="placa_vehiculo"
-                    ).upper()
-                    st.form_submit_button("OK")
+                placa_vehiculo = st.text_input(
+                    "🚗 Placa del vehículo (obligatoria)",
+                    max_chars=10
+                ).upper()
 
         # --- Carrito en sesión ---
         st.session_state.setdefault("carrito_ventas", [])
@@ -263,18 +260,17 @@ def ventas_app():
                 st.success(f"✅ {cantidad} x {desc_producto} agregado al carrito")
 
         # --- Mostrar carrito ---
-        if st.session_state.carrito_ventas or st.session_state.get("venta_guardada"):
+        if (
+            st.session_state.carrito_ventas
+            or st.session_state.get("venta_guardada")
+            or st.session_state.get("reset_en_progreso")
+        ):
             df_carrito = pd.DataFrame(st.session_state.carrito_ventas)
             st.subheader("🛒 Carrito de Venta")
+            st.dataframe(df_carrito, width="stretch", hide_index=True)
 
-            if not df_carrito.empty:
-                st.dataframe(df_carrito, width="stretch", hide_index=True)
-
-                # --- Calcular totales ---
-                valor_venta = df_carrito["Subtotal"].sum()
-            else:
-                st.info("🧹 Carrito vacío")
-                valor_venta = 0.0
+            # --- Calcular totales ---
+            valor_venta = df_carrito["Subtotal"].sum()
 
             totales = calcular_totales(valor_venta, regimen)
 
