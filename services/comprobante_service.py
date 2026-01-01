@@ -151,7 +151,11 @@ def generar_ticket_pdf(venta_id, ruta):
 
     y -= 6
     draw_center("Gracias por su compra", 8)
-
+    # -------------------------
+    # Espacio extra para corte de papel
+    # -------------------------
+    y -= 30   # ≈ 2 a 3 líneas en blanco
+    
     c.showPage()
     c.save()
 
