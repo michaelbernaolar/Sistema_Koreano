@@ -260,17 +260,18 @@ def ventas_app():
                 st.success(f"✅ {cantidad} x {desc_producto} agregado al carrito")
 
         # --- Mostrar carrito ---
-        if (
-            st.session_state.carrito_ventas
-            or st.session_state.get("venta_guardada")
-            or st.session_state.get("reset_en_progreso")
-        ):
+        if st.session_state.carrito_ventas or st.session_state.get("venta_guardada"):
             df_carrito = pd.DataFrame(st.session_state.carrito_ventas)
             st.subheader("🛒 Carrito de Venta")
-            st.dataframe(df_carrito, width="stretch", hide_index=True)
 
-            # --- Calcular totales ---
-            valor_venta = df_carrito["Subtotal"].sum()
+            if not df_carrito.empty:
+                st.dataframe(df_carrito, width="stretch", hide_index=True)
+
+                # --- Calcular totales ---
+                valor_venta = df_carrito["Subtotal"].sum()
+            else:
+                st.info("🧹 Carrito vacío")
+                valor_venta = 0.0
 
             totales = calcular_totales(valor_venta, regimen)
 
