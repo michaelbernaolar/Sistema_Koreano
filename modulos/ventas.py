@@ -88,11 +88,13 @@ def ventas_app():
         with col3:
             placa_vehiculo = None
             if es_varios:
-                placa_vehiculo = st.text_input(
-                    "🚗 Placa del vehículo (obligatoria)",
-                    max_chars=10,
-                    key="placa_vehiculo"
-                ).upper()
+                with st.form("form_placa"):
+                    placa_vehiculo = st.text_input(
+                        "🚗 Placa del vehículo (obligatoria)",
+                        max_chars=10,
+                        key="placa_vehiculo"
+                    ).upper()
+                    st.form_submit_button("OK")
 
         # --- Carrito en sesión ---
         st.session_state.setdefault("carrito_ventas", [])
