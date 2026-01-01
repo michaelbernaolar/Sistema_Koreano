@@ -362,6 +362,7 @@ def ventas_app():
                     st.session_state["venta_guardada"] = True
 
                     st.success(f"✅ Venta registrada correctamente (ID: {id_venta})")
+                    st.rerun()
 
             with col3:
                 if st.button(
@@ -370,9 +371,22 @@ def ventas_app():
                 ):
                     if "venta_actual_id" in st.session_state:
                         html = generar_ticket_html(st.session_state["venta_actual_id"])
-                        st.components.v1.html(html, height=600, scrolling=True)
-                    else:
-                        st.warning("Primero guarda la venta")
+
+                        auto_print_html = f"""
+                        <iframe id="printFrame" style="display:none;"></iframe>
+                        <script>
+                            const frame = document.getElementById("printFrame");
+                            frame.contentDocument.open();
+                            frame.contentDocument.write(`{html}`);
+                            frame.contentDocument.close();
+                            frame.onload = function () {{
+                                frame.contentWindow.focus();
+                                frame.contentWindow.print();
+                            }};
+                        </script>
+                        """
+
+                        st.components.v1.html(auto_print_html, height=0)
 
             with col4:
                 if not st.session_state["pdf_generado"]:
