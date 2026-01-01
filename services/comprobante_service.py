@@ -155,7 +155,7 @@ def generar_ticket_pdf(venta_id, ruta):
     # Espacio extra para corte de papel
     # -------------------------
     y -= 30   # ≈ 2 a 3 líneas en blanco
-    
+
     c.showPage()
     c.save()
 
@@ -278,6 +278,11 @@ def generar_ticket_html(venta_id: int, ancho_mm: int = 80) -> str:
         @media print {{
             button {{ display: none; }}
         }}
+
+        .cut-space {{
+            height: 18mm;      /* ajusta entre 15–25mm si es necesario */
+        }}
+
         </style>
     </head>
     <body>
@@ -322,8 +327,11 @@ def generar_ticket_html(venta_id: int, ancho_mm: int = 80) -> str:
         <div class="center">NO OTORGA CRÉDITO FISCAL</div>
         <div class="center">Gracias por su compra</div>
 
-        <br>
+        <!-- ESPACIO EXTRA PARA CORTE -->
+        <div class="cut-space"></div>
+
         <button onclick="window.print()">🖨 Imprimir</button>
+
     </body>
     </html>
     """
