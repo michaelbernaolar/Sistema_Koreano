@@ -42,7 +42,7 @@ def ventas_app():
             configuracion = obtener_configuracion()
             regimen = configuracion.get("regimen", "Nuevo RUS")  # Valor por defecto
 
-        # --- Datos del comprobante ---
+        # --- Datos del comprobante --
         col1, col2, col3 = st.columns(3)
         nro_comprobante = ""  
         with col1:
