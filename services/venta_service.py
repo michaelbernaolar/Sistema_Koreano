@@ -124,13 +124,8 @@ def resetear_venta(state):
     state["ruta_pdf"] = None
     state.pop("venta_actual_id", None)
 
-    # Limpiar widgets
-    keys_a_borrar = [
-        "placa_vehiculo",
-    ]
-
-    for k in keys_a_borrar:
-        state.pop(k, None)
+    # Limpiar widget (FORMA CORRECTA)
+    state["placa_vehiculo"] = ""
 
 
 def precio_valido(precio, costo):
