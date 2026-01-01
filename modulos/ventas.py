@@ -93,7 +93,7 @@ def ventas_app():
                     max_chars=10
                 ).upper()
 
-        # --- Carrito en sesión ---
+        # --- Carrito en sesión --
         st.session_state.setdefault("carrito_ventas", [])
 
         st.markdown("### ➕ Agregar productos a la venta")
