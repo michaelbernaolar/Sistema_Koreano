@@ -29,7 +29,7 @@ def ventas_app():
     inicializar_estado_venta(st.session_state)
     tabs = st.tabs(["📝 Registrar Venta", "📋 Consultar Ventas", "📊 Reportes"])
 
-    # ========================
+    # =======================
     # TAB 1: Registrar Venta
     # ========================
     with tabs[0]:
