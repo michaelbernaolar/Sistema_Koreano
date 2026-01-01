@@ -370,22 +370,9 @@ def ventas_app():
                 ):
                     if "venta_actual_id" in st.session_state:
                         html = generar_ticket_html(st.session_state["venta_actual_id"])
-
-                        auto_print_html = f"""
-                        <iframe id="printFrame" style="display:none;"></iframe>
-                        <script>
-                            const frame = document.getElementById("printFrame");
-                            frame.contentDocument.open();
-                            frame.contentDocument.write(`{html}`);
-                            frame.contentDocument.close();
-                            frame.onload = function () {{
-                                frame.contentWindow.focus();
-                                frame.contentWindow.print();
-                            }};
-                        </script>
-                        """
-
-                        st.components.v1.html(auto_print_html, height=0)
+                        st.components.v1.html(html, height=600, scrolling=True)
+                    else:
+                        st.warning("Primero guarda la venta")
 
             with col4:
                 if not st.session_state["pdf_generado"]:
