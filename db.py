@@ -257,13 +257,12 @@ def generar_codigo_correlativo(tabla, prefijo):
         nuevo_num = 1
     return f"{prefijo}{nuevo_num:05d}"
 
-
 # -------------------------
 # Categorías
 # -------------------------
 def obtener_categorias():
     conn = get_connection()
-    df = pd.read_sql("SELECT id, nombre FROM categoria ORDER BY nombre", conn)
+    df = pd.read_sql("SELECT id, nombre FROM categoria ORDER BY id ASC", conn)
     conn.close()
     return df
 

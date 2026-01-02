@@ -21,7 +21,11 @@ from services.producto_service import (
 
 @st.cache_data(ttl=300)
 def cargar_categorias():
-    return obtener_categorias()
+    # Obtener categorías desde la base de datos
+    categorias = obtener_categorias()
+    # Ordenar por id para ver la creación desde la más antigua a la más reciente
+    return categorias.sort_values("id", ascending=True)
+
 
 def productos_app():
     st.title("📦 Gestión de Productos")
@@ -298,29 +302,31 @@ def productos_app():
     with tab_cat:
         st.subheader("📂 Gestión de Categorías")
 
+        categorias_df = cargar_categorias()  
+
+        if not categorias_df.empty:
+            ultima_cat = categorias_df.iloc[-1]["nombre"]  # última categoría según id
+            st.info(f"Última categoría agregada: {ultima_cat}")
+
         tab1, tab2 = st.tabs(["➕ Agregar", "✏️ Modificar / Eliminar"])
 
         with tab1:
-            st.markdown("### ➕ Agregar nueva categoría")
-            nueva = st.text_input("Nombre de la categoría", key="nueva_cat")
+            nueva = st.text_input("Nombre de la categoría", key="nueva_cat", value="")  # vacía por defecto
             if st.button("Agregar categoría", key="btn_agregar_cat"):
                 if nueva.strip():
                     try:
-                        agregar_categoria(nueva.strip())
-                        st.cache_data.clear()
-                        st.success("✅ Categoría agregada correctamente")
-                        st.rerun()
-                    except ValueError as e:
-                        st.warning(str(e))
+                        agregar_categoria(nueva.strip())         # Agregar en DB
+                        st.cache_data.clear()                     # Limpiar caché
+                        st.success(f"✅ Categoría '{nueva.strip()}' agregada correctamente")
+                        st.experimental_rerun()                   # Recargar la app
+                    except Exception as e:
+                        st.error(f"❌ No se pudo agregar la categoría: {e}")
+                else:
+                    st.warning("⚠️ Ingresa un nombre de categoría válido")
         with tab2:
-            st.markdown("### ✏️ Buscar y gestionar categorías")
-            categorias_df = cargar_categorias()
-
             busqueda = st.text_input("🔍 Buscar categoría", key="buscar_cat")
             if busqueda:
                 categorias_filtradas = categorias_df[categorias_df["nombre"].str.contains(busqueda, case=False)]
-            else:
-                categorias_filtradas = categorias_df
 
             st.dataframe(categorias_filtradas[["id", "nombre"]], width='stretch', hide_index=True)
 
@@ -340,7 +346,7 @@ def productos_app():
                         editar_categoria(id_cat, nuevo_nombre.strip())
                         st.cache_data.clear()
                         st.success("✅ Categoría actualizada")
-                        st.rerun()
+                        st.experimental_rerun()
 
                 with col2:
                     if st.button("🗑️ Eliminar categoría", key="btn_eliminar_cat"):
@@ -348,5 +354,5 @@ def productos_app():
                         eliminar_categoria(id_cat)
                         st.cache_data.clear()
                         st.warning("⚠️ Categoría eliminada")
-                        st.rerun()
+                        st.experimental_rerun()
     
