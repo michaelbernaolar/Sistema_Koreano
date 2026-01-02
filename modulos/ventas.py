@@ -217,9 +217,9 @@ def ventas_app():
                 if stock_disp > 0:
                     cantidad = st.number_input(
                         "📌 Cantidad",
-                        min_value=0.01,
+                        min_value=1.0,
                         max_value=stock_disp,
-                        step=0.01,
+                        step=1.0,
                         value=min(1.0, stock_disp),
                         format="%.2f"
                     )
