@@ -35,7 +35,7 @@ def guardar_venta(
     placa_vehiculo,
     pago_cliente,
     vuelto,
-    carrito
+    carrito,
     usuario
 ):
     fecha = obtener_fecha_lima(fecha)
