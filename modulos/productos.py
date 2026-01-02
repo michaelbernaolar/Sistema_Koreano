@@ -325,6 +325,7 @@ def productos_app():
                     st.warning("⚠️ Ingresa un nombre de categoría válido")
         with tab2:
             busqueda = st.text_input("🔍 Buscar categoría", key="buscar_cat")
+            categorias_filtradas = categorias_df
             if busqueda:
                 categorias_filtradas = categorias_df[categorias_df["nombre"].str.contains(busqueda, case=False)]
 
