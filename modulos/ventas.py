@@ -219,8 +219,8 @@ def ventas_app():
                         "📌 Cantidad",
                         min_value=1.0,
                         max_value=stock_disp,
-                        step=1.0,
-                        value=min(1.0, stock_disp),
+                        step=1.0,        # ← SOLO controla + / -
+                        value=1.0,
                         format="%.2f"
                     )
                 else:
