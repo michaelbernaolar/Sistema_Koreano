@@ -300,13 +300,29 @@ def ventas_app():
 
             if metodo_pago == "Efectivo":
                 st.subheader("💵 Pago en efectivo")
-                pago_cliente = st.number_input(
+                
+                pago_cliente_txt = st.text_input(
                     "💰 Monto entregado por el cliente",
-                    min_value=0.0,
-                    value=0.0,
-                    step=0.10,
-                    format="%.2f"
+                    placeholder="Ingrese monto entregado"
                 )
+
+                pago_cliente = None
+
+                if pago_cliente_txt.strip() != "":
+                    try:
+                        pago_cliente = float(pago_cliente_txt)
+                        if pago_cliente < total:
+                            st.warning(f"⚠️ El pago es menor al total a cobrar (S/. {total:,.2f})")
+                            boton_guardar = False
+                        else:
+                            vuelto = round(pago_cliente - total, 2)
+                            st.success(f"💸 Vuelto a entregar: S/. {vuelto:,.2f}")
+                            boton_guardar = True
+                    except ValueError:
+                        st.error("❌ Ingrese un monto válido")
+                        boton_guardar = False
+                else:
+                    boton_guardar = False
 
                 if pago_cliente > 0:
                     if pago_cliente < total:
