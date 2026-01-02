@@ -10,6 +10,43 @@ from streamlit_cookies_manager import CookieManager
 # Configuración de la página
 st.set_page_config(page_title="Sistema de Gestión", layout="wide")
 
+st.markdown("""
+<style>
+/* Fondo general */
+.stApp {
+    background-color: #f5f7fa;
+}
+
+/* Card estilo login */
+.login-card {
+    background: white;
+    padding: 2.5rem 2.5rem 2rem 2.5rem;
+    border-radius: 14px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+/* Título login */
+.login-title {
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+/* Subtítulo login */
+.login-subtitle {
+    text-align: center;
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+}
+
+/* Botón principal */
+button[kind="primary"] {
+    height: 44px;
+    font-size: 16px;
+    border-radius: 8px;
+}
+</style>
+""", unsafe_allow_html=True)
+
 cookies = CookieManager(prefix="koreano_")
 
 if not cookies.ready():
@@ -19,11 +56,25 @@ if not cookies.ready():
 usuario = obtener_usuario_sesion(cookies)
 
 if not usuario:
-    col_left, col_center, col_right = st.columns([1, 1.2, 1])
+    st.markdown("""
+        <style>
+        section[data-testid="stSidebar"] {
+            display: none;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+if not usuario:
+    col_left, col_center, col_right = st.columns([1, 1, 1])
 
     with col_center:
-        st.markdown("## 🔐 Acceso al sistema")
-        st.markdown("Ingrese sus credenciales para continuar")
+        st.markdown("""
+        <div class="login-card">
+            <h2 class="login-title">🔐 Acceso al sistema</h2>
+            <p class="login-subtitle">
+                Ingrese sus credenciales para continuar
+            </p>
+        """, unsafe_allow_html=True)
 
         with st.form("login_form", clear_on_submit=False):
             username = st.text_input(
@@ -38,6 +89,7 @@ if not usuario:
 
             submitted = st.form_submit_button(
                 "Ingresar",
+                type="primary",
                 use_container_width=True
             )
 
@@ -54,7 +106,9 @@ if not usuario:
                 else:
                     st.error("Usuario o contraseña incorrectos")
 
+        st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
+
 
 if st.session_state.get("forzar_cambio_password"):
     st.warning("Debes cambiar tu contraseña antes de continuar")
