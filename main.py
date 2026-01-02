@@ -28,8 +28,7 @@ if not usuario:
         with st.form("login_form", clear_on_submit=False):
             username = st.text_input(
                 "Usuario",
-                placeholder="Ingrese su usuario",
-                autofocus=True
+                placeholder="Ingrese su usuario"
             )
             password = st.text_input(
                 "Contraseña",
@@ -37,7 +36,10 @@ if not usuario:
                 placeholder="Ingrese su contraseña"
             )
 
-            submitted = st.form_submit_button("Ingresar", use_container_width=True)
+            submitted = st.form_submit_button(
+                "Ingresar",
+                use_container_width=True
+            )
 
             if submitted:
                 user = autenticar_usuario(username, password)
