@@ -1,3 +1,4 @@
+# modulos/productos.py
 import streamlit as st
 import pandas as pd
 import os
@@ -198,72 +199,6 @@ def productos_app():
                 st.success("✅ Imagen actualizada correctamente")
                 st.rerun()
 
-
-            # for _, row in df.iterrows():
-            #     with st.expander(f"📦 {row['id']} | {row['descripcion']}"):
-            #         cols = st.columns([1, 2])
-            #         with cols[0]:
-            #             if row["imagen"] and os.path.exists(row["imagen"]):
-            #                 st.image(row["imagen"], width=200, caption="Imagen del producto")
-            #             stock_nivel = row["stock_actual"]
-            #             if stock_nivel < 5:
-            #                 st.markdown(f"🛑 **Stock crítico:** {stock_nivel} unidades")
-            #             elif stock_nivel < 20:
-            #                 st.markdown(f"⚠️ **Stock bajo:** {stock_nivel} unidades")
-            #             else:
-            #                 st.markdown(f"✅ **Stock suficiente:** {stock_nivel} unidades")
-            #         with cols[1]:
-            #             with st.form(f"editar_{row['id']}"):
-            #                 descripcion = st.text_input("Descripción", row["descripcion"])
-
-            #                 categorias_df = obtener_categorias()
-            #                 opciones_cat = categorias_df["nombre"].tolist()
-            #                 cat_actual = row["categoria"] if row["categoria"] else "(Sin categoría)"
-
-            #                 categoria_seleccionada = st.selectbox(
-            #                     "Categoría",
-            #                     opciones_cat if opciones_cat else ["(Sin categorías)"],
-            #                     index=opciones_cat.index(cat_actual) if cat_actual in opciones_cat else 0
-            #                 )
-
-            #                 id_categoria = int(categorias_df[categorias_df["nombre"] == categoria_seleccionada]["id"].iloc[0]) \
-            #                     if not categorias_df.empty else None
-
-            #                 catalogo = st.text_input("Catálogo", row["catalogo"])
-            #                 marca = st.text_input("Marca", row["marca"])
-            #                 modelo = st.text_input("Modelo", row["modelo"])
-            #                 ubicacion = st.text_input("Ubicación", row["ubicacion"])
-            #                 precio_venta = st.number_input("Precio de Venta", value=to_float(row["precio_venta"]), step=0.1)
-            #                 imagen_nueva = st.file_uploader("Actualizar imagen (opcional)", type=["jpg", "png", "jpeg"])
-            #                 activo = st.selectbox("Activo", [1, 0], index=0 if row["activo"] == 1 else 1)
-
-            #                 actualizar = st.form_submit_button("Actualizar")
-            #                 if actualizar:
-            #                     if imagen_nueva:
-            #                         os.makedirs("imagenes", exist_ok=True)
-            #                         img_ext = os.path.splitext(imagen_nueva.name)[1]
-            #                         img_path = os.path.join("imagenes", f"{row['id']}{img_ext}")
-            #                         with open(img_path, "wb") as f:
-            #                             f.write(imagen_nueva.read())
-            #                         ruta_imagen = img_path
-
-            #                         # 🔄 Forzamos recarga inmediata para que se vea la nueva imagen
-            #                         data = (
-            #                             descripcion, id_categoria, catalogo, marca, modelo, ubicacion,
-            #                             row["unidad_base"], row["stock_actual"], precio_venta, ruta_imagen, int(activo), row["id"]
-            #                         )
-            #                         actualizar_producto(data)
-            #                         st.success("✅ Imagen y datos actualizados correctamente.")
-            #                         st.rerun()
-            #                     else:
-            #                         ruta_imagen = row["imagen"]
-            #                         data = (
-            #                             descripcion, id_categoria, catalogo, marca, modelo, ubicacion,
-            #                             row["unidad_base"], row["stock_actual"], precio_venta, ruta_imagen, int(activo), row["id"]
-            #                         )
-            #                         actualizar_producto(data)
-            #                         st.success("✅ Producto actualizado correctamente.")
-            #                         st.rerun()
         elif hay_filtros:
             st.warning("🔎 No se encontraron productos con esos filtros.")
         else:
@@ -370,13 +305,13 @@ def productos_app():
             nueva = st.text_input("Nombre de la categoría", key="nueva_cat")
             if st.button("Agregar categoría", key="btn_agregar_cat"):
                 if nueva.strip():
-                    agregar_categoria(nueva.strip())
-                    st.cache_data.clear()
-                    st.success("✅ Categoría agregada correctamente")
-                    st.rerun()
-                else:
-                    st.warning("⚠️ Ingresa un nombre válido")
-
+                    try:
+                        agregar_categoria(nueva.strip())
+                        st.cache_data.clear()
+                        st.success("✅ Categoría agregada correctamente")
+                        st.rerun()
+                    except ValueError as e:
+                        st.warning(str(e))
         with tab2:
             st.markdown("### ✏️ Buscar y gestionar categorías")
             categorias_df = cargar_categorias()

@@ -270,9 +270,17 @@ def obtener_categorias():
 def agregar_categoria(nombre):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO categoria (nombre) VALUES (%s)", (nombre,))
-    conn.commit()
-    conn.close()
+    try:
+        cursor.execute(
+            "INSERT INTO categoria (nombre) VALUES (%s)",
+            (nombre,)
+        )
+        conn.commit()
+    except psycopg2.errors.UniqueViolation:
+        conn.rollback()
+        raise ValueError("La categoría ya existe")
+    finally:
+        conn.close()
 
 def editar_categoria(id_cat, nuevo_nombre):
     conn = get_connection()
