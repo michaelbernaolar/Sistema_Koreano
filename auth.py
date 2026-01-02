@@ -1,3 +1,4 @@
+# Auth.py
 import bcrypt
 from db import get_connection
 

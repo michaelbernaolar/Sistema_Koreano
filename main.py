@@ -1,3 +1,4 @@
+# main.py
 import streamlit as st
 import os
 import time
@@ -18,18 +19,38 @@ if not cookies.ready():
 usuario = obtener_usuario_sesion(cookies)
 
 if not usuario:
-    st.title("🔐 Acceso al sistema")
-    username = st.text_input("Usuario")
-    password = st.text_input("Contraseña", type="password")
+    col_left, col_center, col_right = st.columns([1, 1.2, 1])
 
-    if st.button("Ingresar"):
-        user = autenticar_usuario(username, password)
-        if user:
-            iniciar_sesion(user, cookies)
-            st.session_state["forzar_cambio_password"] = user.get("forzar_cambio_password", False)
-            st.rerun()
-        else:
-            st.error("Usuario o contraseña incorrectos")
+    with col_center:
+        st.markdown("## 🔐 Acceso al sistema")
+        st.markdown("Ingrese sus credenciales para continuar")
+
+        with st.form("login_form", clear_on_submit=False):
+            username = st.text_input(
+                "Usuario",
+                placeholder="Ingrese su usuario",
+                autofocus=True
+            )
+            password = st.text_input(
+                "Contraseña",
+                type="password",
+                placeholder="Ingrese su contraseña"
+            )
+
+            submitted = st.form_submit_button("Ingresar", use_container_width=True)
+
+            if submitted:
+                user = autenticar_usuario(username, password)
+                if user:
+                    iniciar_sesion(user, cookies)
+                    st.session_state["forzar_cambio_password"] = user.get(
+                        "forzar_cambio_password", False
+                    )
+                    st.success("Acceso correcto")
+                    time.sleep(0.5)
+                    st.rerun()
+                else:
+                    st.error("Usuario o contraseña incorrectos")
 
     st.stop()
 

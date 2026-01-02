@@ -1,3 +1,4 @@
+# Comprobante_service.py
 from reportlab.lib.pagesizes import mm
 from reportlab.pdfgen import canvas
 from db import (

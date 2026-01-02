@@ -1,3 +1,4 @@
+# venta_service.py
 from datetime import datetime, date
 from db import get_connection, registrar_salida_por_venta, obtener_fecha_lima
 import pytz
