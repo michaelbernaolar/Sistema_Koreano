@@ -305,7 +305,7 @@ def productos_app():
         categorias_df = cargar_categorias()  
 
         if not categorias_df.empty:
-            ultima_cat = categorias_df.iloc[-1]["nombre"]  # última categoría según id
+            ultima_cat = categorias_df.sort_values("id", ascending=False).iloc[0]
             st.info(f"Última categoría agregada: {ultima_cat['id']} - {ultima_cat['nombre']}")
 
         tab1, tab2 = st.tabs(["➕ Agregar", "✏️ Modificar / Eliminar"])
