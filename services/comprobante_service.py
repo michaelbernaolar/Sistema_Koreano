@@ -7,7 +7,6 @@ from db import (
 import streamlit as st
 
 config = obtener_configuracion()
-usuario = st.session_state.get("usuario", {})
 
 def wrap_text(c, text, max_width, font="Courier", size=9):
     c.setFont(font, size)
@@ -77,7 +76,7 @@ def generar_ticket_pdf(venta_id, ruta):
     draw_center(venta["fecha"].strftime("%d/%m/%Y %H:%M"))
 
     draw_separator()
-    draw_left(f"Atendido por: {usuario.get('nombre', '')}")
+    draw_left(f"Atendido por: {venta['usuario']}")
 
     draw_separator()
 
@@ -176,10 +175,12 @@ def obtener_venta_completa(venta_id):
                 v.placa_vehiculo,
                 v.pago_cliente,
                 v.vuelto,
-                c.nombre,
-                c.dni_ruc
+                c.nombre AS cliente,
+                c.dni_ruc,
+                u.nombre AS usuario_nombre
             FROM venta v
             LEFT JOIN cliente c ON c.id = v.id_cliente
+            LEFT JOIN usuarios u ON u.id = v.id_usuario
             WHERE v.id = %s
         """, (venta_id,))
         v = cursor.fetchone()
@@ -198,7 +199,8 @@ def obtener_venta_completa(venta_id):
             "pago_cliente": v[10],
             "vuelto": v[11],
             "cliente": v[12] or "CLIENTE VARIOS",
-            "documento": v[13] or ""
+            "documento": v[13] or "",
+            "usuario": v[14] or "—"
         }
         
         cursor.execute("""
@@ -234,7 +236,6 @@ def generar_ticket_html(venta_id: int, ancho_mm: int = 80) -> str:
     venta, detalle = obtener_venta_completa(venta_id)
 
     total_items = sum(d["cantidad"] for d in detalle)
-    usuario_nombre = usuario.get("nombre", "")
 
     sep = "-" * (32 if ancho_mm == 58 else 41)
 
@@ -295,7 +296,7 @@ def generar_ticket_html(venta_id: int, ancho_mm: int = 80) -> str:
 
         <div class="line">{sep}</div>
 
-        Atendido por: {usuario_nombre}<br>
+        Atendido por: {venta["usuario"]}<br>
 
         <div class="line">{sep}</div>
         Cliente: {venta["cliente"]}<br>

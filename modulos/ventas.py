@@ -26,6 +26,12 @@ from services.comprobante_service import (
 
 def ventas_app():
     st.title("🛒 Registro y Consulta de Ventas")
+    usuario = st.session_state.get("usuario")
+
+    if not usuario:
+        st.error("❌ No hay un usuario autenticado")
+        st.stop()
+        
     inicializar_estado_venta(st.session_state)
     tabs = st.tabs(["📝 Registrar Venta", "📋 Consultar Ventas", "📊 Reportes"])
 
@@ -367,7 +373,8 @@ def ventas_app():
                         placa_vehiculo=placa_vehiculo,
                         pago_cliente=pago_cliente,
                         vuelto=vuelto,
-                        carrito=st.session_state.carrito_ventas
+                        carrito=st.session_state.carrito_ventas,
+                        usuario=usuario
                     )
 
                     st.session_state["venta_actual_id"] = id_venta

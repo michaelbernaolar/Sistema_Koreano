@@ -36,6 +36,7 @@ def guardar_venta(
     pago_cliente,
     vuelto,
     carrito
+    usuario
 ):
     fecha = obtener_fecha_lima(fecha)
 
@@ -54,15 +55,16 @@ def guardar_venta(
 
     cursor.execute("""
         INSERT INTO public.venta (
-            fecha, id_cliente, suma_total, op_gravada, igv, total,
+            fecha, id_cliente, id_usuario, suma_total, op_gravada, igv, total,
             tipo_comprobante, metodo_pago, nro_comprobante,
             placa_vehiculo, pago_cliente, vuelto
         )
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
         RETURNING id
     """, (
         fecha,
         cliente["id"],
+        usuario["id"],
         f(totales["valor_venta"]),
         f(totales["op_gravada"]),
         f(totales["igv"]),

@@ -24,7 +24,7 @@ def autenticar_usuario(username, password):
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT id, username, password_hash, rol, activo, password_updated_at
+        SELECT id, username, nombre, password_hash, rol, activo, password_updated_at
         FROM usuarios
         WHERE username = %s
     """, (username,))
@@ -35,7 +35,7 @@ def autenticar_usuario(username, password):
     if not user:
         return None
 
-    id_user, username, password_hash, rol, activo, pwd_updated = user
+    id_user, username, nombre, password_hash, rol, activo, pwd_updated = user
 
     if not activo:
         return None
@@ -44,6 +44,7 @@ def autenticar_usuario(username, password):
         return {
             "id": id_user,
             "username": username,
+            "nombre": nombre,
             "rol": rol,
             "forzar_cambio_password": pwd_updated is None
         }
