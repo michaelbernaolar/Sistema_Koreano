@@ -318,7 +318,7 @@ def generar_ticket_html(venta_id: int, ancho_mm: int = 80) -> str:
         <div class="center">NO OTORGA CRÉDITO FISCAL</div>
         <div class="center">Gracias por su compra</div>
         <div class="line">{sep}</div>
-        
+        <div class="line">{sep}</div>
         <br>
         <button onclick="window.print()">🖨 Imprimir</button>
     </body>
