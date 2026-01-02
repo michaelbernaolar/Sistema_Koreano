@@ -261,7 +261,7 @@ def generar_ticket_html(venta_id: int, ancho_mm: int = 80) -> str:
         <style>
         @page {{
             size: {ancho_mm}mm auto;
-            margin: 4mm;
+            margin: 3mm 3mm 0mm 3mm; 
         }}
 
         body {{
@@ -269,6 +269,7 @@ def generar_ticket_html(venta_id: int, ancho_mm: int = 80) -> str:
             width: {ancho_mm}mm;
             margin: 0 auto;
             font-size: 12px;
+            padding-bottom: 22mm;   /* ← ESPACIO REAL PARA CORTE */
         }}
 
         .center {{ text-align: center; }}
@@ -280,7 +281,9 @@ def generar_ticket_html(venta_id: int, ancho_mm: int = 80) -> str:
         }}
 
         .cut-space {{
-            height: 18mm;      /* ajusta entre 15–25mm si es necesario */
+            height: 18mm;
+            display: block;
+            visibility: visible;
         }}
 
         </style>
