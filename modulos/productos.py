@@ -306,7 +306,7 @@ def productos_app():
 
         if not categorias_df.empty:
             ultima_cat = categorias_df.iloc[-1]["nombre"]  # última categoría según id
-            st.info(f"Última categoría agregada: {ultima_cat}")
+            st.info(f"Última categoría agregada: {ultima_cat['id']} - {ultima_cat['nombre']}")
 
         tab1, tab2 = st.tabs(["➕ Agregar", "✏️ Modificar / Eliminar"])
 
@@ -329,7 +329,7 @@ def productos_app():
             if busqueda:
                 categorias_filtradas = categorias_df[categorias_df["nombre"].str.contains(busqueda, case=False)]
 
-            st.dataframe(categorias_filtradas[["id", "nombre"]], width='stretch', hide_index=True)
+            st.dataframe(categorias_filtradas.sort_values("id", ascending=False)[["id", "nombre"]], width='stretch', hide_index=True)
 
             if not categorias_filtradas.empty:
                 seleccion = st.selectbox(
