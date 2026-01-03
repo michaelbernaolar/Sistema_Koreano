@@ -1,6 +1,10 @@
 # modulos/caja.py
 import streamlit as st
-from services.venta_service import abrir_caja, cerrar_caja, obtener_caja_abierta
+from services.venta_service import (
+    abrir_caja,
+    cerrar_caja,
+    obtener_caja_abierta
+)
 
 def caja_app(usuario):
     st.title("💵 Apertura y Cierre de Caja")

@@ -23,6 +23,13 @@ from services.comprobante_service import (
 )
 
 def ventas_app():
+    if "caja_abierta_id" not in st.session_state:
+        st.warning("⚠️ No hay una caja abierta")
+        if st.button("Ir a Caja"):
+            st.session_state.modulo = "💵 Caja"
+            st.rerun()
+        st.stop()
+        
     st.title("🛒 Registro y Consulta de Ventas")
     usuario = st.session_state.get("usuario")
 

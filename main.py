@@ -6,6 +6,7 @@ from db import init_db
 from auth import autenticar_usuario, obtener_usuario_por_username
 from session_manager import iniciar_sesion, obtener_usuario_sesion, cerrar_sesion
 from streamlit_cookies_manager import CookieManager
+from services.venta_service import obtener_caja_abierta
 
 # Configuración de la página
 st.set_page_config(page_title="Sistema de Gestión", layout="wide")
@@ -115,6 +116,12 @@ if st.session_state.get("forzar_cambio_password"):
     from modulos.mi_cuenta import mi_cuenta_app
     mi_cuenta_app(usuario, cookies)
     st.stop()
+
+
+if usuario and "caja_abierta_id" not in st.session_state:
+    caja = obtener_caja_abierta()
+    if caja:
+        st.session_state["caja_abierta_id"] = caja["id"]
 
 # Importar módulos
 from modulos.proveedores import proveedores_app
@@ -245,6 +252,7 @@ elif st.session_state.modulo == "👤 Mi cuenta":
 # BOTÓN CERRAR SESIÓN (ABAJO)
 # -------------------------
 if st.sidebar.button("Cerrar sesión", use_container_width=True):
+    st.session_state.pop("caja_abierta_id", None)
     cerrar_sesion(usuario["id"], cookies)
     st.rerun()
 

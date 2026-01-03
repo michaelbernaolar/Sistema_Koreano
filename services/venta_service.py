@@ -214,3 +214,28 @@ def abrir_caja(monto, usuario):
     conn.close()
     return caja_id
 
+def obtener_caja_abierta():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id, monto_apertura, fecha_apertura, usuario_apertura
+        FROM caja
+        WHERE estado = 'ABIERTA'
+        ORDER BY fecha_apertura DESC
+        LIMIT 1
+    """)
+
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return {
+            "id": row[0],
+            "monto_apertura": float(row[1]),
+            "fecha_apertura": row[2],
+            "usuario_apertura": row[3]
+        }
+
+    return None
+
