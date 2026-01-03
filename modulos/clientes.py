@@ -32,7 +32,7 @@ def clientes_app():
             if st.form_submit_button("💾 Guardar cliente"):
                 if codigo and nombre and dni_ruc:
                     cursor.execute("""
-                        INSERT INTO cliente (id, nombre, dni_ruc, telefono, direccion)
+                        INSERT INTO cliente (codigo, nombre, dni_ruc, telefono, direccion)
                         VALUES (%s, %s, %s, %s, %s)
                     """, (codigo, nombre, dni_ruc, telefono, direccion))
                     conn.commit()

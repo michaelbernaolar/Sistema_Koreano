@@ -264,20 +264,19 @@ def init_db():
 # Funciones auxiliares
 # -------------------------
 def generar_codigo_correlativo(tabla, prefijo):
-    """Genera código correlativo con prefijo + 5 dígitos"""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute(f"SELECT id FROM {tabla} ORDER BY id DESC LIMIT 1")
+    cursor.execute(f"SELECT codigo FROM {tabla} ORDER BY codigo DESC LIMIT 1")
     ultimo = cursor.fetchone()
     conn.close()
 
-    if ultimo:
+    if ultimo and ultimo[0]:
         ultimo_num = int(ultimo[0].replace(prefijo, ""))
         nuevo_num = ultimo_num + 1
     else:
         nuevo_num = 1
-    return f"{prefijo}{nuevo_num:05d}"
 
+    return f"{prefijo}{nuevo_num:05d}"
 # -------------------------
 # Categorías
 # -------------------------
