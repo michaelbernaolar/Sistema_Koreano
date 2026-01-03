@@ -106,6 +106,13 @@ def init_db():
         placa_vehiculo TEXT,
         pago_cliente NUMERIC(14,2),
         vuelto NUMERIC(14,2),
+        id_usuario integer null,          
+        estado TEXT DEFAULT 'EMITIDA',
+        motivo_anulacion TEXT,
+        fecha_anulacion TIMESTAMP,
+        usuario_anulacion TEXT,
+        reimpresiones INTEGER DEFAULT 0,
+        id_caja INTEGER,
         FOREIGN KEY (id_cliente) REFERENCES cliente(id)
     )
     ''')
@@ -220,6 +227,7 @@ def init_db():
     ON CONFLICT (id) DO NOTHING
     ''')
 
+    # Tabla de historial_precios
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS historial_precios (
         id SERIAL PRIMARY KEY,
@@ -233,11 +241,23 @@ def init_db():
     )
     """)
 
+    # Tabla de historial_precios
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS caja (
+        id SERIAL PRIMARY KEY,
+        fecha_apertura TIMESTAMP,
+        fecha_cierre TIMESTAMP,
+        monto_apertura NUMERIC(14,2),
+        monto_cierre NUMERIC(14,2),
+        usuario_apertura TEXT,
+        usuario_cierre TEXT,
+        estado TEXT
+    )
+    """)
+
+
     conn.commit()
     conn.close()
-
- 
-
 
 # -------------------------
 # Funciones auxiliares
@@ -726,3 +746,4 @@ def obtener_fecha_lima(fecha=None):
 
     # Quitar tzinfo antes de guardar
     return fecha.replace(tzinfo=None)
+

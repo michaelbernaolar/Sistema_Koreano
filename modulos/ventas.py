@@ -1,14 +1,12 @@
+# modulos/ventas.py
 import pandas as pd
 import streamlit as st
-import os
-import pytz
 from datetime import datetime
 
 from db import (
-    get_connection, query_df,
-    select_cliente, obtener_cliente_por_id,
-    registrar_salida_por_venta, obtener_configuracion,
-    obtener_siguiente_correlativo_ticket,obtener_fecha_lima
+    query_df, select_cliente, obtener_cliente_por_id,
+    obtener_configuracion, obtener_siguiente_correlativo_ticket,
+    obtener_fecha_lima
 )
 
 from services.producto_service import (
@@ -21,7 +19,7 @@ from services.venta_service import (
 )
 from services.comprobante_service import (
     generar_ticket_html,
-    generar_ticket_pdf
+    generar_ticket_pdf, registrar_reimpresion
 )
 
 def ventas_app():
@@ -289,7 +287,7 @@ def ventas_app():
             # Mostrar métricas
             col1, col2, col3, col4 = st.columns(4)
             with col1:
-                st.metric("💵 Valor Venta (con IGV)", f"S/. {valor_venta:,.2f}")
+                st.metric("💵 Valor Venta", f"S/. {valor_venta:,.2f}")
             with col2:
                 st.metric("💰 Op. Gravada", f"S/. {op_gravada:,.2f}")
             with col3:
@@ -344,7 +342,7 @@ def ventas_app():
             # ============================
             # BOTONES EN UNA SOLA FILA
             # ============================
-            col1, col2, col3, col4, col5 = st.columns([1, 1.4, 1.4, 1.4, 1])
+            col1, col2, col3, col4, col5, col6 = st.columns([1, 1.4, 1.4, 1.4, 1.4, 1])
 
             with col1:
                 if st.button(
@@ -363,6 +361,10 @@ def ventas_app():
                     if tipo_comprobante == "Ticket":
                         nro_comprobante = obtener_siguiente_correlativo_ticket()
 
+                    if "caja_abierta_id" not in st.session_state:
+                        st.error("❌ No hay caja abierta")
+                        st.stop()
+
                     id_venta = guardar_venta(
                         fecha=fecha,
                         cliente=cliente,
@@ -374,7 +376,8 @@ def ventas_app():
                         pago_cliente=pago_cliente,
                         vuelto=vuelto,
                         carrito=st.session_state.carrito_ventas,
-                        usuario=usuario
+                        usuario=usuario, 
+                        id_caja=st.session_state["caja_abierta_id"]
                     )
 
                     st.session_state["venta_actual_id"] = id_venta
@@ -384,11 +387,9 @@ def ventas_app():
                     st.rerun()
 
             with col3:
-                if st.button(
-                    "🧾 Imprimir",
-                    disabled=not st.session_state["venta_guardada"]
-                ):
+                if st.button("🧾 Imprimir"):
                     if "venta_actual_id" in st.session_state:
+                        registrar_reimpresion(st.session_state["venta_actual_id"])
                         html = generar_ticket_html(st.session_state["venta_actual_id"])
 
                         auto_print_html = f"""
@@ -404,10 +405,14 @@ def ventas_app():
                             }};
                         </script>
                         """
-
                         st.components.v1.html(auto_print_html, height=0)
-
             with col4:
+                if st.button("🔁 Reimprimir"):
+                    if "venta_actual_id" in st.session_state:
+                        registrar_reimpresion(st.session_state["venta_actual_id"])
+                        html = generar_ticket_html(st.session_state["venta_actual_id"])
+                        st.components.v1.html(html, height=600)
+            with col5:
                 if not st.session_state["pdf_generado"]:
                     if st.button(
                         "📄 Generar PDF",
@@ -429,7 +434,7 @@ def ventas_app():
                             file_name=st.session_state["ruta_pdf"],
                             mime="application/pdf"
                         )
-            with col5:
+            with col6:
                 if st.button("✔️ Finalizar"):
                     resetear_venta(st.session_state)
                     st.rerun()
@@ -455,7 +460,8 @@ def ventas_app():
             SELECT v.id, v.fecha, c.nombre AS cliente, v.nro_comprobante, v.tipo_comprobante, v.metodo_pago, v.total
             FROM venta v
             LEFT JOIN cliente c ON v.id_cliente = c.id
-            WHERE v.fecha BETWEEN %s AND %s
+            WHERE v.estado = 'EMITIDA'
+            AND v.fecha BETWEEN %s AND %s
         """
         params = [fecha_ini, fecha_fin]
         if cliente_filtro:
@@ -465,6 +471,26 @@ def ventas_app():
         df_ventas = query_df(query, params)
 
         st.dataframe(df_ventas, width="stretch", hide_index=True)
+
+        venta_id_anular = st.number_input(
+            "ID de venta a anular",
+            min_value=1,
+            step=1
+        )
+
+        motivo = st.text_area("Motivo de anulación (obligatorio)")
+
+        if st.button("❌ Anular venta"):
+            if not motivo.strip():
+                st.error("Debe ingresar un motivo")
+            else:
+                try:
+                    from services.venta_service import anular_venta
+                    anular_venta(venta_id_anular, motivo, usuario)
+                    st.success("Venta anulada correctamente")
+                    st.rerun()
+                except Exception as e:
+                    st.error(str(e))
 
     # ========================
     # TAB 3: Reportes
@@ -477,6 +503,7 @@ def ventas_app():
             df = query_df("""
                 SELECT c.nombre AS cliente, SUM(v.total) AS total_ventas
                 FROM venta v
+                WHERE estado = 'EMITIDA'
                 LEFT JOIN cliente c ON v.id_cliente = c.id
                 GROUP BY c.nombre
                 ORDER BY total_ventas DESC
@@ -490,7 +517,9 @@ def ventas_app():
             df = query_df("""
                 SELECT p.descripcion, SUM(d.cantidad * d.precio_unitario) AS total_ventas
                 FROM venta_detalle d
+                JOIN venta v ON v.id = d.id_venta
                 JOIN producto p ON d.id_producto = p.id
+                WHERE v.estado = 'EMITIDA'
                 GROUP BY p.descripcion
                 ORDER BY total_ventas DESC
             """)
@@ -501,20 +530,29 @@ def ventas_app():
 
         elif tipo_reporte == "Diario":
             df = query_df("""
-                SELECT DATE(fecha) AS dia, SUM(total) AS total_dia
+                SELECT
+                    DATE(fecha) AS dia,
+                    COUNT(*) FILTER (WHERE estado='EMITIDA') AS ventas_emitidas,
+                    COUNT(*) FILTER (WHERE estado='ANULADA') AS ventas_anuladas,
+                    SUM(total) FILTER (WHERE estado='EMITIDA') AS total_vendido
                 FROM venta
-                GROUP BY DATE(fecha)
+                GROUP BY dia
                 ORDER BY dia
             """)
+
             if not df.empty:
+                st.metric("Ventas emitidas", int(df.iloc[-1]["ventas_emitidas"]))
+                st.metric("Ventas anuladas", int(df.iloc[-1]["ventas_anuladas"]))
+                st.metric("Total vendido", f"S/. {df.iloc[-1]['total_vendido'] or 0:,.2f}")
                 st.line_chart(df.set_index("dia"))
             else:
-                st.warning("⚠️ No hay datos para mostrar en este reporte")
+                st.warning("⚠️ No hay datos")
 
         elif tipo_reporte == "Mensual":
             df = query_df("""
                 SELECT to_char(fecha, 'YYYY-MM') AS mes, SUM(total) AS total_mes
                 FROM venta
+                WHERE estado = 'EMITIDA'
                 GROUP BY mes
                 ORDER BY mes
             """)

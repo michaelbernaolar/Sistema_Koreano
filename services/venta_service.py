@@ -1,7 +1,6 @@
 # venta_service.py
 from datetime import datetime, date
 from db import get_connection, registrar_salida_por_venta, obtener_fecha_lima
-import pytz
 
 def f(value):
     return float(value) if value is not None else None
@@ -37,7 +36,8 @@ def guardar_venta(
     pago_cliente,
     vuelto,
     carrito,
-    usuario
+    usuario, 
+    id_caja
 ):
     fecha = obtener_fecha_lima(fecha)
 
@@ -48,19 +48,29 @@ def guardar_venta(
     totales = calcular_totales(valor_venta, regimen)
 
     totales = {
-        "valor_venta": f(totales["valor_venta"]),
-        "op_gravada": f(totales["op_gravada"]),
-        "igv": f(totales["igv"]),
-        "total": f(totales["total"]),
+        "valor_venta": totales["valor_venta"],
+        "op_gravada": totales["op_gravada"],
+        "igv": totales["igv"],
+        "total": totales["total"],
     }
+
+    cursor.execute(
+        "SELECT estado FROM caja WHERE id = %s",
+        (id_caja,)
+    )
+    estado = cursor.fetchone()
+
+    if not estado or estado[0] != "ABIERTA":
+        raise Exception("No hay caja abierta")
+
 
     cursor.execute("""
         INSERT INTO public.venta (
             fecha, id_cliente, id_usuario, suma_total, op_gravada, igv, total,
             tipo_comprobante, metodo_pago, nro_comprobante,
-            placa_vehiculo, pago_cliente, vuelto
+            placa_vehiculo, pago_cliente, vuelto, id_caja, estado
         )
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'EMITIDA')
         RETURNING id
     """, (
         fecha,
@@ -75,7 +85,8 @@ def guardar_venta(
         nro_comprobante,
         placa_vehiculo,
         f(pago_cliente) if metodo_pago == "Efectivo" else None,
-        f(vuelto) if metodo_pago == "Efectivo" else None
+        f(vuelto) if metodo_pago == "Efectivo" else None,
+        id_caja
     ))
 
     id_venta = cursor.fetchone()[0]
@@ -129,3 +140,77 @@ def resetear_venta(state):
 
 def precio_valido(precio, costo):
     return precio >= costo
+
+def anular_venta(venta_id, motivo, usuario):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Validar que no esté anulada
+    cursor.execute(
+        "SELECT estado FROM venta WHERE id = %s",
+        (venta_id,)
+    )
+    estado = cursor.fetchone()
+
+    if not estado:
+        conn.close()
+        raise ValueError("Venta no encontrada")
+
+    if estado[0] == "ANULADA":
+        conn.close()
+        raise ValueError("La venta ya está anulada")
+
+    cursor.execute(
+        "SELECT reimpresiones FROM venta WHERE id = %s",
+        (venta_id,)
+    )
+    reimp = cursor.fetchone()[0]
+
+    if reimp > 0:
+        raise ValueError("No se puede anular una venta reimpresa")
+
+    cursor.execute("""
+        UPDATE venta
+        SET
+            estado = 'ANULADA',
+            motivo_anulacion = %s,
+            fecha_anulacion = NOW(),
+            usuario_anulacion = %s
+        WHERE id = %s
+    """, (motivo, usuario["nombre"], venta_id))
+
+    conn.commit()
+    conn.close()
+
+def cerrar_caja(id_caja, monto, usuario):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE caja
+        SET
+            fecha_cierre = NOW(),
+            monto_cierre = %s,
+            usuario_cierre = %s,
+            estado = 'CERRADA'
+        WHERE id = %s
+    """, (monto, usuario, id_caja))
+
+    conn.commit()
+    conn.close()
+
+def abrir_caja(monto, usuario):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO caja (fecha_apertura, monto_apertura, usuario_apertura, estado)
+        VALUES (NOW(), %s, %s, 'ABIERTA')
+        RETURNING id
+    """, (monto, usuario))
+
+    caja_id = cursor.fetchone()[0]
+    conn.commit()
+    conn.close()
+    return caja_id
+

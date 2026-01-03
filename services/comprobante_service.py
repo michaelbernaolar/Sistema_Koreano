@@ -1,13 +1,25 @@
-# Comprobante_service.py
+# services/comprobante_service.py
 from reportlab.lib.pagesizes import mm
 from reportlab.pdfgen import canvas
 from db import (
-    get_connection, obtener_configuracion,
-    obtener_venta_por_id, obtener_detalle_venta
+    get_connection, obtener_configuracion
 )
 import streamlit as st
 
 config = obtener_configuracion()
+
+def registrar_reimpresion(venta_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE venta
+        SET reimpresiones = reimpresiones + 1
+        WHERE id = %s
+    """, (venta_id,))
+
+    conn.commit()
+    conn.close()
 
 def wrap_text(c, text, max_width, font="Courier", size=9):
     c.setFont(font, size)
@@ -56,6 +68,12 @@ def generar_ticket_pdf(venta_id, ruta):
         c.drawString(5, y, sep)
         y -= 13
 
+    if venta["reimpresiones"] > 0:
+        draw_center(
+            f"*** COPIA – Reimpresión N° {venta['reimpresiones']} ***",
+            9
+        )
+        draw_separator()
     # -------------------------
     # Encabezado – Empresa
     # -------------------------
@@ -77,7 +95,7 @@ def generar_ticket_pdf(venta_id, ruta):
     draw_center(venta["fecha"].strftime("%d/%m/%Y %H:%M"))
 
     draw_separator()
-    draw_left(f"Atendido por: {venta['usuario']}")
+    draw_left(f"Atendido por: {venta['usuario_nombre']}")
 
     draw_separator()
 
@@ -178,7 +196,8 @@ def obtener_venta_completa(venta_id):
                 v.vuelto,
                 c.nombre AS cliente,
                 c.dni_ruc,
-                u.nombre AS usuario_nombre
+                u.nombre AS usuario_nombre,
+                v.reimpresiones
             FROM venta v
             LEFT JOIN cliente c ON c.id = v.id_cliente
             LEFT JOIN usuarios u ON u.id = v.id_usuario
@@ -201,7 +220,8 @@ def obtener_venta_completa(venta_id):
             "vuelto": v[11],
             "cliente": v[12] or "CLIENTE VARIOS",
             "documento": v[13] or "",
-            "usuario": v[14] or "—"
+            "usuario_nombre": v[14] or "—",
+            "reimpresiones": v[15]
         }
         
         cursor.execute("""
@@ -235,6 +255,10 @@ def obtener_venta_completa(venta_id):
 # ============================
 def generar_ticket_html(venta_id: int, ancho_mm: int = 80) -> str:
     venta, detalle = obtener_venta_completa(venta_id)
+
+    marca_copia = ""
+    if venta["reimpresiones"] > 0:
+        marca_copia = f"*** COPIA – Reimpresión N° {venta['reimpresiones']} ***"
 
     total_items = sum(d["cantidad"] for d in detalle)
 
@@ -297,7 +321,7 @@ def generar_ticket_html(venta_id: int, ancho_mm: int = 80) -> str:
 
         <div class="line">{sep}</div>
 
-        Atendido por: {venta["usuario"]}<br>
+        Atendido por: {venta["usuario_nombre"]}<br>
 
         <div class="line">{sep}</div>
         Cliente: {venta["cliente"]}<br>
@@ -319,6 +343,7 @@ def generar_ticket_html(venta_id: int, ancho_mm: int = 80) -> str:
         <div class="line">{sep}</div>
         <div class="center">NO OTORGA CRÉDITO FISCAL</div>
         <div class="center">Gracias por su compra</div>
+        <div class="center"><b>{marca_copia}</b></div>
         <div class="line">{sep}</div>
         <div class="line">{sep}</div>
         <br>
