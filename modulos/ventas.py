@@ -459,7 +459,7 @@ def ventas_app():
         query = """
             SELECT v.id, v.fecha, c.nombre AS cliente, v.nro_comprobante, v.tipo_comprobante, v.metodo_pago, v.total
             FROM venta v
-            LEFT JOIN cliente c ON v.id_cliente = c.id::integer
+            LEFT JOIN cliente c ON v.id_cliente = c.id
             WHERE v.estado = 'EMITIDA'
             AND v.fecha BETWEEN %s AND %s
         """
@@ -503,7 +503,7 @@ def ventas_app():
             df = query_df("""
                 SELECT c.nombre AS cliente, SUM(v.total) AS total_ventas
                 FROM venta v
-                LEFT JOIN cliente c ON v.id_cliente = c.id::integer
+                LEFT JOIN cliente c ON v.id_cliente = c.id
                 WHERE v.estado = 'EMITIDA'
                 GROUP BY c.nombre
                 ORDER BY total_ventas DESC

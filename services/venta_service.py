@@ -194,7 +194,7 @@ def cerrar_caja(id_caja, monto, usuario):
             usuario_cierre = %s,
             estado = 'CERRADA'
         WHERE id = %s
-    """, (monto, usuario, id_caja))
+    """, (monto, usuario["username"], id_caja))
 
     conn.commit()
     conn.close()
@@ -207,7 +207,7 @@ def abrir_caja(monto, usuario):
         INSERT INTO caja (fecha_apertura, monto_apertura, usuario_apertura, estado)
         VALUES (NOW(), %s, %s, 'ABIERTA')
         RETURNING id
-    """, (monto, usuario))
+    """, (monto, usuario["username"]))
 
     caja_id = cursor.fetchone()[0]
     conn.commit()

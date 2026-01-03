@@ -125,6 +125,7 @@ from modulos.ventas import ventas_app
 from modulos.configuracion import configuracion_app
 from modulos.precios import precios_app
 from modulos.mi_cuenta import mi_cuenta_app
+from modulos.caja import caja_app
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -156,6 +157,7 @@ if st.session_state.modulo == "⚙️ Configuración" and usuario["rol"] != "adm
 # Módulos disponibles
 modulos = [
     "🏠 Inicio",
+    "💵 Caja",
     "📦 Productos",
     "📇 Proveedores",
     "📦 Compras",
@@ -220,6 +222,8 @@ if st.session_state.modulo == "🏠 Inicio":
 # -------------------------
 # Módulos
 # -------------------------
+elif st.session_state.modulo == "💵 Caja":
+    caja_app(usuario)
 elif st.session_state.modulo == "📦 Productos":
     productos_app()
 elif st.session_state.modulo == "📇 Proveedores":
