@@ -45,7 +45,8 @@ def init_db():
     # Tabla de cliente
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS cliente (
-        id TEXT PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
+        codigo VARCHAR(10) UNIQUE,
         nombre TEXT,
         dni_ruc TEXT,
         telefono TEXT,
@@ -93,7 +94,7 @@ def init_db():
     CREATE TABLE IF NOT EXISTS venta (
         id SERIAL PRIMARY KEY,
         fecha TIMESTAMP,
-        id_cliente TEXT,
+        id_cliente INTEGER,
         suma_total NUMERIC(14,2),
         descuento NUMERIC(14,2),
         op_gravada NUMERIC(14,2),
