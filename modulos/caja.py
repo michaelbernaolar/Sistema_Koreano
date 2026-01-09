@@ -9,10 +9,10 @@ from services.venta_service import (
 def caja_app(usuario):
     st.title("💵 Apertura y Cierre de Caja")
 
-    caja_abierta_id = obtener_caja_abierta()
+    caja_abierta = obtener_caja_abierta()
 
-    if caja_abierta_id:
-        st.success(f"✅ Caja ABIERTA (ID: {caja_abierta_id})")
+    if caja_abierta:
+        st.success(f"✅ Caja ABIERTA (ID: {caja_abierta['id']})")
 
         monto_cierre = st.number_input(
             "💰 Monto de cierre",
@@ -22,7 +22,11 @@ def caja_app(usuario):
         )
 
         if st.button("🔒 Cerrar caja", type="primary"):
-            cerrar_caja(caja_abierta_id, monto_cierre, usuario)
+            cerrar_caja(
+                caja_abierta["id"],   # 👈 SOLO el ID
+                monto_cierre,
+                usuario
+            )
             st.session_state.pop("caja_abierta_id", None)
             st.success("Caja cerrada correctamente")
             st.rerun()
