@@ -74,8 +74,8 @@ def guardar_venta(
         RETURNING id
     """, (
         fecha,
-        cliente["id"],
-        usuario["id"],
+        int(cliente["id"]), 
+        int(usuario["id"]),
         f(totales["valor_venta"]),
         f(totales["op_gravada"]),
         f(totales["igv"]),
@@ -105,7 +105,7 @@ def guardar_venta(
             VALUES (%s,%s,%s,%s,%s,%s)
         """, (
             int(id_venta),
-            item["ID Producto"],
+            int(item["ID Producto"]),  
             f(item["Cantidad"]),
             f(precio_unit),
             f(subtotal),
@@ -114,8 +114,8 @@ def guardar_venta(
 
         registrar_salida_por_venta(
             cursor,
-            item["ID Producto"],
-            item["Cantidad"],
+            int(item["ID Producto"]), 
+            float(item["Cantidad"]),
             fecha,
             f"Venta {cliente['nombre']} - {nro_comprobante}"
         )
