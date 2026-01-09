@@ -22,7 +22,7 @@ def caja_app(usuario):
         )
 
         if st.button("🔒 Cerrar caja", type="primary"):
-            cerrar_caja(caja_abierta_id, monto_cierre, usuario["username"])
+            cerrar_caja(caja_abierta_id, monto_cierre, usuario)
             st.session_state.pop("caja_abierta_id", None)
             st.success("Caja cerrada correctamente")
             st.rerun()
