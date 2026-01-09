@@ -86,7 +86,7 @@ def guardar_venta(
         placa_vehiculo,
         f(pago_cliente) if metodo_pago == "Efectivo" else None,
         f(vuelto) if metodo_pago == "Efectivo" else None,
-        id_caja
+        int(id_caja)
     ))
 
     id_venta = cursor.fetchone()[0]
