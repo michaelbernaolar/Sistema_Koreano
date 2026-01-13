@@ -28,12 +28,17 @@ def caja_app(usuario):
         st.dataframe(df, hide_index=True)
 
         st.metric(
+            "🧾 Total vendido (todos los métodos)",
+            f"S/. {resumen['total_vendido']:,.2f}"
+        )
+
+        st.metric(
             "💵 Efectivo esperado en caja",
             f"S/. {resumen['efectivo_neto']:,.2f}"
         )
 
         monto_cierre = st.number_input(
-            "💰 Monto de cierre",
+           "💵 Efectivo contado en caja",
             min_value=0.0,
             step=1.0,
             format="%.2f"
