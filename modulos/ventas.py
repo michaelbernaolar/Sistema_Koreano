@@ -208,9 +208,9 @@ def ventas_app():
             row = productos_dict[producto_sel]
             id_producto = row.id
             desc_producto = row.descripcion
-            stock_disp = float(row.stock_actual)
-            costo = float(row.costo_promedio)
-            margen = float(row.margen_utilidad) * 100
+            stock_disp = float(row.stock_actual or 0)
+            costo = float(row.costo_promedio) if row.costo_promedio is not None else 0.0
+            margen = float(row.margen_utilidad) * 100 if row.margen_utilidad is not None else 0.0
 
             st.write("### 📋 Detalles del producto")
             st.write(f"🔢 Código: {id_producto}")
@@ -469,7 +469,7 @@ def ventas_app():
             cliente_filtro = st.text_input("Cliente")
 
         fecha_fin = fecha_fin + timedelta(days=1)
-        
+
         query = """
             SELECT v.id, v.fecha, c.nombre AS cliente, v.nro_comprobante, v.tipo_comprobante, v.metodo_pago, v.total
             FROM venta v
