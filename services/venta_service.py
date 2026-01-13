@@ -26,6 +26,15 @@ def calcular_totales(valor_venta: float, regimen: str):
             "total": total
         }
     
+def parsear_comprobante(nro_comprobante: str):
+    try:
+        serie, numero = nro_comprobante.split("-")
+        return serie, int(numero)
+    except Exception:
+        raise Exception(
+            "Formato de comprobante inválido. Use SERIE-NUMERO (ej: T-000001)"
+        )
+    
 def guardar_venta(
     fecha,
     cliente,
@@ -112,25 +121,19 @@ def guardar_venta(
 
     id_venta = cursor.fetchone()[0]
 
-    # Correlativo (solo si tiene formato SERIE-NUMERO)
-    if "-" in nro_comprobante:
-        try:
-            serie, numero = nro_comprobante.split("-")
-            numero = int(numero)
+    serie, numero = parsear_comprobante(nro_comprobante)
 
-            cursor.execute("""
-                INSERT INTO correlativo_comprobante
-                (tipo, serie, numero, estado, fecha, id_venta)
-                VALUES (%s,%s,%s,'EMITIDO',%s,%s)
-            """, (
-                tipo_comprobante,
-                serie,
-                numero,
-                fecha,
-                id_venta
-            ))
-        except ValueError:
-            raise Exception("Formato de comprobante inválido")
+    cursor.execute("""
+        INSERT INTO correlativo_comprobante
+        (tipo, serie, numero, estado, fecha, id_venta)
+        VALUES (%s,%s,%s,'EMITIDO',%s,%s)
+    """, (
+        tipo_comprobante,
+        serie,
+        numero,
+        fecha,
+        id_venta
+    ))
 
     # Detalle + stock
     for item in carrito:

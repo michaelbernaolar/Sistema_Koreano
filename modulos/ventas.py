@@ -81,7 +81,7 @@ def ventas_app():
                 nro_comprobante, numero_correlativo = obtener_siguiente_correlativo(tipo_comprobante.upper(), serie)
                 st.text_input("📑 N° Comprobante", value=nro_comprobante, disabled=True)
             else:
-                nro_comprobante = st.text_input("📑 N° Documento")
+                nro_comprobante = st.text_input("📑 N° Comprobante")
 
         # --- Cliente, Régimen y Método de Pago ---
         col1, col2, col3 = st.columns([5, 2, 2])
@@ -95,15 +95,14 @@ def ventas_app():
         es_varios = cliente["dni_ruc"] == "99999999"
         with col2:
             if es_varios:
-                nro_comprobante = cliente["dni_ruc"]  # 99999999
+                nro_documento = cliente["dni_ruc"]  # 99999999
                 st.text_input(
                     "📑 N° Documento",
-                    value=nro_comprobante,
+                    value=nro_documento,
                     disabled=True
                 )
             else:
-                nro_comprobante = st.text_input("📑 N° Documento")
-
+                nro_documento = st.text_input("📑 N° Documento")
         with col3:
             placa_vehiculo = None
             if es_varios:
