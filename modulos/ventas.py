@@ -460,7 +460,6 @@ def ventas_app():
     # ========================
     with tabs[1]:
         st.subheader("📋 Consultar ventas")
-        fecha_fin = fecha_fin + timedelta(days=1)
         col1, col2, col3 = st.columns(3)
         with col1:
             fecha_ini = st.date_input("Desde", datetime.today().replace(day=1))
@@ -469,6 +468,8 @@ def ventas_app():
         with col3:
             cliente_filtro = st.text_input("Cliente")
 
+        fecha_fin = fecha_fin + timedelta(days=1)
+        
         query = """
             SELECT v.id, v.fecha, c.nombre AS cliente, v.nro_comprobante, v.tipo_comprobante, v.metodo_pago, v.total
             FROM venta v
