@@ -16,6 +16,10 @@ def caja_app(usuario):
 
     if caja_abierta:
         st.success(f"✅ Caja ABIERTA (ID: {caja_abierta['id']})")
+        st.metric(
+            "🔓 Monto de apertura",
+            f"S/. {caja_abierta['monto_apertura']:,.2f}"
+        )
         st.subheader("📊 Resumen de Caja")
 
         resumen = obtener_resumen_caja(caja_abierta["id"])

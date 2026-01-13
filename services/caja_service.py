@@ -6,7 +6,7 @@ def obtener_resumen_caja(id_caja):
 
     # Ventas por método de pago
     cursor.execute("""
-        SELECT metodo_pago, SUM(total)
+        SELECT metodo_pago, COALESCE(SUM(total), 0)
         FROM venta
         WHERE id_caja = %s
           AND estado = 'EMITIDA'
@@ -15,6 +15,9 @@ def obtener_resumen_caja(id_caja):
     """, (id_caja,))
 
     por_metodo = cursor.fetchall()
+
+    # Total vendido (todos los métodos)
+    total_vendido = sum(float(total) for _, total in por_metodo)
 
     # Efectivo total y vuelto
     cursor.execute("""
@@ -33,5 +36,6 @@ def obtener_resumen_caja(id_caja):
 
     return {
         "por_metodo": por_metodo,
-        "efectivo_neto": float(efectivo_total - vuelto)
+        "efectivo_neto": float(efectivo_total - vuelto),
+        "total_vendido": float(total_vendido)
     }
