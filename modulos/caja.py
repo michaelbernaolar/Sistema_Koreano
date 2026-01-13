@@ -125,6 +125,8 @@ def caja_app(usuario):
                 "Usuario cierre",
                 "Efectivo",
                 "Yape",
+                "Plin",
+                "Transferencia",
                 "Tarjeta",
                 "Total Vendido"
             ]
@@ -132,9 +134,11 @@ def caja_app(usuario):
 
         st.dataframe(df, hide_index=True, use_container_width=True)
 
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3, col4, col5, col6 = st.columns(6)
 
         col1.metric("💵 Total Efectivo", f"S/. {df['Efectivo'].sum():,.2f}")
         col2.metric("📱 Total Yape", f"S/. {df['Yape'].sum():,.2f}")
-        col3.metric("💳 Total Tarjeta", f"S/. {df['Tarjeta'].sum():,.2f}")
-        col4.metric("🧾 Total General", f"S/. {df['Total Vendido'].sum():,.2f}")
+        col3.metric("📱 Total Plin", f"S/. {df['Plin'].sum():,.2f}")
+        col4.metric("📱 Total Transferencia", f"S/. {df['Transferencia'].sum():,.2f}")
+        col5.metric("💳 Total Tarjeta", f"S/. {df['Tarjeta'].sum():,.2f}")
+        col6.metric("🧾 Total General", f"S/. {df['Total Vendido'].sum():,.2f}")
