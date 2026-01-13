@@ -1,5 +1,6 @@
 from datetime import timedelta
 from db import get_connection
+from decimal import Decimal
 
 def obtener_resumen_caja(id_caja):
     conn = get_connection()
@@ -34,7 +35,7 @@ def obtener_resumen_caja(id_caja):
     ventas_efectivo = 0
 
     for metodo, total in ventas_por_metodo:
-        total = float(total)
+        total = Decimal(total)
         por_metodo.append((metodo, total))
         total_vendido += total
 
@@ -51,7 +52,7 @@ def obtener_resumen_caja(id_caja):
           AND tipo = 'INGRESO'
           AND metodo_pago = 'Efectivo'
     """, (id_caja,))
-    ingresos = float(cursor.fetchone()[0])
+    ingresos = Decimal(cursor.fetchone()[0])
 
     # -----------------------------
     # Egresos manuales (efectivo)
@@ -63,7 +64,7 @@ def obtener_resumen_caja(id_caja):
           AND tipo = 'EGRESO'
           AND metodo_pago = 'Efectivo'
     """, (id_caja,))
-    egresos = float(cursor.fetchone()[0])
+    egresos = Decimal(cursor.fetchone()[0])
 
     conn.close()
 
