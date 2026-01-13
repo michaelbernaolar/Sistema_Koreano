@@ -169,15 +169,17 @@ def anular_venta(venta_id, motivo, usuario):
     if reimp > 0:
         raise ValueError("No se puede anular una venta reimpresa")
 
+    fecha = obtener_fecha_lima()
+
     cursor.execute("""
         UPDATE venta
         SET
             estado = 'ANULADA',
             motivo_anulacion = %s,
-            fecha_anulacion = NOW(),
+            fecha_anulacion = %s,
             usuario_anulacion = %s
         WHERE id = %s
-    """, (motivo, usuario["nombre"], venta_id))
+    """, (motivo, fecha, usuario["nombre"], venta_id))
 
     conn.commit()
     conn.close()
@@ -186,15 +188,17 @@ def cerrar_caja(id_caja, monto, usuario):
     conn = get_connection()
     cursor = conn.cursor()
 
+    fecha = obtener_fecha_lima()
+
     cursor.execute("""
         UPDATE caja
         SET
-            fecha_cierre = NOW(),
+            fecha_cierre = %s,
             monto_cierre = %s,
             usuario_cierre = %s,
             estado = 'CERRADA'
         WHERE id = %s
-    """, (monto, usuario["username"], id_caja))
+    """, (fecha, monto, usuario["username"], id_caja))
 
     conn.commit()
     conn.close()
@@ -203,11 +207,13 @@ def abrir_caja(monto, usuario):
     conn = get_connection()
     cursor = conn.cursor()
 
+    fecha = obtener_fecha_lima()
+
     cursor.execute("""
         INSERT INTO caja (fecha_apertura, monto_apertura, usuario_apertura, estado)
-        VALUES (NOW(), %s, %s, 'ABIERTA')
+        VALUES (%s, %s, %s, 'ABIERTA')
         RETURNING id
-    """, (monto, usuario["username"]))
+    """, (fecha, monto, usuario["username"]))
 
     caja_id = cursor.fetchone()[0]
     conn.commit()
