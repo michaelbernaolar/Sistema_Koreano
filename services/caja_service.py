@@ -47,24 +47,42 @@ def obtener_resumen_caja(id_caja):
     }
 
 
-def obtener_historial_cajas():
+def obtener_historial_cajas(fecha_ini, fecha_fin):
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
         SELECT
-            id,
-            fecha_apertura,
-            fecha_cierre,
-            monto_apertura,
-            monto_cierre,
-            usuario_apertura,
-            usuario_cierre,
-            (monto_cierre - monto_apertura) AS diferencia
-        FROM caja
-        WHERE fecha_cierre IS NOT NULL
-        ORDER BY fecha_cierre DESC
-    """)
+            c.id,
+            c.fecha_apertura,
+            c.fecha_cierre,
+            c.monto_apertura,
+            c.monto_cierre,
+            c.usuario_apertura,
+            c.usuario_cierre,
+
+            COALESCE(SUM(CASE WHEN v.metodo_pago = 'Efectivo' THEN v.total ELSE 0 END), 0) AS efectivo,
+            COALESCE(SUM(CASE WHEN v.metodo_pago = 'Yape' THEN v.total ELSE 0 END), 0) AS yape,
+            COALESCE(SUM(CASE WHEN v.metodo_pago = 'Tarjeta' THEN v.total ELSE 0 END), 0) AS tarjeta,
+
+            COALESCE(SUM(v.total), 0) AS total_vendido
+
+        FROM caja c
+        LEFT JOIN venta v ON v.id_caja = c.id
+            AND v.estado = 'EMITIDA'
+
+        WHERE c.fecha_cierre IS NOT NULL
+          AND DATE(c.fecha_apertura) BETWEEN %s AND %s
+
+        GROUP BY
+            c.id,
+            c.fecha_apertura,
+            c.fecha_cierre,
+            c.monto_apertura,
+            c.monto_cierre
+
+        ORDER BY c.fecha_cierre DESC
+    """, (fecha_ini, fecha_fin))
 
     rows = cursor.fetchall()
     conn.close()

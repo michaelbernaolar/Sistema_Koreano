@@ -99,11 +99,19 @@ def caja_app(usuario):
     # TAB 2 – HISTORIAL
     # =========================
     with tab_historial:
-        historial = obtener_historial_cajas()
+        st.subheader("📚 Historial de cajas")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            fecha_ini = st.date_input("Desde")
+        with col2:
+            fecha_fin = st.date_input("Hasta")
+
+        historial = obtener_historial_cajas(fecha_ini, fecha_fin)
 
         if not historial:
-            st.info("No hay cajas cerradas registradas")
-            return
+            st.info("No hay registros en el rango seleccionado")
+            st.stop()
 
         df = pd.DataFrame(
             historial,
@@ -115,13 +123,18 @@ def caja_app(usuario):
                 "Monto cierre",
                 "Usuario apertura",
                 "Usuario cierre",
-                "Diferencia"
+                "Efectivo",
+                "Yape",
+                "Tarjeta",
+                "Total Vendido"
             ]
         )
 
-        st.dataframe(df, hide_index=True)
+        st.dataframe(df, hide_index=True, use_container_width=True)
 
-        st.metric(
-            "📊 Total diferencias",
-            f"S/. {df['Diferencia'].sum():,.2f}"
-        )
+        col1, col2, col3, col4 = st.columns(4)
+
+        col1.metric("💵 Total Efectivo", f"S/. {df['Efectivo'].sum():,.2f}")
+        col2.metric("📱 Total Yape", f"S/. {df['Yape'].sum():,.2f}")
+        col3.metric("💳 Total Tarjeta", f"S/. {df['Tarjeta'].sum():,.2f}")
+        col4.metric("🧾 Total General", f"S/. {df['Total Vendido'].sum():,.2f}")
