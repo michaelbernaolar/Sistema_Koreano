@@ -63,15 +63,19 @@ def ventas_app():
             )
         with col2:
             if "Nuevo RUS" in regimen:
-                if tipo_comprobante == "Ticket":
-                    serie = "T"
-                elif tipo_comprobante == "Boleta":
-                    serie = "B"
-                else:
-                    serie = "F"
-                st.text_input("📄 Tipo de comprobante", value=tipo_comprobante, disabled=True)
+                tipo_comprobante = "Ticket"   # ← DEFINES PRIMERO
+                serie = "T"
+                st.text_input(
+                    "📄 Tipo de comprobante",
+                    value=tipo_comprobante,
+                    disabled=True
+                )
             else:
-                tipo_comprobante = st.selectbox("📄 Tipo de comprobante",["Boleta", "Factura"])
+                tipo_comprobante = st.selectbox(
+                    "📄 Tipo de comprobante",
+                    ["Boleta", "Factura"]
+                )
+                serie = "B" if tipo_comprobante == "Boleta" else "F"
         with col3:
             if "Nuevo RUS" in regimen:
                 nro_comprobante, numero_correlativo = obtener_siguiente_correlativo(tipo_comprobante.upper(), serie)
@@ -369,8 +373,6 @@ def ventas_app():
                 ):
                     fecha = obtener_fecha_lima()
 
-                    if tipo_comprobante == "Ticket":
-                        nro_comprobante, numero_correlativo = obtener_siguiente_correlativo(tipo_comprobante.upper(), serie)
                     if "caja_abierta_id" not in st.session_state:
                         st.error("❌ No hay caja abierta")
                         st.stop()
