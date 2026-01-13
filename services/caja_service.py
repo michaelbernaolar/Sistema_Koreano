@@ -5,6 +5,9 @@ def obtener_resumen_caja(id_caja):
     conn = get_connection()
     cursor = conn.cursor()
 
+    # -----------------------------
+    # Monto de apertura
+    # -----------------------------
     cursor.execute("""
         SELECT monto_apertura
         FROM caja
@@ -12,6 +15,35 @@ def obtener_resumen_caja(id_caja):
     """, (id_caja,))
     monto_apertura = cursor.fetchone()[0]
 
+    # -----------------------------
+    # Ventas por método de pago
+    # -----------------------------
+    cursor.execute("""
+        SELECT
+            metodo_pago,
+            COALESCE(SUM(total), 0)
+        FROM venta
+        WHERE id_caja = %s
+          AND estado = 'EMITIDA'
+        GROUP BY metodo_pago
+    """, (id_caja,))
+    ventas_por_metodo = cursor.fetchall()
+
+    por_metodo = []
+    total_vendido = 0
+    ventas_efectivo = 0
+
+    for metodo, total in ventas_por_metodo:
+        total = float(total)
+        por_metodo.append((metodo, total))
+        total_vendido += total
+
+        if metodo == "Efectivo":
+            ventas_efectivo = total
+
+    # -----------------------------
+    # Ingresos manuales (efectivo)
+    # -----------------------------
     cursor.execute("""
         SELECT COALESCE(SUM(monto), 0)
         FROM caja_movimiento
@@ -19,8 +51,11 @@ def obtener_resumen_caja(id_caja):
           AND tipo = 'INGRESO'
           AND metodo_pago = 'Efectivo'
     """, (id_caja,))
-    ingresos = cursor.fetchone()[0]
+    ingresos = float(cursor.fetchone()[0])
 
+    # -----------------------------
+    # Egresos manuales (efectivo)
+    # -----------------------------
     cursor.execute("""
         SELECT COALESCE(SUM(monto), 0)
         FROM caja_movimiento
@@ -28,17 +63,25 @@ def obtener_resumen_caja(id_caja):
           AND tipo = 'EGRESO'
           AND metodo_pago = 'Efectivo'
     """, (id_caja,))
-    egresos = cursor.fetchone()[0]
+    egresos = float(cursor.fetchone()[0])
 
     conn.close()
 
-    efectivo_teorico = monto_apertura + ingresos - egresos
+    # -----------------------------
+    # Cálculos finales
+    # -----------------------------
+    efectivo_neto = monto_apertura + ventas_efectivo + ingresos - egresos
 
     return {
-        "apertura": monto_apertura,
-        "ingresos": ingresos,
-        "egresos": egresos,
-        "efectivo_teorico": efectivo_teorico
+        "por_metodo": por_metodo,
+        "total_vendido": total_vendido,
+        "efectivo_neto": efectivo_neto,
+        "detalle_efectivo": {
+            "apertura": monto_apertura,
+            "ventas_efectivo": ventas_efectivo,
+            "ingresos": ingresos,
+            "egresos": egresos
+        }
     }
 
 def obtener_historial_cajas(fecha_ini, fecha_fin):
