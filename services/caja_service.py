@@ -31,8 +31,8 @@ def obtener_resumen_caja(id_caja):
     ventas_por_metodo = cursor.fetchall()
 
     por_metodo = []
-    total_vendido = 0
-    ventas_efectivo = 0
+    total_vendido = Decimal("0")
+    ventas_efectivo = Decimal("0")
 
     for metodo, total in ventas_por_metodo:
         total = Decimal(total)
