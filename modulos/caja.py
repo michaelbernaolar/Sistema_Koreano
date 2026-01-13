@@ -1,6 +1,7 @@
 # modulos/caja.py
 import streamlit as st
 import pandas as pd
+from decimal import Decimal
 from services.venta_service import (
     abrir_caja, cerrar_caja,
     obtener_caja_abierta
@@ -58,6 +59,7 @@ def caja_app(usuario):
                 step=1.0,
                 format="%.2f"
             )
+            monto_cierre = Decimal(str(monto_cierre))
 
             diferencia = monto_cierre - resumen["efectivo_neto"]
 
@@ -65,7 +67,7 @@ def caja_app(usuario):
                 if diferencia == 0:
                     st.success("✅ Caja cuadrada")
                 elif diferencia > 0:
-                    st.warning(f"⚠️ Sobrante: S/. {diferencia:,.2f}")
+                    st.warning(f"⚠️ Sobrante: S/. {float(diferencia):,.2f}")
                 else:
                     st.error(f"❌ Faltante: S/. {abs(diferencia):,.2f}")
 
