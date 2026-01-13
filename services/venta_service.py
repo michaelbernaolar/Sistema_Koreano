@@ -91,6 +91,18 @@ def guardar_venta(
 
     id_venta = cursor.fetchone()[0]
 
+    cursor.execute("""
+        INSERT INTO correlativo_comprobante
+        (tipo, serie, numero, estado, fecha, id_venta)
+        VALUES (%s, %s, %s, 'EMITIDO', %s, %s)
+    """, (
+        tipo_comprobante,
+        nro_comprobante.split("-")[0],
+        int(nro_comprobante.split("-")[1]),
+        fecha,
+        id_venta
+    ))
+
     for item in carrito:
         if "Nuevo RUS" in regimen:
             precio_unit = item["Precio Unitario"]
@@ -160,6 +172,7 @@ def anular_venta(venta_id, motivo, usuario):
         conn.close()
         raise ValueError("La venta ya está anulada")
 
+    # Validar reimpresiones
     cursor.execute(
         "SELECT reimpresiones FROM venta WHERE id = %s",
         (venta_id,)
@@ -167,10 +180,12 @@ def anular_venta(venta_id, motivo, usuario):
     reimp = cursor.fetchone()[0]
 
     if reimp > 0:
+        conn.close()
         raise ValueError("No se puede anular una venta reimpresa")
 
     fecha = obtener_fecha_lima()
 
+    # 1️⃣ ANULAR LA VENTA (YA LO TENÍAS)
     cursor.execute("""
         UPDATE venta
         SET
@@ -180,6 +195,20 @@ def anular_venta(venta_id, motivo, usuario):
             usuario_anulacion = %s
         WHERE id = %s
     """, (motivo, fecha, usuario["nombre"], venta_id))
+
+    # 2️⃣ MARCAR CORRELATIVO COMO ANULADO (NUEVO)
+    cursor.execute("""
+        UPDATE correlativo_comprobante
+        SET estado = 'ANULADO'
+        WHERE id_venta = %s
+    """, (venta_id,))
+
+    # 3️⃣ REGISTRAR EVENTO DE ANULACIÓN (NUEVO)
+    cursor.execute("""
+        INSERT INTO venta_evento
+        (id_venta, tipo, fecha, usuario, observacion)
+        VALUES (%s, 'ANULACION', %s, %s, %s)
+    """, (venta_id, fecha, usuario["nombre"], motivo))
 
     conn.commit()
     conn.close()

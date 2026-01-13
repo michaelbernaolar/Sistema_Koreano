@@ -8,7 +8,7 @@ import streamlit as st
 
 config = obtener_configuracion()
 
-def registrar_reimpresion(venta_id):
+def registrar_reimpresion(venta_id, usuario):
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -17,6 +17,12 @@ def registrar_reimpresion(venta_id):
         SET reimpresiones = reimpresiones + 1
         WHERE id = %s
     """, (venta_id,))
+
+    cursor.execute("""
+        INSERT INTO venta_evento
+        (id_venta, tipo, fecha, usuario)
+        VALUES (%s, 'REIMPRESION', NOW(), %s)
+    """, (venta_id, usuario["nombre"]))
 
     conn.commit()
     conn.close()
@@ -39,6 +45,24 @@ def wrap_text(c, text, max_width, font="Courier", size=9):
         lines.append(current)
 
     return lines
+
+def obtener_siguiente_correlativo(tipo="TICKET", serie="T"):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT COALESCE(MAX(numero), 0)
+        FROM correlativo_comprobante
+        WHERE tipo = %s AND serie = %s
+    """, (tipo, serie))
+
+    ultimo = cursor.fetchone()[0]
+    conn.close()
+
+    numero = ultimo + 1
+    nro_formateado = f"{serie}-{numero:06d}"
+
+    return nro_formateado, numero
 
 def generar_ticket_pdf(venta_id, ruta):
     venta, detalle = obtener_venta_completa(venta_id)

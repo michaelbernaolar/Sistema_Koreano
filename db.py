@@ -256,6 +256,31 @@ def init_db():
     )
     """)
 
+    # Tabla de correlativo_comprobante
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS correlativo_comprobante (
+        id SERIAL PRIMARY KEY,
+        tipo TEXT NOT NULL,              -- TICKET, BOLETA, FACTURA
+        serie TEXT NOT NULL,
+        numero INTEGER NOT NULL,
+        estado TEXT NOT NULL,            -- EMITIDO / ANULADO
+        fecha TIMESTAMP NOT NULL,
+        id_venta INTEGER,
+        UNIQUE (tipo, serie, numero)
+    )
+    """)
+
+    # Tabla de venta_evento
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS venta_evento (
+        id SERIAL PRIMARY KEY,
+        id_venta INTEGER,
+        tipo TEXT,          -- REIMPRESION / ANULACION
+        fecha TIMESTAMP,
+        usuario TEXT,
+        observacion TEXT
+    )
+    """)
 
     conn.commit()
     conn.close()
@@ -708,28 +733,6 @@ def obtener_detalle_venta(id_venta):
         }
         for r in rows
     ]
-
-def obtener_siguiente_correlativo_ticket():
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT nro_comprobante
-        FROM venta
-        WHERE tipo_comprobante = 'Ticket'
-        ORDER BY id DESC
-        LIMIT 1
-    """)
-
-    row = cursor.fetchone()
-    conn.close()
-
-    if not row or not row[0]:
-        return "T-000001"
-
-    ultimo = row[0].replace("T-", "")
-    nuevo = int(ultimo) + 1
-    return f"T-{nuevo:06d}"
 
 def obtener_fecha_lima(fecha=None):
     lima = pytz.timezone("America/Lima")

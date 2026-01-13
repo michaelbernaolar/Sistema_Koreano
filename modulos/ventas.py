@@ -5,8 +5,7 @@ from datetime import datetime
 
 from db import (
     query_df, select_cliente, obtener_cliente_por_id,
-    obtener_configuracion, obtener_siguiente_correlativo_ticket,
-    obtener_fecha_lima
+    obtener_configuracion, obtener_fecha_lima
 )
 
 from services.producto_service import (
@@ -18,7 +17,7 @@ from services.venta_service import (
     inicializar_estado_venta, resetear_venta, precio_valido
 )
 from services.comprobante_service import (
-    generar_ticket_html,
+    generar_ticket_html, obtener_siguiente_correlativo,
     generar_ticket_pdf, registrar_reimpresion
 )
 
@@ -64,13 +63,18 @@ def ventas_app():
             )
         with col2:
             if "Nuevo RUS" in regimen:
-                tipo_comprobante = "Ticket"
+                if tipo_comprobante == "Ticket":
+                    serie = "T"
+                elif tipo_comprobante == "Boleta":
+                    serie = "B"
+                else:
+                    serie = "F"
                 st.text_input("📄 Tipo de comprobante", value=tipo_comprobante, disabled=True)
             else:
                 tipo_comprobante = st.selectbox("📄 Tipo de comprobante",["Boleta", "Factura"])
         with col3:
             if "Nuevo RUS" in regimen:
-                nro_comprobante = obtener_siguiente_correlativo_ticket()
+                nro_comprobante, numero_correlativo = obtener_siguiente_correlativo(tipo_comprobante.upper(), serie)
                 st.text_input("📑 N° Comprobante", value=nro_comprobante, disabled=True)
             else:
                 nro_comprobante = st.text_input("📑 N° Documento")
@@ -366,8 +370,7 @@ def ventas_app():
                     fecha = obtener_fecha_lima()
 
                     if tipo_comprobante == "Ticket":
-                        nro_comprobante = obtener_siguiente_correlativo_ticket()
-
+                        nro_comprobante, numero_correlativo = obtener_siguiente_correlativo(tipo_comprobante.upper(), serie)
                     if "caja_abierta_id" not in st.session_state:
                         st.error("❌ No hay caja abierta")
                         st.stop()
