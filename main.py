@@ -91,7 +91,7 @@ if not usuario:
             submitted = st.form_submit_button(
                 "Ingresar",
                 type="primary",
-                use_container_width=True
+                width='stretch'
             )
 
             if submitted:
@@ -251,7 +251,7 @@ elif st.session_state.modulo == "👤 Mi cuenta":
 # -------------------------
 # BOTÓN CERRAR SESIÓN (ABAJO)
 # -------------------------
-if st.sidebar.button("Cerrar sesión", use_container_width=True):
+if st.sidebar.button("Cerrar sesión", width='stretch'):
     st.session_state.pop("caja_abierta_id", None)
     cerrar_sesion(usuario["id"], cookies)
     st.rerun()

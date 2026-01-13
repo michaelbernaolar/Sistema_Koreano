@@ -132,7 +132,7 @@ def caja_app(usuario):
             ]
         )
 
-        st.dataframe(df, hide_index=True, use_container_width=True)
+        st.dataframe(df, hide_index=True, width='stretch')
 
         col1, col2, col3, col4, col5, col6 = st.columns(6)
 
