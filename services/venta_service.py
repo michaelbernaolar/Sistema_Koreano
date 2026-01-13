@@ -112,19 +112,25 @@ def guardar_venta(
 
     id_venta = cursor.fetchone()[0]
 
-    # Correlativo
-    serie, numero = nro_comprobante.split("-")
-    cursor.execute("""
-        INSERT INTO correlativo_comprobante
-        (tipo, serie, numero, estado, fecha, id_venta)
-        VALUES (%s,%s,%s,'EMITIDO',%s,%s)
-    """, (
-        tipo_comprobante,
-        serie,
-        int(numero),
-        fecha,
-        id_venta
-    ))
+    # Correlativo (solo si tiene formato SERIE-NUMERO)
+    if "-" in nro_comprobante:
+        try:
+            serie, numero = nro_comprobante.split("-")
+            numero = int(numero)
+
+            cursor.execute("""
+                INSERT INTO correlativo_comprobante
+                (tipo, serie, numero, estado, fecha, id_venta)
+                VALUES (%s,%s,%s,'EMITIDO',%s,%s)
+            """, (
+                tipo_comprobante,
+                serie,
+                numero,
+                fecha,
+                id_venta
+            ))
+        except ValueError:
+            raise Exception("Formato de comprobante inválido")
 
     # Detalle + stock
     for item in carrito:
