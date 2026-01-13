@@ -1,56 +1,52 @@
+from datetime import timedelta
 from db import get_connection
 
 def obtener_resumen_caja(id_caja):
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Monto apertura
     cursor.execute("""
         SELECT monto_apertura
         FROM caja
         WHERE id = %s
     """, (id_caja,))
-    monto_apertura = float(cursor.fetchone()[0])
+    monto_apertura = cursor.fetchone()[0]
 
-    # Ventas por método (solo informativo)
     cursor.execute("""
-        SELECT metodo_pago, COALESCE(SUM(total), 0)
-        FROM venta
+        SELECT COALESCE(SUM(monto), 0)
+        FROM caja_movimiento
         WHERE id_caja = %s
-          AND estado = 'EMITIDA'
-        GROUP BY metodo_pago
-    """, (id_caja,))
-    por_metodo = cursor.fetchall()
-
-    total_vendido = sum(float(total) for _, total in por_metodo)
-
-    # 💵 EFECTIVO CORRECTO
-    cursor.execute("""
-        SELECT COALESCE(SUM(pago_cliente - vuelto), 0)
-        FROM venta
-        WHERE id_caja = %s
+          AND tipo = 'INGRESO'
           AND metodo_pago = 'Efectivo'
-          AND estado = 'EMITIDA'
     """, (id_caja,))
+    ingresos = cursor.fetchone()[0]
 
-    efectivo_ventas = float(cursor.fetchone()[0])
-
-    efectivo_esperado = monto_apertura + efectivo_ventas
+    cursor.execute("""
+        SELECT COALESCE(SUM(monto), 0)
+        FROM caja_movimiento
+        WHERE id_caja = %s
+          AND tipo = 'EGRESO'
+          AND metodo_pago = 'Efectivo'
+    """, (id_caja,))
+    egresos = cursor.fetchone()[0]
 
     conn.close()
 
-    return {
-        "monto_apertura": monto_apertura,
-        "por_metodo": por_metodo,
-        "total_vendido": total_vendido,
-        "efectivo_neto": efectivo_esperado
-    }
+    efectivo_teorico = monto_apertura + ingresos - egresos
 
+    return {
+        "apertura": monto_apertura,
+        "ingresos": ingresos,
+        "egresos": egresos,
+        "efectivo_teorico": efectivo_teorico
+    }
 
 def obtener_historial_cajas(fecha_ini, fecha_fin):
     conn = get_connection()
     cursor = conn.cursor()
 
+    fecha_fin = fecha_fin + timedelta(days=1)
+    
     cursor.execute("""
         SELECT
             c.id,
@@ -74,7 +70,8 @@ def obtener_historial_cajas(fecha_ini, fecha_fin):
             AND v.estado = 'EMITIDA'
 
         WHERE c.fecha_cierre IS NOT NULL
-          AND DATE(c.fecha_apertura) BETWEEN %s AND %s
+            AND c.fecha_apertura >= %s
+            AND c.fecha_apertura < %s
 
         GROUP BY
             c.id,

@@ -1,7 +1,7 @@
 # modulos/ventas.py
 import pandas as pd
 import streamlit as st
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from db import (
     query_df, select_cliente, obtener_cliente_por_id,
@@ -460,6 +460,7 @@ def ventas_app():
     # ========================
     with tabs[1]:
         st.subheader("📋 Consultar ventas")
+        fecha_fin = fecha_fin + timedelta(days=1)
         col1, col2, col3 = st.columns(3)
         with col1:
             fecha_ini = st.date_input("Desde", datetime.today().replace(day=1))
@@ -473,7 +474,8 @@ def ventas_app():
             FROM venta v
             LEFT JOIN cliente c ON v.id_cliente = c.id
             WHERE v.estado = 'EMITIDA'
-            AND v.fecha BETWEEN %s AND %s
+            AND v.fecha >= %s
+            AND v.fecha < %s
         """
         params = [fecha_ini, fecha_fin]
         if cliente_filtro:

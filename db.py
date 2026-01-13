@@ -282,6 +282,21 @@ def init_db():
     )
     """)
 
+    # Tabla de caja_movimiento
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS caja_movimiento (
+        id SERIAL PRIMARY KEY,
+        id_caja INTEGER NOT NULL,
+        fecha TIMESTAMP NOT NULL,
+        tipo TEXT CHECK (tipo IN ('INGRESO','EGRESO')),
+        metodo_pago TEXT,
+        monto NUMERIC(14,2),
+        referencia TEXT,
+        id_venta INTEGER,
+        usuario TEXT
+    )
+    """)
+
     conn.commit()
     conn.close()
 

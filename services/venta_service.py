@@ -25,6 +25,8 @@ def calcular_totales(valor_venta: float, regimen: str):
             "total": total
         }
 
+from decimal import Decimal
+
 def guardar_venta(
     fecha,
     cliente,
@@ -36,37 +38,31 @@ def guardar_venta(
     pago_cliente,
     vuelto,
     carrito,
-    usuario, 
+    usuario,
     id_caja
 ):
-    fecha = obtener_fecha_lima(fecha)
+    fecha = obtener_fecha_lima()
 
     conn = get_connection()
     cursor = conn.cursor()
 
-    valor_venta = f(sum(i["Subtotal"] for i in carrito))
-    totales = calcular_totales(valor_venta, regimen)
-
-    totales = {
-        "valor_venta": totales["valor_venta"],
-        "op_gravada": totales["op_gravada"],
-        "igv": totales["igv"],
-        "total": totales["total"],
-    }
+    # Calcular totales correctamente
+    valor_venta = Decimal(sum(Decimal(str(i["Subtotal"])) for i in carrito))
+    tot = calcular_totales(valor_venta, regimen)
 
     cursor.execute(
         "SELECT estado FROM caja WHERE id = %s",
         (id_caja,)
     )
     estado = cursor.fetchone()
-
     if not estado or estado[0] != "ABIERTA":
         raise Exception("No hay caja abierta")
 
-
+    # Insertar venta
     cursor.execute("""
-        INSERT INTO public.venta (
-            fecha, id_cliente, id_usuario, suma_total, op_gravada, igv, total,
+        INSERT INTO venta (
+            fecha, id_cliente, id_usuario,
+            suma_total, op_gravada, igv, total,
             tipo_comprobante, metodo_pago, nro_comprobante,
             placa_vehiculo, pago_cliente, vuelto, id_caja, estado
         )
@@ -74,63 +70,84 @@ def guardar_venta(
         RETURNING id
     """, (
         fecha,
-        int(cliente["id"]), 
+        int(cliente["id"]),
         int(usuario["id"]),
-        f(totales["valor_venta"]),
-        f(totales["op_gravada"]),
-        f(totales["igv"]),
-        f(totales["total"]),
+        tot["valor_venta"],
+        tot["op_gravada"],
+        tot["igv"],
+        tot["total"],
         tipo_comprobante,
         metodo_pago,
         nro_comprobante,
         placa_vehiculo,
-        f(pago_cliente) if metodo_pago == "Efectivo" else None,
-        f(vuelto) if metodo_pago == "Efectivo" else None,
-        int(id_caja)
+        pago_cliente if metodo_pago == "Efectivo" else None,
+        vuelto if metodo_pago == "Efectivo" else None,
+        id_caja
     ))
 
     id_venta = cursor.fetchone()[0]
 
+    # Correlativo
+    serie, numero = nro_comprobante.split("-")
     cursor.execute("""
         INSERT INTO correlativo_comprobante
         (tipo, serie, numero, estado, fecha, id_venta)
-        VALUES (%s, %s, %s, 'EMITIDO', %s, %s)
+        VALUES (%s,%s,%s,'EMITIDO',%s,%s)
     """, (
         tipo_comprobante,
-        nro_comprobante.split("-")[0],
-        int(nro_comprobante.split("-")[1]),
+        serie,
+        int(numero),
         fecha,
         id_venta
     ))
 
+    # Detalle + stock
     for item in carrito:
-        if "Nuevo RUS" in regimen:
-            precio_unit = item["Precio Unitario"]
-            subtotal = item["Subtotal"]
-        else:
-            precio_unit = round(item["Precio Unitario"] / 1.18, 2)
-            subtotal = round(precio_unit * item["Cantidad"], 2)
+        cantidad = Decimal(str(item["Cantidad"]))
+        precio_unit = Decimal(str(item["Precio Unitario"]))
+
+        if "Nuevo RUS" not in regimen:
+            precio_unit = (precio_unit / Decimal("1.18")).quantize(Decimal("0.01"))
+
+        subtotal = (precio_unit * cantidad).quantize(Decimal("0.01"))
 
         cursor.execute("""
-            INSERT INTO public.venta_detalle
+            INSERT INTO venta_detalle
             (id_venta, id_producto, cantidad, precio_unitario, sub_total, precio_final)
             VALUES (%s,%s,%s,%s,%s,%s)
         """, (
-            int(id_venta),
-            item["ID Producto"],  
-            f(item["Cantidad"]),
-            f(precio_unit),
-            f(subtotal),
-            f(subtotal)
+            id_venta,
+            item["ID Producto"],
+            cantidad,
+            precio_unit,
+            subtotal,
+            subtotal
         ))
 
         registrar_salida_por_venta(
             cursor,
-            item["ID Producto"], 
-            float(item["Cantidad"]),
+            item["ID Producto"],
+            cantidad,
             fecha,
-            f"Venta {cliente['nombre']} - {nro_comprobante}"
+            f"Venta {nro_comprobante}"
         )
+
+    # Caja: INGRESO
+    if metodo_pago == "Efectivo":
+        cursor.execute("""
+            INSERT INTO caja_movimiento (
+                id_caja, fecha, tipo, metodo_pago,
+                monto, referencia, id_venta, usuario
+            )
+            VALUES (%s,%s,'INGRESO','Efectivo',%s,%s,%s,%s)
+        """, (
+            id_caja,
+            fecha,
+            tot["total"],
+            f"Venta {nro_comprobante}",
+            id_venta,
+            usuario["nombre"]
+        ))
 
     conn.commit()
     conn.close()
@@ -157,58 +174,101 @@ def anular_venta(venta_id, motivo, usuario):
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Validar que no esté anulada
-    cursor.execute(
-        "SELECT estado FROM venta WHERE id = %s",
-        (venta_id,)
-    )
-    estado = cursor.fetchone()
+    cursor.execute("""
+        SELECT estado, reimpresiones, total, metodo_pago, id_caja, nro_comprobante
+        FROM venta
+        WHERE id = %s
+    """, (venta_id,))
+    row = cursor.fetchone()
 
-    if not estado:
-        conn.close()
+    if not row:
         raise ValueError("Venta no encontrada")
 
-    if estado[0] == "ANULADA":
-        conn.close()
+    estado, reimp, total, metodo_pago, id_caja, nro = row
+
+    if estado == "ANULADA":
         raise ValueError("La venta ya está anulada")
 
-    # Validar reimpresiones
-    cursor.execute(
-        "SELECT reimpresiones FROM venta WHERE id = %s",
-        (venta_id,)
-    )
-    reimp = cursor.fetchone()[0]
-
     if reimp > 0:
-        conn.close()
         raise ValueError("No se puede anular una venta reimpresa")
 
     fecha = obtener_fecha_lima()
 
-    # 1️⃣ ANULAR LA VENTA (YA LO TENÍAS)
+    # Anular venta
     cursor.execute("""
         UPDATE venta
-        SET
-            estado = 'ANULADA',
-            motivo_anulacion = %s,
-            fecha_anulacion = %s,
-            usuario_anulacion = %s
-        WHERE id = %s
+        SET estado='ANULADA',
+            motivo_anulacion=%s,
+            fecha_anulacion=%s,
+            usuario_anulacion=%s
+        WHERE id=%s
     """, (motivo, fecha, usuario["nombre"], venta_id))
 
-    # 2️⃣ MARCAR CORRELATIVO COMO ANULADO (NUEVO)
+    # Detalles
     cursor.execute("""
-        UPDATE correlativo_comprobante
-        SET estado = 'ANULADO'
+        SELECT id_producto, cantidad
+        FROM venta_detalle
         WHERE id_venta = %s
     """, (venta_id,))
+    detalles = cursor.fetchall()
 
-    # 3️⃣ REGISTRAR EVENTO DE ANULACIÓN (NUEVO)
+    for id_producto, cantidad in detalles:
+        # devolver stock
+        cursor.execute("""
+            UPDATE producto
+            SET stock_actual = stock_actual + %s
+            WHERE id = %s
+        """, (cantidad, id_producto))
+
+        # registrar kardex
+        cursor.execute("""
+            SELECT costo_promedio
+            FROM producto
+            WHERE id = %s
+        """, (id_producto,))
+        costo = cursor.fetchone()[0]
+
+        cursor.execute("""
+            INSERT INTO movimientos
+            (id_producto, tipo, cantidad, fecha, motivo, referencia, costo_unitario, valor_total)
+            VALUES (%s,'entrada',%s,%s,'Anulación de venta',%s,%s,%s)
+        """, (
+            id_producto,
+            cantidad,
+            fecha,
+            f"Venta {nro}",
+            costo,
+            cantidad * costo
+        ))
+
+    # Correlativo
+    cursor.execute("""
+        UPDATE correlativo_comprobante
+        SET estado='ANULADO'
+        WHERE id_venta=%s
+    """, (venta_id,))
+
+    # Evento
     cursor.execute("""
         INSERT INTO venta_evento
         (id_venta, tipo, fecha, usuario, observacion)
-        VALUES (%s, 'ANULACION', %s, %s, %s)
+        VALUES (%s,'ANULACION',%s,%s,%s)
     """, (venta_id, fecha, usuario["nombre"], motivo))
+
+    # Caja: EGRESO
+    if metodo_pago == "Efectivo":
+        cursor.execute("""
+            INSERT INTO caja_movimiento
+            (id_caja, fecha, tipo, metodo_pago, monto, referencia, id_venta, usuario)
+            VALUES (%s,%s,'EGRESO','Efectivo',%s,%s,%s,%s)
+        """, (
+            id_caja,
+            fecha,
+            total,
+            f"Anulación {nro}",
+            venta_id,
+            usuario["nombre"]
+        ))
 
     conn.commit()
     conn.close()
