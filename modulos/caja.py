@@ -3,10 +3,12 @@ import streamlit as st
 import pandas as pd
 from services.venta_service import (
     abrir_caja, cerrar_caja,
-    obtener_caja_abierta, obtener_historial_cajas
+    obtener_caja_abierta
 )
 
-from services.caja_service import obtener_resumen_caja
+from services.caja_service import (
+    obtener_resumen_caja, obtener_historial_cajas
+)
 
 
 def caja_app(usuario):
