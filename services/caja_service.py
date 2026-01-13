@@ -63,8 +63,8 @@ def obtener_historial_cajas(fecha_ini, fecha_fin):
 
             COALESCE(SUM(CASE WHEN v.metodo_pago = 'Efectivo' THEN v.total ELSE 0 END), 0) AS efectivo,
             COALESCE(SUM(CASE WHEN v.metodo_pago = 'Yape' THEN v.total ELSE 0 END), 0) AS yape,
-            COALESCE(SUM(CASE WHEN v.metodo_pago = 'Tarjeta' THEN v.total ELSE 0 END), 0) AS plin,
-            COALESCE(SUM(CASE WHEN v.metodo_pago = 'Tarjeta' THEN v.total ELSE 0 END), 0) AS transferencia,
+            COALESCE(SUM(CASE WHEN v.metodo_pago = 'Plina' THEN v.total ELSE 0 END), 0) AS plin,
+            COALESCE(SUM(CASE WHEN v.metodo_pago = 'Transferencia' THEN v.total ELSE 0 END), 0) AS transferencia,
             COALESCE(SUM(CASE WHEN v.metodo_pago = 'Tarjeta' THEN v.total ELSE 0 END), 0) AS tarjeta,
 
             COALESCE(SUM(v.total), 0) AS total_vendido
