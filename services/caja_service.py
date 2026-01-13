@@ -45,3 +45,28 @@ def obtener_resumen_caja(id_caja):
         "total_vendido": total_vendido,
         "efectivo_neto": efectivo_esperado
     }
+
+
+def obtener_historial_cajas():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            id,
+            fecha_apertura,
+            fecha_cierre,
+            monto_apertura,
+            monto_cierre,
+            usuario_apertura,
+            usuario_cierre,
+            (monto_cierre - monto_apertura) AS diferencia
+        FROM caja
+        WHERE fecha_cierre IS NOT NULL
+        ORDER BY fecha_cierre DESC
+    """)
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    return rows
