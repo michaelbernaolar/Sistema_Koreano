@@ -1,5 +1,6 @@
 # venta_service.py
 from datetime import datetime, date
+from decimal import Decimal
 from db import get_connection, registrar_salida_por_venta, obtener_fecha_lima
 
 def f(value):
@@ -24,9 +25,7 @@ def calcular_totales(valor_venta: float, regimen: str):
             "igv": igv,
             "total": total
         }
-
-from decimal import Decimal
-
+    
 def guardar_venta(
     fecha,
     cliente,
@@ -46,9 +45,22 @@ def guardar_venta(
     conn = get_connection()
     cursor = conn.cursor()
 
+    def to_decimal(value):
+        if value is None:
+            return None
+        return Decimal(str(value))
+
     # Calcular totales correctamente
-    valor_venta = Decimal(sum(Decimal(str(i["Subtotal"])) for i in carrito))
+    valor_venta = sum(Decimal(str(i["Subtotal"])) for i in carrito)
     tot = calcular_totales(valor_venta, regimen)
+
+    # 🔒 Normalizar totales (EVITA np.float64)
+    tot = {
+        "valor_venta": to_decimal(tot["valor_venta"]),
+        "op_gravada": to_decimal(tot["op_gravada"]),
+        "igv": to_decimal(tot["igv"]),
+        "total": to_decimal(tot["total"]),
+    }
 
     cursor.execute(
         "SELECT estado FROM caja WHERE id = %s",
@@ -57,6 +69,19 @@ def guardar_venta(
     estado = cursor.fetchone()
     if not estado or estado[0] != "ABIERTA":
         raise Exception("No hay caja abierta")
+    
+
+    pago_cliente_db = (
+        to_decimal(pago_cliente)
+        if metodo_pago == "Efectivo" and pago_cliente is not None
+        else None
+    )
+
+    vuelto_db = (
+        to_decimal(vuelto)
+        if metodo_pago == "Efectivo" and vuelto is not None
+        else None
+    )
 
     # Insertar venta
     cursor.execute("""
@@ -80,8 +105,8 @@ def guardar_venta(
         metodo_pago,
         nro_comprobante,
         placa_vehiculo,
-        pago_cliente if metodo_pago == "Efectivo" else None,
-        vuelto if metodo_pago == "Efectivo" else None,
+        pago_cliente_db,
+        vuelto_db, 
         id_caja
     ))
 
