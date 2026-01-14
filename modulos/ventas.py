@@ -400,7 +400,8 @@ def ventas_app():
             with col3:
                 if st.button("🧾 Imprimir"):
                     if "venta_actual_id" in st.session_state:
-                        registrar_reimpresion(st.session_state["venta_actual_id"])
+                        registrar_reimpresion(
+                            st.session_state["venta_actual_id"], usuario)
                         html = generar_ticket_html(st.session_state["venta_actual_id"])
 
                         auto_print_html = f"""
@@ -420,7 +421,7 @@ def ventas_app():
             with col4:
                 if st.button("🔁 Reimprimir"):
                     if "venta_actual_id" in st.session_state:
-                        registrar_reimpresion(st.session_state["venta_actual_id"])
+                        registrar_reimpresion(st.session_state["venta_actual_id"], usuario)
                         html = generar_ticket_html(st.session_state["venta_actual_id"])
                         st.components.v1.html(html, height=600)
             with col5:
