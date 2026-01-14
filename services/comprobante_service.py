@@ -46,23 +46,26 @@ def wrap_text(c, text, max_width, font="Courier", size=9):
 
     return lines
 
-def obtener_siguiente_correlativo(tipo="TICKET", serie="T"):
+def obtener_siguiente_correlativo(tipo, serie):
     conn = get_connection()
     cursor = conn.cursor()
-
+    
     cursor.execute("""
-        SELECT COALESCE(MAX(numero), 0)
-        FROM correlativo_comprobante
+        SELECT numero 
+        FROM correlativo_comprobante 
         WHERE tipo = %s AND serie = %s
+        ORDER BY numero DESC
+        LIMIT 1
     """, (tipo, serie))
-
-    ultimo = cursor.fetchone()[0]
+    row = cursor.fetchone()
     conn.close()
 
-    numero = ultimo + 1
-    nro_formateado = f"{serie}-{numero:06d}"
+    siguiente = 1
+    if row:
+        siguiente = row[0] + 1
 
-    return nro_formateado, numero
+    nro_comprobante = f"{serie}-{siguiente:06d}"
+    return nro_comprobante, siguiente
 
 def generar_ticket_pdf(venta_id, ruta):
     venta, detalle = obtener_venta_completa(venta_id)
