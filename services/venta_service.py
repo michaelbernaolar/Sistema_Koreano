@@ -104,7 +104,7 @@ def guardar_venta(
         RETURNING id
     """, (
         fecha,
-        int(cliente["id"]),
+        cliente["id"],
         int(usuario["id"]),
         tot["valor_venta"],
         tot["op_gravada"],
