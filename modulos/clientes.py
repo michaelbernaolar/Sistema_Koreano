@@ -24,6 +24,7 @@ def clientes_app():
         
         with st.form("form_cliente", clear_on_submit=True):
             id = generar_codigo_correlativo("cliente", "CLI")
+            st.text_input("Código (autogenerado)", value=id, disabled=True)
             nombre = st.text_input("Nombre / Razón social")
             dni_ruc = st.text_input("DNI / RUC")
             telefono = st.text_input("Teléfono")
