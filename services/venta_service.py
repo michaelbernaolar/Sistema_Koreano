@@ -63,7 +63,7 @@ def guardar_venta(
     valor_venta = sum(Decimal(str(i["Subtotal"])) for i in carrito)
     tot = calcular_totales(valor_venta, regimen)
 
-    # 🔒 Normalizar totales (EVITA np.float64)
+    # 🔒 Normalizar totales (evita np.float64)
     tot = {
         "valor_venta": to_decimal(tot["valor_venta"]),
         "op_gravada": to_decimal(tot["op_gravada"]),
@@ -71,14 +71,11 @@ def guardar_venta(
         "total": to_decimal(tot["total"]),
     }
 
-    cursor.execute(
-        "SELECT estado FROM caja WHERE id = %s",
-        (id_caja,)
-    )
+    # Validar caja abierta
+    cursor.execute("SELECT estado FROM caja WHERE id = %s", (id_caja,))
     estado = cursor.fetchone()
     if not estado or estado[0] != "ABIERTA":
         raise Exception("No hay caja abierta")
-    
 
     pago_cliente_db = (
         to_decimal(pago_cliente)
@@ -92,7 +89,9 @@ def guardar_venta(
         else None
     )
 
+    # ----------------------
     # Insertar venta
+    # ----------------------
     cursor.execute("""
         INSERT INTO venta (
             fecha, id_cliente, id_usuario,
@@ -115,27 +114,28 @@ def guardar_venta(
         nro_comprobante,
         placa_vehiculo,
         pago_cliente_db,
-        vuelto_db, 
+        vuelto_db,
         id_caja
     ))
 
     id_venta = cursor.fetchone()[0]
 
+    # ----------------------
+    # Actualizar correlativo
+    # ----------------------
+    # Parsear serie y número del comprobante
     serie, numero = parsear_comprobante(nro_comprobante)
 
+    # Insertar/actualizar correlativo **solo después de guardar la venta**
     cursor.execute("""
-        INSERT INTO correlativo_comprobante
-        (tipo, serie, numero, estado, fecha, id_venta)
-        VALUES (%s,%s,%s,'EMITIDO',%s,%s)
-    """, (
-        tipo_comprobante,
-        serie,
-        numero,
-        fecha,
-        id_venta
-    ))
+        INSERT INTO correlativo_comprobante(tipo, serie, numero)
+        VALUES (%s, %s, %s)
+        ON CONFLICT(tipo, serie) DO UPDATE SET numero = EXCLUDED.numero
+    """, (tipo_comprobante.upper(), serie, numero))
 
-    # Detalle + stock
+    # ----------------------
+    # Insertar detalle de venta y registrar salidas
+    # ----------------------
     for item in carrito:
         cantidad = Decimal(str(item["Cantidad"]))
         precio_unit = Decimal(str(item["Precio Unitario"]))
@@ -166,7 +166,9 @@ def guardar_venta(
             f"Venta {nro_comprobante}"
         )
 
-    # Caja: INGRESO
+    # ----------------------
+    # Registrar ingreso en caja
+    # ----------------------
     if metodo_pago == "Efectivo":
         cursor.execute("""
             INSERT INTO caja_movimiento (

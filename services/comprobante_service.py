@@ -47,6 +47,7 @@ def wrap_text(c, text, max_width, font="Courier", size=9):
     return lines
 
 def obtener_siguiente_correlativo(tipo, serie):
+    """Solo obtiene el siguiente número, no actualiza la tabla."""
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -60,10 +61,7 @@ def obtener_siguiente_correlativo(tipo, serie):
     row = cursor.fetchone()
     conn.close()
 
-    siguiente = 1
-    if row:
-        siguiente = row[0] + 1
-
+    siguiente = 1 if not row else row[0] + 1
     nro_comprobante = f"{serie}-{siguiente:06d}"
     return nro_comprobante, siguiente
 
