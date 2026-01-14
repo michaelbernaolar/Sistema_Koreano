@@ -45,7 +45,7 @@ def init_db():
     # Tabla de cliente
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS cliente (
-        id SERIAL PRIMARY KEY,
+        id TEXT PRIMARY KEY,
         codigo VARCHAR(10) UNIQUE,
         nombre TEXT,
         dni_ruc TEXT,
@@ -53,7 +53,7 @@ def init_db():
         direccion TEXT
     )
     ''')
-
+    
     # Tabla de proveedor
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS proveedor (
