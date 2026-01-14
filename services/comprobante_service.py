@@ -223,7 +223,7 @@ def obtener_venta_completa(venta_id):
                 u.nombre AS usuario_nombre,
                 v.reimpresiones
             FROM venta v
-            LEFT JOIN cliente c ON c.id::integer = v.id_cliente
+            LEFT JOIN cliente c ON c.id = v.id_cliente
             LEFT JOIN usuarios u ON u.id = v.id_usuario
             WHERE v.id = %s
         """, (venta_id,))
