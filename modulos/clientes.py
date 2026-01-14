@@ -21,20 +21,20 @@ def clientes_app():
     # ------------------------
     with tab1:
         st.subheader("➕ Registrar nuevo cliente")
-
+        
         with st.form("form_cliente", clear_on_submit=True):
-            codigo = st.text_input("Código cliente", value=generar_codigo_correlativo("cliente", "CLI"))
+            id = generar_codigo_correlativo("cliente", "CLI")
             nombre = st.text_input("Nombre / Razón social")
             dni_ruc = st.text_input("DNI / RUC")
             telefono = st.text_input("Teléfono")
             direccion = st.text_input("Dirección")
 
             if st.form_submit_button("💾 Guardar cliente"):
-                if codigo and nombre and dni_ruc:
+                if id and nombre and dni_ruc:
                     cursor.execute("""
-                        INSERT INTO cliente (codigo, nombre, dni_ruc, telefono, direccion)
+                        INSERT INTO cliente (id, nombre, dni_ruc, telefono, direccion)
                         VALUES (%s, %s, %s, %s, %s)
-                    """, (codigo, nombre, dni_ruc, telefono, direccion))
+                    """, (id, nombre, dni_ruc, telefono, direccion))
                     conn.commit()
                     st.success("✅ Cliente guardado correctamente")
                     st.rerun()

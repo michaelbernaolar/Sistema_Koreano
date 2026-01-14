@@ -46,7 +46,6 @@ def init_db():
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS cliente (
         id TEXT PRIMARY KEY,
-        codigo VARCHAR(10) UNIQUE,
         nombre TEXT,
         dni_ruc TEXT,
         telefono TEXT,
