@@ -50,7 +50,6 @@ def obtener_siguiente_correlativo(tipo, serie):
     conn = get_connection()
     cursor = conn.cursor()
     
-    # Obtener último número
     cursor.execute("""
         SELECT numero 
         FROM correlativo_comprobante 
@@ -59,20 +58,11 @@ def obtener_siguiente_correlativo(tipo, serie):
         LIMIT 1
     """, (tipo, serie))
     row = cursor.fetchone()
+    conn.close()
 
     siguiente = 1
     if row:
         siguiente = row[0] + 1
-
-    # Guardar o actualizar el correlativo
-    cursor.execute("""
-        INSERT INTO correlativo_comprobante(tipo, serie, numero)
-        VALUES (%s, %s, %s)
-        ON CONFLICT(tipo, serie) DO UPDATE SET numero = EXCLUDED.numero
-    """, (tipo, serie, siguiente))
-
-    conn.commit()
-    conn.close()
 
     nro_comprobante = f"{serie}-{siguiente:06d}"
     return nro_comprobante, siguiente
