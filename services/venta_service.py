@@ -123,14 +123,15 @@ def guardar_venta(
     # ----------------------
     # Actualizar correlativo
     # ----------------------
-    # Parsear serie y número del comprobante
+    # Insertar/actualizar correlativo **solo después de guardar la venta**
     serie, numero = parsear_comprobante(nro_comprobante)
 
-    # Insertar/actualizar correlativo **solo después de guardar la venta**
     cursor.execute("""
-        INSERT INTO correlativo_comprobante(tipo, serie, numero)
-        VALUES (%s, %s, %s)
-        ON CONFLICT(tipo, serie) DO UPDATE SET numero = EXCLUDED.numero
+        INSERT INTO correlativo_comprobante(tipo, serie, numero, estado)
+        VALUES (%s, %s, %s, 'EMITIDO')
+        ON CONFLICT(tipo, serie) DO UPDATE 
+        SET numero = EXCLUDED.numero,
+            estado = EXCLUDED.estado
     """, (tipo_comprobante.upper(), serie, numero))
 
     # ----------------------
