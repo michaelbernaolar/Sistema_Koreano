@@ -93,7 +93,7 @@ def init_db():
     CREATE TABLE IF NOT EXISTS venta (
         id SERIAL PRIMARY KEY,
         fecha TIMESTAMP,
-        id_cliente INTEGER,
+        id_cliente TEXT,
         suma_total NUMERIC(14,2),
         descuento NUMERIC(14,2),
         op_gravada NUMERIC(14,2),
