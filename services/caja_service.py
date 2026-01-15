@@ -114,15 +114,17 @@ def obtener_historial_cajas(fecha_ini, fecha_fin):
             AND v.estado = 'EMITIDA'
 
         WHERE c.fecha_cierre IS NOT NULL
-            AND c.fecha_apertura >= %s
-            AND c.fecha_apertura < %s
+            AND c.fecha_cierre >= %s
+            AND c.fecha_cierre < %s
 
         GROUP BY
             c.id,
             c.fecha_apertura,
             c.fecha_cierre,
             c.monto_apertura,
-            c.monto_cierre
+            c.monto_cierre,
+            c.usuario_apertura,
+            c.usuario_cierre
 
         ORDER BY c.fecha_cierre DESC
     """, (fecha_ini, fecha_fin))
