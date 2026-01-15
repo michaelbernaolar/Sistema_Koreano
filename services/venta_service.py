@@ -134,12 +134,18 @@ def guardar_venta(
     serie, numero = parsear_comprobante(nro_comprobante)
 
     cursor.execute("""
-        INSERT INTO correlativo_comprobante(tipo, serie, numero, estado)
-        VALUES (%s, %s, %s, 'EMITIDO')
-        ON CONFLICT(tipo, serie) DO UPDATE 
-        SET numero = EXCLUDED.numero,
-            estado = EXCLUDED.estado
-    """, (tipo_comprobante.upper(), serie, numero))
+        INSERT INTO correlativo_comprobante (
+            tipo, serie, numero, estado, fecha, id_venta
+        )
+        VALUES (%s, %s, %s, 'EMITIDO', %s, %s)
+        ON CONFLICT (tipo, serie, numero) DO NOTHING
+    """, (
+        tipo_comprobante.upper(),
+        serie,
+        numero,
+        fecha,
+        id_venta
+    ))
 
     # ----------------------
     # Insertar detalle de venta y registrar salidas
