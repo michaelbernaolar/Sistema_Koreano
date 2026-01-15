@@ -1,7 +1,10 @@
 # modulos/ventas.py
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 from datetime import datetime, timedelta
+from typing import Any
+from decimal import Decimal
 
 from db import (
     query_df, select_cliente, obtener_cliente_por_id,
@@ -20,6 +23,12 @@ from services.comprobante_service import (
     generar_ticket_html, obtener_siguiente_correlativo,
     generar_ticket_pdf, registrar_reimpresion
 )
+
+def to_float(value, default=0.0):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
 
 def ventas_app():
     if "caja_abierta_id" not in st.session_state:
@@ -92,7 +101,11 @@ def ventas_app():
             st.stop()
 
         cliente = obtener_cliente_por_id(cliente_id)
-        es_varios = cliente["dni_ruc"] == "99999999"
+        if cliente is None:
+            st.error("❌ Cliente no encontrado")
+            st.stop()
+
+        es_varios = cliente.get("dni_ruc") == "99999999"
         with col2:
             if es_varios:
                 nro_documento = cliente["dni_ruc"]  # 99999999
@@ -207,9 +220,9 @@ def ventas_app():
             row = productos_dict[producto_sel]
             id_producto = row.id
             desc_producto = row.descripcion
-            stock_disp = float(row.stock_actual or 0)
-            costo = float(row.costo_promedio) if row.costo_promedio is not None else 0.0
-            margen = float(row.margen_utilidad) * 100 if row.margen_utilidad is not None else 0.0
+            stock_disp = to_float(row.stock_actual)
+            costo = to_float(row.costo_promedio)
+            margen = to_float(row.margen_utilidad) * 100
 
             st.write("### 📋 Detalles del producto")
             st.write(f"🔢 Código: {id_producto}")
@@ -218,7 +231,7 @@ def ventas_app():
 
             # --- Validar y asegurar precio base correcto ---
             try:
-                precio_base = float(row.precio_venta)
+                precio_base = max(to_float(row.precio_venta, 0.01), 0.01)
                 if precio_base <= 0:
                     precio_base = 0.01
             except (ValueError, TypeError):
@@ -282,26 +295,29 @@ def ventas_app():
             df_carrito = pd.DataFrame(st.session_state.carrito_ventas)
             st.subheader("🛒 Carrito de Venta")
 
+            # Inicializar SIEMPRE
+            valor_venta_dec = Decimal("0.00") 
             if not df_carrito.empty:
                 st.dataframe(df_carrito, width="stretch", hide_index=True)
 
                 # --- Calcular totales ---
-                valor_venta = df_carrito["Subtotal"].sum()
+                valor_venta_float = to_float(df_carrito["Subtotal"].sum())
+                valor_venta_dec = Decimal(str(valor_venta_float))
             else:
                 st.info("🧹 Carrito vacío")
                 valor_venta = 0.0
 
-            totales = calcular_totales(valor_venta, regimen)
+            totales = calcular_totales(valor_venta_dec, regimen)
 
-            op_gravada = totales["op_gravada"]
-            igv = totales["igv"]
-            total = totales["total"]
-            suma_total = totales["valor_venta"]
+            op_gravada = float(totales["op_gravada"])
+            igv = float(totales["igv"])
+            total = float(totales["total"])
+            suma_total = float(totales["valor_venta"])
 
             # Mostrar métricas
             col1, col2, col3, col4 = st.columns(4)
             with col1:
-                st.metric("💵 Valor Venta", f"S/. {valor_venta:,.2f}")
+                st.metric("💵 Valor Venta", f"S/. {valor_venta_dec:,.2f}")
             with col2:
                 st.metric("💰 Op. Gravada", f"S/. {op_gravada:,.2f}")
             with col3:
@@ -417,13 +433,13 @@ def ventas_app():
                             }};
                         </script>
                         """
-                        st.components.v1.html(auto_print_html, height=0)
+                        components.html(auto_print_html, height=0)
             with col4:
                 if st.button("🔁 Reimprimir"):
                     if "venta_actual_id" in st.session_state:
                         registrar_reimpresion(st.session_state["venta_actual_id"], usuario)
                         html = generar_ticket_html(st.session_state["venta_actual_id"])
-                        st.components.v1.html(html, height=600)
+                        components.html(html, height=600)
             with col5:
                 if not st.session_state["pdf_generado"]:
                     if st.button(
@@ -478,7 +494,7 @@ def ventas_app():
             AND v.fecha >= %s
             AND v.fecha < %s
         """
-        params = [fecha_ini, fecha_fin]
+        params: list[Any] = [fecha_ini, fecha_fin]
         if cliente_filtro:
             query += " AND c.nombre LIKE %s"
             params.append(f"%{cliente_filtro}%")

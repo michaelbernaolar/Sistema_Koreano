@@ -7,18 +7,19 @@ def f(value):
     return float(value) if value is not None else None
 
 # services/venta_service.py
-def calcular_totales(valor_venta: float, regimen: str):
+def calcular_totales(valor_venta: Decimal, regimen: str):
     if "Nuevo RUS" in regimen:
         return {
             "valor_venta": valor_venta,
             "op_gravada": valor_venta,
-            "igv": 0.0,
+            "igv": Decimal("0.00"),
             "total": valor_venta
         }
     else:
-        op_gravada = round(valor_venta / 1.18, 2)
-        igv = round(op_gravada * 0.18, 2)
-        total = round(op_gravada + igv, 2)
+        op_gravada = (valor_venta / Decimal("1.18")).quantize(Decimal("0.01"))
+        igv = (op_gravada * Decimal("0.18")).quantize(Decimal("0.01"))
+        total = (op_gravada + igv).quantize(Decimal("0.01"))
+
         return {
             "valor_venta": valor_venta,
             "op_gravada": op_gravada,
@@ -60,7 +61,10 @@ def guardar_venta(
         return Decimal(str(value))
 
     # Calcular totales correctamente
-    valor_venta = sum(Decimal(str(i["Subtotal"])) for i in carrito)
+    valor_venta: Decimal = sum(
+        (Decimal(str(i["Subtotal"])) for i in carrito),
+        Decimal("0.00")
+    )
     tot = calcular_totales(valor_venta, regimen)
 
     # 🔒 Normalizar totales (evita np.float64)
@@ -118,7 +122,10 @@ def guardar_venta(
         id_caja
     ))
 
-    id_venta = cursor.fetchone()[0]
+    row = cursor.fetchone()
+    if row is None:
+        raise Exception("No se obtuvo resultado de la consulta")
+    id_venta = row[0]
 
     # ----------------------
     # Actualizar correlativo
@@ -263,7 +270,11 @@ def anular_venta(venta_id, motivo, usuario):
             FROM producto
             WHERE id = %s
         """, (id_producto,))
-        costo = cursor.fetchone()[0]
+
+        row = cursor.fetchone()
+        if row is None:
+            raise Exception("No se pudo obtener el costo")
+        costo = row[0]
 
         cursor.execute("""
             INSERT INTO movimientos
@@ -341,7 +352,11 @@ def abrir_caja(monto, usuario):
         RETURNING id
     """, (fecha, monto, usuario["username"]))
 
-    caja_id = cursor.fetchone()[0]
+    row = cursor.fetchone()
+    if row is None:
+        raise Exception("No hay caja abierta para el usuario")
+    caja_id = row[0] 
+    
     conn.commit()
     conn.close()
     return caja_id
