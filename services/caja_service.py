@@ -71,7 +71,7 @@ def obtener_resumen_caja(id_caja):
     # -----------------------------
     # Cálculos finales
     # -----------------------------
-    efectivo_neto = monto_apertura + ventas_efectivo + ingresos - egresos
+    efectivo_neto = monto_apertura + ingresos - egresos
 
     return {
         "por_metodo": por_metodo,

@@ -116,7 +116,7 @@ def generar_ticket_pdf(venta_id, ruta):
     # Título del comprobante
     # -------------------------
     draw_center("TICKET", 11)
-    draw_center(f"N° {venta['nro_comprobante']}")
+    draw_center(f"{venta['nro_comprobante']}")
     draw_center(venta["fecha"].strftime("%d/%m/%Y %H:%M"))
 
     draw_separator()
@@ -340,7 +340,7 @@ def generar_ticket_html(venta_id: int, ancho_mm: int = 80) -> str:
 
         <div class="center">
             <b>TICKET</b><br>
-            N° {venta["nro_comprobante"]}<br>
+            {venta["nro_comprobante"]}<br>
             {venta["fecha"].strftime("%d/%m/%Y %H:%M")}
         </div>
 
