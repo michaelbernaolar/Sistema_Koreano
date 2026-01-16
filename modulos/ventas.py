@@ -495,6 +495,7 @@ def ventas_app():
             AND v.fecha < %s
         """
         params: list[Any] = [fecha_ini, fecha_fin]
+        
         if comprobante_filtro.strip():
             query += " AND v.nro_comprobante ILIKE %s"
             params.append(f"%{comprobante_filtro.strip()}%")
