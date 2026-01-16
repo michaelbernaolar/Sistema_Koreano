@@ -473,7 +473,7 @@ def ventas_app():
 
     # ========================
     # TAB 2: Consultar Ventas
-    # ========================
+    # =======================
     with tabs[1]:
         st.subheader("📋 Consultar ventas")
         col1, col2, col3 = st.columns(3)
