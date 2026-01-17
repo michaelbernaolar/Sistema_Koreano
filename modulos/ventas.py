@@ -46,7 +46,7 @@ def ventas_app():
         st.stop()
         
     inicializar_estado_venta(st.session_state)
-    tabs = st.tabs(["📝 Registrar Venta", "📋 Consultar Ventas", "📊 Reportes"])
+    tabs = st.tabs(["📝 Registrar Venta", "📋 Consultar Ventas", "📄 Comprobante", "📊 Reportes"])
 
     # =======================
     # TAB 1: Registrar Venta
@@ -416,9 +416,9 @@ def ventas_app():
             with col3:
                 if st.button("🧾 Imprimir"):
                     if "venta_actual_id" in st.session_state:
-                        registrar_reimpresion(
-                            st.session_state["venta_actual_id"], usuario)
-                        html = generar_ticket_html(st.session_state["venta_actual_id"])
+                        html = generar_ticket_html(
+                            st.session_state["venta_actual_id"]
+                        )
 
                         auto_print_html = f"""
                         <iframe id="printFrame" style="display:none;"></iframe>
@@ -524,11 +524,51 @@ def ventas_app():
                     st.rerun()
                 except Exception as e:
                     st.error(str(e))
-
     # =======================
-    # TAB 3: Reportes
+    # TAB 3: Comprobante
     # =======================
     with tabs[2]:
+        st.subheader("📄 Comprobante")
+
+        venta_id = st.number_input(
+            "ID de venta",
+            min_value=1,
+            step=1
+        )
+
+        if st.button("🔍 Ver comprobante"):
+            st.session_state["ver_comprobante_id"] = venta_id
+
+        if "ver_comprobante_id" in st.session_state:
+            vid = st.session_state["ver_comprobante_id"]
+
+            html = generar_ticket_html(vid)
+            components.html(html, height=600)
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                if st.button("🖨 Reimprimir"):
+                    registrar_reimpresion(vid, usuario)
+                    st.success("Reimpresión registrada")
+                    st.rerun()
+
+            with col2:
+                if st.button("📄 Generar PDF"):
+                    ruta = f"ticket_{vid}.pdf"
+                    generar_ticket_pdf(vid, ruta)
+                    with open(ruta, "rb") as f:
+                        st.download_button(
+                            "⬇️ Descargar PDF",
+                            f,
+                            file_name=ruta,
+                            mime="application/pdf"
+                        )
+
+    # =======================
+    # TAB 4: Reportes
+    # =======================
+    with tabs[3]:
         st.subheader("📊 Reportes de Ventas")
         tipo_reporte = st.selectbox("Selecciona reporte", ["Por cliente", "Por producto", "Diario", "Mensual"])
 
