@@ -1,7 +1,7 @@
 # venta_service.py
 from datetime import datetime, date
 from decimal import Decimal
-from db import get_connection, registrar_salida_por_venta, obtener_fecha_lima
+from db import get_connection, registrar_salida_por_venta, obtener_fecha_lima, query_df
 
 def f(value):
     return float(value) if value is not None else None
@@ -392,3 +392,65 @@ def obtener_caja_abierta():
 
     return None
 
+def crear_venta_abierta(cliente_id, placa_vehiculo, usuario_id, id_caja):
+    conn = get_connection()
+    cursor = conn.cursor()
+    fecha = obtener_fecha_lima()
+
+    cursor.execute("""
+        INSERT INTO venta (
+            fecha, id_cliente, id_usuario,
+            suma_total, op_gravada, igv, total,
+            estado, placa_vehiculo, id_caja
+        )
+        VALUES (%s,%s,%s,0,0,0,0,'ABIERTA',%s,%s)
+        RETURNING id
+    """, (
+        fecha,
+        cliente_id,
+        usuario_id,
+        placa_vehiculo,
+        id_caja
+    ))
+
+    id_venta = cursor.fetchone()[0]
+    conn.commit()
+    conn.close()
+    return id_venta
+
+def agregar_item_venta(id_venta, id_producto, cantidad, precio_unit):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    subtotal = Decimal(str(cantidad)) * Decimal(str(precio_unit))
+
+    cursor.execute("""
+        INSERT INTO venta_detalle
+        (id_venta, id_producto, cantidad, precio_unitario, sub_total, precio_final)
+        VALUES (%s,%s,%s,%s,%s,%s)
+    """, (
+        id_venta,
+        id_producto,
+        cantidad,
+        precio_unit,
+        subtotal,
+        subtotal
+    ))
+
+    cursor.execute("""
+        UPDATE venta
+        SET suma_total = suma_total + %s
+        WHERE id = %s
+    """, (subtotal, id_venta))
+
+    conn.commit()
+    conn.close()
+
+def obtener_ventas_abiertas():
+    return query_df("""
+        SELECT v.id, c.nombre, v.placa_vehiculo, v.suma_total, v.fecha
+        FROM venta v
+        JOIN cliente c ON c.id = v.id_cliente
+        WHERE v.estado = 'ABIERTA'
+        ORDER BY v.fecha
+    """)

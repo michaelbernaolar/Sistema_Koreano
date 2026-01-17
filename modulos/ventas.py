@@ -16,8 +16,8 @@ from services.producto_service import (
     obtener_filtros_productos, to_float
 )
 from services.venta_service import (
-    calcular_totales, guardar_venta,
-    inicializar_estado_venta, resetear_venta, precio_valido
+    calcular_totales, guardar_venta, agregar_item_venta,
+    inicializar_estado_venta, resetear_venta, precio_valido, obtener_ventas_abiertas
 )
 from services.comprobante_service import (
     generar_ticket_html, obtener_siguiente_correlativo, buscar_comprobantes,
@@ -47,6 +47,24 @@ def ventas_app():
     # ========================
     with tabs[0]:
         st.session_state.setdefault("carrito_ventas", [])
+        # ===============================
+        # SERVICIOS / VENTAS EN CURSO
+        # ===============================
+        st.subheader("🛠 Servicios en curso")
+
+        df_abiertas = obtener_ventas_abiertas()
+
+        if not df_abiertas.empty:
+            venta_sel = st.selectbox(
+                "Selecciona una orden abierta",
+                df_abiertas["id"].tolist(),
+                format_func=lambda x: f"Orden #{x}"
+            )
+
+            st.session_state["venta_abierta_id"] = venta_sel
+        else:
+            st.info("No hay servicios en curso")
+
         col1, col2 = st.columns([3, 1])
         with col1:
             st.subheader("📝 Registrar nueva venta")
@@ -117,6 +135,24 @@ def ventas_app():
                     "🚗 Placa del vehículo (obligatoria)",
                     max_chars=10
                 ).upper()
+
+                # ===============================
+        # ABRIR ORDEN DE SERVICIO
+        # ===============================
+        from services.venta_service import crear_venta_abierta
+
+        if st.button("🚗 Abrir orden de servicio"):
+            if not placa_vehiculo:
+                st.warning("Ingrese la placa del vehículo")
+            else:
+                id_venta = crear_venta_abierta(
+                    cliente_id=cliente_id,
+                    placa_vehiculo=placa_vehiculo,
+                    usuario_id=usuario["id"],
+                    id_caja=st.session_state["caja_abierta_id"]
+                )
+                st.session_state["venta_abierta_id"] = id_venta
+                st.success(f"Orden de servicio #{id_venta} creada")
 
         # --- Carrito en sesión --
         st.session_state.setdefault("carrito_ventas", [])
@@ -271,18 +307,19 @@ def ventas_app():
                 boton_carrito = True
 
             if st.button(
-                "➕ Agregar al carrito",
-                disabled=not boton_carrito or st.session_state.get("venta_guardada", False)
+                "➕ Agregar a la orden",
+                disabled=not boton_carrito
             ):
-                subtotal = float(cantidad) * float(precio_unit)
-                st.session_state.carrito_ventas.append({
-                    "ID Producto": id_producto,
-                    "Descripción": desc_producto,
-                    "Cantidad": float(cantidad),
-                    "Precio Unitario": float(precio_unit),
-                    "Subtotal": float(subtotal)
-                })
-                st.success(f"✅ {cantidad} x {desc_producto} agregado al carrito")
+                if "venta_abierta_id" not in st.session_state:
+                    st.error("❌ Primero debes abrir una orden de servicio")
+                else:
+                    agregar_item_venta(
+                        id_venta=st.session_state["venta_abierta_id"],
+                        id_producto=id_producto,
+                        cantidad=cantidad,
+                        precio_unit=precio_unit
+                    )
+                    st.success(f"✅ Producto agregado a la orden #{st.session_state['venta_abierta_id']}")
 
         # --- Mostrar carrito ---
         if st.session_state.carrito_ventas or st.session_state.get("venta_guardada"):
