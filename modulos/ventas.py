@@ -533,16 +533,24 @@ def ventas_app():
         nro_comprobante = st.text_input(
             "Número de comprobante",
             placeholder="Ej: T-000123, B-000045, F-000010"
-        )
+        ).strip()
 
-        if st.button("🔍 Ver comprobante"):
+        # Buscar automáticamente cuando hay valor
+        if nro_comprobante:
             venta_id = obtener_venta_id_por_comprobante(nro_comprobante)
 
             if venta_id:
                 st.session_state["ver_comprobante_id"] = venta_id
+                st.session_state["error_comprobante"] = None
             else:
-                st.error("❌ Comprobante no encontrado")
+                st.session_state.pop("ver_comprobante_id", None)
+                st.session_state["error_comprobante"] = "❌ Comprobante no encontrado"
 
+        # Mensaje de error
+        if st.session_state.get("error_comprobante"):
+            st.error(st.session_state["error_comprobante"])
+
+        # Mostrar comprobante
         if "ver_comprobante_id" in st.session_state:
             vid = st.session_state["ver_comprobante_id"]
 
@@ -558,17 +566,16 @@ def ventas_app():
                     st.rerun()
 
             with col2:
-                if st.button("📄 Generar PDF"):
-                    ruta = f"ticket_{vid}.pdf"
-                    generar_ticket_pdf(vid, ruta)
+                ruta = f"ticket_{vid}.pdf"
+                generar_ticket_pdf(vid, ruta)
 
-                    with open(ruta, "rb") as f:
-                        st.download_button(
-                            "⬇️ Descargar PDF",
-                            f,
-                            file_name=ruta,
-                            mime="application/pdf"
-                        )
+                with open(ruta, "rb") as f:
+                    st.download_button(
+                        "⬇️ Descargar PDF",
+                        f,
+                        file_name=ruta,
+                        mime="application/pdf"
+                    )
 
     # =======================
     # TAB 4: Reportes
