@@ -57,7 +57,11 @@ def compras_app():
             with col1:
                 tipo_doc = st.selectbox("📄 Tipo de Documento", ["Factura", "Boleta", "Nota"])
             with col2:
-                metodo_pago = st.selectbox("💳 Método de Pago", ["Contado", "Crédito", "Transferencia"])            
+                metodo_pago = st.selectbox(
+                    "💳 Método de pago",
+                    ["Efectivo", "Yape", "Plin", "Tarjeta", "Transferencia"],
+                    key="metodo_pago_select"
+                )          
             with col3:
                 # --- Reglas de IGV simplificadas ---
                 if tipo_doc == "Factura":
@@ -144,7 +148,7 @@ def compras_app():
                 # SELECCIÓN DEL PRODUCTO
                 # ==============================
                 productos_dict = {
-                    f"{row.id} | {row.descripcion}": row
+                    f"{row.id} | {row.descripcion} | {row.stock_actual}": row
                     for row in df_prod.itertuples()
                 }
 
