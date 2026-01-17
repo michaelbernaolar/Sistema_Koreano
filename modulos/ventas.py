@@ -16,8 +16,8 @@ from services.producto_service import (
     obtener_filtros_productos, to_float
 )
 from services.venta_service import (
-    calcular_totales, guardar_venta, agregar_item_venta, obtener_valor_venta,
-    inicializar_estado_venta, resetear_venta, precio_valido, obtener_ventas_abiertas
+    calcular_totales, guardar_venta, agregar_item_venta, obtener_valor_venta, obtener_detalle_venta,
+    inicializar_estado_venta, resetear_venta, precio_valido, obtener_ventas_abiertas, crear_venta_abierta
 )
 from services.comprobante_service import (
     generar_ticket_html, obtener_siguiente_correlativo, buscar_comprobantes,
@@ -76,6 +76,11 @@ def ventas_app():
                 )
 
                 st.session_state["venta_abierta_id"] = venta_sel
+
+                df_detalle = obtener_detalle_venta(venta_sel)
+
+                # Convertir a carrito visual (solo para mostrar)
+                st.session_state["carrito_ventas"] = df_detalle.to_dict("records")
             else:
                 st.info("No hay servicios en curso")
 
@@ -153,8 +158,6 @@ def ventas_app():
         # ===============================
         # ABRIR ORDEN DE SERVICIO
         # ===============================
-        from services.venta_service import crear_venta_abierta
-
         if st.button("🚗 Abrir orden de servicio"):
             if not placa_vehiculo:
                 st.warning("Ingrese la placa del vehículo")
@@ -344,9 +347,21 @@ def ventas_app():
                 st.success("Producto agregado correctamente")
 
         # --- Mostrar carrito ---
-        if st.session_state.carrito_ventas or st.session_state.get("venta_guardada"):
+        st.subheader("🛒 Carrito de Venta")
+
+        if tipo_venta == "POS":
             df_carrito = pd.DataFrame(st.session_state.carrito_ventas)
-            st.subheader("🛒 Carrito de Venta")
+        else:
+            if "venta_abierta_id" not in st.session_state:
+                st.info("Abra o seleccione una orden de servicio")
+                df_carrito = pd.DataFrame()
+            else:
+                df_carrito = obtener_detalle_venta(st.session_state["venta_abierta_id"])
+
+        if not df_carrito.empty:
+            st.dataframe(df_carrito, hide_index=True)
+        else:
+            st.info("🧹 Carrito vacío")
 
             # Inicializar SIEMPRE
             valor_venta_dec = Decimal("0.00") 

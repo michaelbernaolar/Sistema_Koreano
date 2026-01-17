@@ -478,13 +478,6 @@ def agregar_item_venta(id_venta, id_producto, cantidad, precio_unit):
         subtotal,
         subtotal
     ))
-
-    cursor.execute("""
-        UPDATE venta
-        SET suma_total = suma_total + %s
-        WHERE id = %s
-    """, (subtotal, id_venta))
-
     conn.commit()
     conn.close()
 
@@ -512,3 +505,17 @@ def obtener_valor_venta(carrito=None, id_venta=None):
         return Decimal(str(df.iloc[0]["total"]))
 
     return Decimal("0.00")
+
+def obtener_detalle_venta(id_venta):
+    return query_df("""
+        SELECT
+            d.id_producto AS "ID Producto",
+            p.descripcion AS "Descripción",
+            d.cantidad AS "Cantidad",
+            d.precio_unitario AS "Precio Unitario",
+            d.sub_total AS "Subtotal"
+        FROM venta_detalle d
+        JOIN producto p ON p.id = d.id_producto
+        WHERE d.id_venta = %s
+        ORDER BY d.id
+    """, (id_venta,))
