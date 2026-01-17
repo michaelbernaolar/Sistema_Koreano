@@ -1,14 +1,14 @@
 import streamlit as st
 import pandas as pd
 
-from db import get_connection
 from datetime import datetime
-from db import actualizar_costo_promedio
-from db import obtener_configuracion
-from db import recalcular_precios_producto
-from db import registrar_historial_precio
 from decimal import Decimal
-from modulos.ventas import to_float
+
+from db import (
+    get_connection, actualizar_costo_promedio, obtener_configuracion,
+    recalcular_precios_producto, registrar_historial_precio
+)
+
 from services.producto_service import (
     buscar_producto_avanzado, contar_productos,
     obtener_filtros_productos, to_float 
