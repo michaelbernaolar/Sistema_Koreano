@@ -13,7 +13,7 @@ from db import (
 
 from services.producto_service import (
     buscar_producto_avanzado, contar_productos,
-    obtener_filtros_productos
+    obtener_filtros_productos, to_float
 )
 from services.venta_service import (
     calcular_totales, guardar_venta,
@@ -23,12 +23,6 @@ from services.comprobante_service import (
     generar_ticket_html, obtener_siguiente_correlativo, buscar_comprobantes,
     generar_ticket_pdf, registrar_reimpresion
 )
-
-def to_float(value, default=0.0):
-    try:
-        return float(value)
-    except (TypeError, ValueError):
-        return default
 
 def ventas_app():
     if "caja_abierta_id" not in st.session_state:

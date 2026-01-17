@@ -131,3 +131,9 @@ def obtener_filtros_productos():
     """, conn)
     conn.close()
     return df
+
+def to_float(value, default=0.0):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default

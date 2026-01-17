@@ -7,11 +7,11 @@ from db import actualizar_costo_promedio
 from db import obtener_configuracion
 from db import recalcular_precios_producto
 from db import registrar_historial_precio
-
+from decimal import Decimal
 from modulos.ventas import to_float
 from services.producto_service import (
     buscar_producto_avanzado, contar_productos,
-    obtener_filtros_productos
+    obtener_filtros_productos, to_float 
 )
 
 def compras_app():
@@ -243,25 +243,27 @@ def compras_app():
                 st.dataframe(df_carrito_display, width='stretch', hide_index=True)
 
                 # Totales (suma de SUBTOTALES guardados, que están SIN IGV)
-                suma_total = df_carrito["Subtotal"].sum()
-                descuento = st.number_input("🔻 Descuento", min_value=0.0, step=0.10)
+                suma_total_float = to_float(df_carrito["Subtotal"].sum())
+                suma_total = Decimal(str(suma_total_float))
+                descuento = Decimal(str(st.number_input("🔻 Descuento", min_value=0.0, step=0.10)))
                 op_gratuita = 0.0
 
             
                 # === CÁLCULO GLOBAL SEGÚN TIPO DE DOCUMENTO ===                
                 if tipo_doc == "Factura":
                     op_gravada = suma_total - descuento
-                    igv = round(op_gravada * 0.18, 2)
+                    igv = (op_gravada * Decimal("0.18")).quantize(Decimal("0.01"))
                     total = op_gravada + igv
 
                 elif tipo_doc == "Boleta":
-                    op_gravada = round(suma_total/1.18,2)
-                    igv = round(op_gravada * 0.18, 2)
+                    op_gravada = (suma_total / Decimal("1.18")).quantize(Decimal("0.01"))
+                    igv = (op_gravada * Decimal("0.18")).quantize(Decimal("0.01"))
                     total = suma_total
 
-                else:  # Nota revisar
-                    igv = 0.0
-                    total = op_gravada
+                else:
+                    op_gravada = suma_total
+                    igv = Decimal("0.00")
+                    total = suma_total
 
                 # Mostrar resumen
                 st.markdown("### 💰 Resumen de la Compra")
@@ -295,8 +297,8 @@ def compras_app():
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         """, (
                             fecha, id_proveedor, nro_doc, tipo_doc,
-                            suma_total, descuento, op_gravada, op_gratuita,
-                            igv, total, metodo_pago
+                            float(suma_total), float(descuento), float(op_gravada), float(op_gratuita),
+                            float(igv), float(total), metodo_pago
                         ))
 
 
