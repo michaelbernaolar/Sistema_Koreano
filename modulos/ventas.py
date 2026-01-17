@@ -201,7 +201,7 @@ def ventas_app():
             st.warning("⚠️ No hay productos disponibles con esos filtros.")
         else:
             productos_dict = {
-                f"{row.id} | {row.descripcion}": row
+                f"{row.id} | {row.descripcion} | Stock: {row.stock_actual:.2f}": row
                 for row in df_prod.itertuples()
             }
             
