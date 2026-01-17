@@ -21,7 +21,7 @@ from services.venta_service import (
 )
 from services.comprobante_service import (
     generar_ticket_html, obtener_siguiente_correlativo,
-    generar_ticket_pdf, registrar_reimpresion
+    generar_ticket_pdf, registrar_reimpresion, obtener_venta_id_por_comprobante
 )
 
 def to_float(value, default=0.0):
@@ -530,14 +530,18 @@ def ventas_app():
     with tabs[2]:
         st.subheader("📄 Comprobante")
 
-        venta_id = st.number_input(
-            "ID de venta",
-            min_value=1,
-            step=1
+        nro_comprobante = st.text_input(
+            "Número de comprobante",
+            placeholder="Ej: T-000123, B-000045, F-000010"
         )
 
         if st.button("🔍 Ver comprobante"):
-            st.session_state["ver_comprobante_id"] = venta_id
+            venta_id = obtener_venta_id_por_comprobante(nro_comprobante)
+
+            if venta_id:
+                st.session_state["ver_comprobante_id"] = venta_id
+            else:
+                st.error("❌ Comprobante no encontrado")
 
         if "ver_comprobante_id" in st.session_state:
             vid = st.session_state["ver_comprobante_id"]
@@ -557,6 +561,7 @@ def ventas_app():
                 if st.button("📄 Generar PDF"):
                     ruta = f"ticket_{vid}.pdf"
                     generar_ticket_pdf(vid, ruta)
+
                     with open(ruta, "rb") as f:
                         st.download_button(
                             "⬇️ Descargar PDF",

@@ -376,3 +376,21 @@ def generar_ticket_html(venta_id: int, ancho_mm: int = 80) -> str:
     </body>
     </html>
     """
+
+def obtener_venta_id_por_comprobante(nro_comprobante):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT v.id
+        FROM venta v
+        WHERE v.nro_comprobante = %s
+          AND v.estado = 'EMITIDA'
+        LIMIT 1
+    """, (nro_comprobante.strip(),))
+
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    return row[0] if row else None
