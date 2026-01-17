@@ -377,20 +377,40 @@ def generar_ticket_html(venta_id: int, ancho_mm: int = 80) -> str:
     </html>
     """
 
-def obtener_venta_id_por_comprobante(nro_comprobante):
+def buscar_comprobantes(nro_comprobante):
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("""
-        SELECT v.id
-        FROM venta v
-        WHERE v.nro_comprobante = %s
-          AND v.estado = 'EMITIDA'
-        LIMIT 1
-    """, (nro_comprobante.strip(),))
+    nro = nro_comprobante.strip().upper()
 
-    row = cur.fetchone()
+    if "*" in nro:
+        patron = nro.replace("*", "%")
+
+        cur.execute("""
+            SELECT v.id,
+                   v.nro_comprobante,
+                   v.fecha,
+                   v.total
+            FROM venta v
+            WHERE v.nro_comprobante LIKE %s
+              AND v.estado = 'EMITIDA'
+            ORDER BY v.fecha DESC
+        """, (patron,))
+        rows = cur.fetchall()
+    else:
+        cur.execute("""
+            SELECT v.id,
+                   v.nro_comprobante,
+                   v.fecha,
+                   v.total
+            FROM venta v
+            WHERE v.nro_comprobante = %s
+              AND v.estado = 'EMITIDA'
+            LIMIT 1
+        """, (nro,))
+        rows = cur.fetchall()
+
     cur.close()
     conn.close()
 
-    return row[0] if row else None
+    return rows

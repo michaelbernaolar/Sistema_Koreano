@@ -20,8 +20,8 @@ from services.venta_service import (
     inicializar_estado_venta, resetear_venta, precio_valido
 )
 from services.comprobante_service import (
-    generar_ticket_html, obtener_siguiente_correlativo,
-    generar_ticket_pdf, registrar_reimpresion, obtener_venta_id_por_comprobante
+    generar_ticket_html, obtener_siguiente_correlativo, buscar_comprobantes,
+    generar_ticket_pdf, registrar_reimpresion
 )
 
 def to_float(value, default=0.0):
@@ -532,25 +532,49 @@ def ventas_app():
 
         nro_comprobante = st.text_input(
             "Número de comprobante",
-            placeholder="Ej: T-000123, B-000045, F-000010"
+            placeholder="Ej: T-00005, T*05, T*05*"
         ).strip()
 
-        # Buscar automáticamente cuando hay valor
         if nro_comprobante:
-            venta_id = obtener_venta_id_por_comprobante(nro_comprobante)
+            resultados = buscar_comprobantes(nro_comprobante)
 
-            if venta_id:
-                st.session_state["ver_comprobante_id"] = venta_id
-                st.session_state["error_comprobante"] = None
+            if not resultados:
+                st.session_state.pop("ver_comprobante_id", None)
+                st.session_state["resultados_comprobantes"] = []
+                st.error("❌ Comprobante no encontrado")
+
+            elif len(resultados) == 1:
+                st.session_state["ver_comprobante_id"] = resultados[0][0]
+                st.session_state["resultados_comprobantes"] = []
+
             else:
                 st.session_state.pop("ver_comprobante_id", None)
-                st.session_state["error_comprobante"] = "❌ Comprobante no encontrado"
+                st.session_state["resultados_comprobantes"] = resultados
 
-        # Mensaje de error
-        if st.session_state.get("error_comprobante"):
-            st.error(st.session_state["error_comprobante"])
+        # --- TABLA DE RESULTADOS (cuando hay varios) ---
+        if st.session_state.get("resultados_comprobantes"):
+            st.info("🔎 Se encontraron varios comprobantes")
 
-        # Mostrar comprobante
+            df = pd.DataFrame(
+                st.session_state["resultados_comprobantes"],
+                columns=["ID", "Comprobante", "Fecha", "Total"]
+            )
+
+            seleccion = st.dataframe(
+                df,
+                hide_index=True,
+                use_container_width=True,
+                on_select="rerun",
+                selection_mode="single-row"
+            )
+
+            if seleccion and seleccion["selection"]["rows"]:
+                fila = seleccion["selection"]["rows"][0]
+                vid = df.iloc[fila]["ID"]
+                st.session_state["ver_comprobante_id"] = vid
+                st.session_state["resultados_comprobantes"] = []
+
+        # --- MOSTRAR COMPROBANTE ---
         if "ver_comprobante_id" in st.session_state:
             vid = st.session_state["ver_comprobante_id"]
 
@@ -576,7 +600,6 @@ def ventas_app():
                         file_name=ruta,
                         mime="application/pdf"
                     )
-
     # =======================
     # TAB 4: Reportes
     # =======================
