@@ -8,6 +8,12 @@ from db import obtener_configuracion
 from db import recalcular_precios_producto
 from db import registrar_historial_precio
 
+from modulos.ventas import to_float
+from services.producto_service import (
+    buscar_producto_avanzado, contar_productos,
+    obtener_filtros_productos
+)
+
 def compras_app():
     conn = get_connection()
     # Leer configuración general
@@ -66,100 +72,163 @@ def compras_app():
 
             st.markdown("### ➕ Agregar producto a la compra")
 
-            # --- Filtros de producto ---
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                filtro_codigo = st.text_input("🔍Código")
+            df_filtros = obtener_filtros_productos()
+
+            col1, col2, col3 = st.columns(3)
+
+            # --- CATEGORÍA (primer filtro) ---
             with col2:
-                filtro_desc = st.text_input("🔍Descripción")
+                categorias = ["Todos"] + sorted(
+                    df_filtros["categoria"].dropna().unique().tolist()
+                )
+                filtro_categoria = st.selectbox("Categoría", categorias)
+
+                if filtro_categoria != "Todos":
+                    df_filtros = df_filtros[df_filtros["categoria"] == filtro_categoria]
+
+            # --- MARCA (depende de categoría) ---
+            with col1:
+                marcas = ["Todos"] + sorted(
+                    df_filtros["marca"].dropna().unique().tolist()
+                )
+                filtro_marca = st.selectbox("Marca", marcas)
+
+                if filtro_marca != "Todos":
+                    df_filtros = df_filtros[df_filtros["marca"] == filtro_marca]
+
+            # --- STOCK (depende de los dos anteriores) ---
             with col3:
-                filtro_marca = st.text_input("🔍Marca")
-            with col4:
-                filtro_catalogo = st.text_input("🔍Catálogo")
+                filtro_stock = st.selectbox(
+                    "Stock",
+                    ["Todos", "Con stock", "Sin stock"]
+                )
+            criterio = st.text_input("Buscar por palabra clave (código, descripción, modelo, etc.)")
 
-            # --- Query dinámica ---
-            query_prod = "SELECT id, descripcion, marca, catalogo, unidad_base, stock_actual FROM producto WHERE 1=1"
-            params = []
+            LIMITE_INICIAL = 20
 
-            if filtro_codigo:
-                query_prod += " AND id LIKE %s"; params.append(f"%{filtro_codigo}%")
-            if filtro_desc:
-                query_prod += " AND descripcion LIKE %s"; params.append(f"%{filtro_desc}%")
-            if filtro_marca:
-                query_prod += " AND marca LIKE %s"; params.append(f"%{filtro_marca}%")
-            if filtro_catalogo:
-                query_prod += " AND catalogo LIKE %s"; params.append(f"%{filtro_catalogo}%")
+            hay_filtros = any([
+                bool(criterio),
+                filtro_marca != "Todos",
+                filtro_categoria != "Todos",
+                filtro_stock != "Todos"
+            ])
 
-            df_prod_filtrado = pd.read_sql_query(query_prod + " ORDER BY descripcion", conn, params=params)
+            df_prod = pd.DataFrame()
+            total_productos = 0
 
-            if df_prod_filtrado.empty:
-                st.warning("⚠️ No se encontraron productos con esos filtros.")
-            else:
-                producto_sel = st.selectbox(
-                    "📦 Selecciona un producto",
-                    [
-                        f"{row['id']} | {row['descripcion']} | Marca: {row['marca']} | "
-                        f"Catálogo: {row['catalogo']} | Unidad Base: {row['unidad_base']} | Stock: {row['stock_actual']}"
-                        for _, row in df_prod_filtrado.iterrows()
-                    ]
+            if hay_filtros:
+                total_productos = contar_productos(
+                    criterio,
+                    filtro_marca,
+                    filtro_categoria,
+                    filtro_stock
                 )
 
-                id_producto, desc_producto, marca_str, catalogo_str, unidad_base_str, stock_str = producto_sel.split(" | ")
-                id_producto = id_producto.strip()
-                desc_producto = desc_producto.strip()
-                unidad_base = unidad_base_str.replace("Unidad Base: ", "").strip()
+                ver_todos = st.checkbox(f"📄 Ver todos los resultados ({total_productos})")
 
-                # Buscar unidades de compra registradas
+                limite = total_productos if ver_todos else LIMITE_INICIAL
+
+                df_prod = buscar_producto_avanzado(
+                    criterio,
+                    filtro_marca,
+                    filtro_categoria,
+                    filtro_stock,
+                    limit=limite
+                )
+
+            if df_prod.empty: 
+                st.warning("⚠️ No hay productos disponibles con esos filtros.")
+
+            else:
+                # ==============================
+                # SELECCIÓN DEL PRODUCTO
+                # ==============================
+                productos_dict = {
+                    f"{row.id} | {row.descripcion}": row
+                    for row in df_prod.itertuples()
+                }
+
+                producto_sel = st.selectbox(
+                    "📦 Selecciona un producto",
+                    list(productos_dict.keys())
+                )
+
+                row = productos_dict[producto_sel]
+
+                id_producto = row.id
+                desc_producto = row.descripcion
+                stock_disp = to_float(row.stock_actual)
+
+                # ==============================
+                # RELACIÓN PRODUCTO–PROVEEDOR
+                # ==============================
                 df_rel = pd.read_sql_query("""
                     SELECT unidad_compra, factor, precio_compra 
                     FROM producto_proveedor 
                     WHERE id_producto=%s AND id_proveedor=%s
                 """, conn, params=[id_producto, id_proveedor])
-                
-                #Unidad de compra y factor
+
+                # ==============================
+                # UNIDAD DE COMPRA
+                # ==============================
                 if not df_rel.empty:
                     unidad_opciones = df_rel["unidad_compra"].tolist() + ["Otro"]
-                    
-                    col1, col2 = st.columns([1, 1])
+
+                    col1, col2 = st.columns(2)
                     with col1:
                         unidad_compra = st.selectbox("📏 Unidad de compra", unidad_opciones)
                     with col2:
                         if unidad_compra != "Otro":
-                            factor = float(df_rel[df_rel["unidad_compra"] == unidad_compra]["factor"].iloc[0])
-                            st.text_input("🔢 Factor conversión a unidad base", value=factor, disabled=True)
+                            factor = float(
+                                df_rel[df_rel["unidad_compra"] == unidad_compra]["factor"].iloc[0]
+                            )
+                            st.text_input("🔢 Factor conversión", value=factor, disabled=True)
                         else:
-                            factor = st.number_input("🔢 Factor conversión a unidad base", min_value=1.0, step=1.0)
+                            factor = st.number_input("🔢 Factor conversión", min_value=1.0, step=1.0)
                 else:
-                    col1, col2 = st.columns([1, 1])
+                    col1, col2 = st.columns(2)
                     with col1:
-                        unidad_compra = st.text_input("📏 Unidad de compra (Ejm Caja)")
+                        unidad_compra = st.text_input("📏 Unidad de compra")
                     with col2:
-                        factor = st.number_input("🔢 Factor conversión a unidad base", min_value=1.0, step=1.0)
+                        factor = st.number_input("🔢 Factor conversión", min_value=1.0, step=1.0)
 
-                #Precio y cantidad de compra
-                col1, col2 = st.columns([1, 1])
-                with col1:
-                    cantidad_compra = st.number_input("📌 Cantidad (unidad de compra)", min_value=1.0, step=1.0)
-                with col2:
-                    precio_unitario = st.number_input("💲 Precio por unidad de compra", min_value=0.01, step=0.10)
-                               
+                # ==============================
+                # CANTIDAD Y PRECIO
+                # ==============================
+                col_cant, col_prec = st.columns(2)
+
+                with col_cant:
+                    cantidad_compra = st.number_input(
+                        "📌 Cantidad (unidad compra)",
+                        min_value=1.0,
+                        step=1.0,
+                        value=1.0
+                    )
+
+                with col_prec:
+                    precio_unitario = st.number_input(
+                        "💲 Precio por unidad",
+                        min_value=0.01,
+                        step=0.10,
+                        value=0.10
+                    )
 
                 if st.button("➕ Agregar al carrito"):
-                    cantidad_final = cantidad_compra * factor
-                    precio_sin_igv = precio_unitario
-                    subtotal = precio_sin_igv * cantidad_compra
+                        cantidad_final = cantidad_compra * factor
+                        precio_sin_igv = precio_unitario
+                        subtotal = precio_sin_igv * cantidad_compra
 
-                    st.session_state.carrito_compras.append({
-                        "ID Producto": id_producto,
-                        "Descripción": desc_producto,
-                        "Unidad Compra": unidad_compra,
-                        "Factor": factor,
-                        "Cantidad Compra": cantidad_compra,
-                        "Cantidad Final": cantidad_final,
-                        "Precio U. Compra": round(precio_sin_igv, 2),
-                        "Subtotal": round(subtotal, 2)
-                    })
-                    st.success(f"✅ {cantidad_compra} {unidad_compra} de {desc_producto} agregado al carrito")
+                        st.session_state.carrito_compras.append({
+                            "ID Producto": id_producto,
+                            "Descripción": desc_producto,
+                            "Unidad Compra": unidad_compra,
+                            "Factor": factor,
+                            "Cantidad Compra": cantidad_compra,
+                            "Cantidad Final": cantidad_final,
+                            "Precio U. Compra": round(precio_sin_igv, 2),
+                            "Subtotal": round(subtotal, 2)
+                        })
+                        st.success(f"✅ {cantidad_compra} {unidad_compra} de {desc_producto} agregado al carrito")    
 
             # === Mostrar carrito y totales ===
             if st.session_state.carrito_compras:
