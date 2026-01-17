@@ -259,16 +259,20 @@ def compras_app():
                     igv = 0.0
                     total = op_gravada
 
-
                 # Mostrar resumen
                 st.markdown("### 💰 Resumen de la Compra")
-                col1, col2 = st.columns([2, 1])
+
+                col1, col2, col3, col4, col5 = st.columns(5)
+                with col1:
+                    st.metric("💵 Valor Venta", f"S/. {suma_total:,.2f}")
                 with col2:
-                    st.metric("Valor de Venta", f"S/. {suma_total:,.2f}")
-                    st.metric("Total Descuento", f"S/. {descuento:,.2f}")
-                    st.metric("Op. Gravada", f"S/. {op_gravada:,.2f}")
-                    st.metric("I.G.V (18%)", f"S/. {igv:,.2f}")
-                    st.metric("Total Venta", f"S/. {total:,.2f}")
+                    st.metric("🧾 Total Descuento", f"S/. {descuento:,.2f}")
+                with col3:
+                    st.metric("💰 Op. Gravada", f"S/. {op_gravada:,.2f}")
+                with col4:
+                    st.metric("💸 IGV (18%)", f"S/. {igv:,.2f}")
+                with col5:
+                    st.metric("🧾 Total", f"S/. {total:,.2f}")
 
                 # Botones de acción
                 col1, col2 = st.columns(2)
