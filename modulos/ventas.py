@@ -55,10 +55,12 @@ def ventas_app():
         )
         if tipo_venta == "POS":
             st.session_state.pop("venta_abierta_id", None)
+
         # ===============================
         # SERVICIOS / VENTAS EN CURSO
         # ===============================
         st.subheader("🛠 Servicios en curso")
+        df_abiertas = pd.DataFrame()  # ← CLAVE
 
         if tipo_venta == "Taller":
             df_abiertas = obtener_ventas_abiertas()
@@ -67,16 +69,15 @@ def ventas_app():
                 st.subheader("🛠 Servicios en proceso")
                 st.dataframe(df_abiertas)
 
-        if not df_abiertas.empty:
-            venta_sel = st.selectbox(
-                "Selecciona una orden abierta",
-                df_abiertas["id"].tolist(),
-                format_func=lambda x: f"Orden #{x}"
-            )
+                venta_sel = st.selectbox(
+                    "Selecciona una orden abierta",
+                    df_abiertas["id"].tolist(),
+                    format_func=lambda x: f"Orden #{x}"
+                )
 
-            st.session_state["venta_abierta_id"] = venta_sel
-        else:
-            st.info("No hay servicios en curso")
+                st.session_state["venta_abierta_id"] = venta_sel
+            else:
+                st.info("No hay servicios en curso")
 
         col1, col2 = st.columns([3, 1])
         with col1:
