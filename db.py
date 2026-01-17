@@ -84,6 +84,7 @@ def init_db():
         valor_inventario NUMERIC(14,2),
         margen_utilidad NUMERIC(5,4) DEFAULT NULL,
         valor_venta NUMERIC(12,2) DEFAULT NULL,
+        codigo_barras TEXT UNIQUE,
         FOREIGN KEY (id_categoria) REFERENCES categoria(id)
     )
     ''')
