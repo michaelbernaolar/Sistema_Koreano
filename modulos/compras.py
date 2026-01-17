@@ -148,7 +148,7 @@ def compras_app():
                 # SELECCIÓN DEL PRODUCTO
                 # ==============================
                 productos_dict = {
-                    f"{row.id} | {row.descripcion} | {row.stock_actual}": row
+                    f"{row.id} | {row.descripcion} | Stock: {row.stock_actual}": row
                     for row in df_prod.itertuples()
                 }
 
