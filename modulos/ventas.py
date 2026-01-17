@@ -16,7 +16,7 @@ from services.producto_service import (
     obtener_filtros_productos, to_float
 )
 from services.venta_service import (
-    calcular_totales, guardar_venta, agregar_item_venta,
+    calcular_totales, guardar_venta, agregar_item_venta, obtener_valor_venta,
     inicializar_estado_venta, resetear_venta, precio_valido, obtener_ventas_abiertas
 )
 from services.comprobante_service import (
@@ -47,12 +47,25 @@ def ventas_app():
     # ========================
     with tabs[0]:
         st.session_state.setdefault("carrito_ventas", [])
+
+        tipo_venta = st.radio(
+            "Tipo de venta",
+            ["POS", "Taller"],
+            horizontal=True
+        )
+        if tipo_venta == "POS":
+            st.session_state.pop("venta_abierta_id", None)
         # ===============================
         # SERVICIOS / VENTAS EN CURSO
         # ===============================
         st.subheader("🛠 Servicios en curso")
 
-        df_abiertas = obtener_ventas_abiertas()
+        if tipo_venta == "Taller":
+            df_abiertas = obtener_ventas_abiertas()
+
+            if not df_abiertas.empty:
+                st.subheader("🛠 Servicios en proceso")
+                st.dataframe(df_abiertas)
 
         if not df_abiertas.empty:
             venta_sel = st.selectbox(
@@ -136,7 +149,7 @@ def ventas_app():
                     max_chars=10
                 ).upper()
 
-                # ===============================
+        # ===============================
         # ABRIR ORDEN DE SERVICIO
         # ===============================
         from services.venta_service import crear_venta_abierta
@@ -261,9 +274,7 @@ def ventas_app():
 
             # --- Validar y asegurar precio base correcto ---
             try:
-                precio_base = max(to_float(row.precio_venta, 0.01), 0.01)
-                if precio_base <= 0:
-                    precio_base = 0.01
+                precio_base = max(to_float(row.precio_venta, 0.0), 0.0)
             except (ValueError, TypeError):
                 precio_base = 0.01
 
@@ -291,7 +302,7 @@ def ventas_app():
             with col_prec:
                 precio_unit = st.number_input(
                     "💰 Precio de venta unitario",
-                    min_value=0.01,
+                    min_value=0.0,
                     step=0.10,
                     value=precio_base,
                     format="%.2f"
@@ -306,20 +317,30 @@ def ventas_app():
             else:
                 boton_carrito = True
 
-            if st.button(
-                "➕ Agregar a la orden",
-                disabled=not boton_carrito
-            ):
-                if "venta_abierta_id" not in st.session_state:
-                    st.error("❌ Primero debes abrir una orden de servicio")
-                else:
+            if st.button("➕ Agregar a la venta", disabled=not boton_carrito):
+                if tipo_venta == "Taller":
+                    df_abiertas = obtener_ventas_abiertas()
+                    if "venta_abierta_id" not in st.session_state:
+                        st.error("❌ Primero debes abrir una orden de servicio")
+                        st.stop()
+
                     agregar_item_venta(
                         id_venta=st.session_state["venta_abierta_id"],
                         id_producto=id_producto,
                         cantidad=cantidad,
                         precio_unit=precio_unit
                     )
-                    st.success(f"✅ Producto agregado a la orden #{st.session_state['venta_abierta_id']}")
+
+                else:  # POS
+                    st.session_state.carrito_ventas.append({
+                        "ID Producto": id_producto,
+                        "Descripción": desc_producto,
+                        "Cantidad": cantidad,
+                        "Precio Unitario": precio_unit,
+                        "Subtotal": round(cantidad * precio_unit, 2)
+                    })
+
+                st.success("Producto agregado correctamente")
 
         # --- Mostrar carrito ---
         if st.session_state.carrito_ventas or st.session_state.get("venta_guardada"):
@@ -331,9 +352,14 @@ def ventas_app():
             if not df_carrito.empty:
                 st.dataframe(df_carrito, width="stretch", hide_index=True)
 
-                # --- Calcular totales ---
-                valor_venta_float = to_float(df_carrito["Subtotal"].sum())
-                valor_venta_dec = Decimal(str(valor_venta_float))
+                if tipo_venta == "POS":
+                    valor_venta_dec = obtener_valor_venta(
+                        carrito=st.session_state.carrito_ventas
+                    )
+                else:
+                    valor_venta_dec = obtener_valor_venta(
+                        id_venta=st.session_state["venta_abierta_id"]
+                    )
             else:
                 st.info("🧹 Carrito vacío")
                 valor_venta = 0.0
@@ -435,7 +461,8 @@ def ventas_app():
                         vuelto=vuelto,
                         carrito=st.session_state.carrito_ventas,
                         usuario=usuario, 
-                        id_caja=st.session_state["caja_abierta_id"]
+                        id_caja=st.session_state["caja_abierta_id"],
+                        id_venta_existente=st.session_state.get("venta_abierta_id")
                     )
 
                     st.session_state["venta_actual_id"] = id_venta

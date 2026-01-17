@@ -48,7 +48,8 @@ def guardar_venta(
     vuelto,
     carrito,
     usuario,
-    id_caja
+    id_caja,
+    id_venta_existente=None
 ):
     fecha = obtener_fecha_lima()
 
@@ -61,10 +62,17 @@ def guardar_venta(
         return Decimal(str(value))
 
     # Calcular totales correctamente
-    valor_venta: Decimal = sum(
-        (Decimal(str(i["Subtotal"])) for i in carrito),
-        Decimal("0.00")
-    )
+    if id_venta_existente:
+        df = query_df(
+            "SELECT COALESCE(SUM(sub_total),0) total FROM venta_detalle WHERE id_venta=%s",
+            (id_venta_existente,)
+        )
+        valor_venta = Decimal(str(df.iloc[0]["total"]))
+    else:
+        valor_venta = sum(
+            (Decimal(str(i["Subtotal"])) for i in carrito),
+            Decimal("0.00")
+        )
     tot = calcular_totales(valor_venta, regimen)
 
     # 🔒 Normalizar totales (evita np.float64)
@@ -96,31 +104,60 @@ def guardar_venta(
     # ----------------------
     # Insertar venta
     # ----------------------
-    cursor.execute("""
-        INSERT INTO venta (
-            fecha, id_cliente, id_usuario,
-            suma_total, op_gravada, igv, total,
-            tipo_comprobante, metodo_pago, nro_comprobante,
-            placa_vehiculo, pago_cliente, vuelto, id_caja, estado
-        )
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'EMITIDA')
-        RETURNING id
-    """, (
-        fecha,
-        cliente["id"],
-        int(usuario["id"]),
-        tot["valor_venta"],
-        tot["op_gravada"],
-        tot["igv"],
-        tot["total"],
-        tipo_comprobante,
-        metodo_pago,
-        nro_comprobante,
-        placa_vehiculo,
-        pago_cliente_db,
-        vuelto_db,
-        id_caja
-    ))
+    if id_venta_existente:
+        cursor.execute("""
+            UPDATE venta
+            SET
+                suma_total = %s,
+                op_gravada = %s,
+                igv = %s,
+                total = %s,
+                tipo_comprobante = %s,
+                metodo_pago = %s,
+                nro_comprobante = %s,
+                pago_cliente = %s,
+                vuelto = %s,
+                estado = 'EMITIDA'
+            WHERE id = %s
+            RETURNING id
+        """, (
+            tot["valor_venta"],
+            tot["op_gravada"],
+            tot["igv"],
+            tot["total"],
+            tipo_comprobante,
+            metodo_pago,
+            nro_comprobante,
+            pago_cliente_db,
+            vuelto_db,
+            id_venta_existente
+        ))
+    else:
+        cursor.execute("""
+            INSERT INTO venta (
+                fecha, id_cliente, id_usuario,
+                suma_total, op_gravada, igv, total,
+                tipo_comprobante, metodo_pago, nro_comprobante,
+                placa_vehiculo, pago_cliente, vuelto, id_caja, estado
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'EMITIDA')
+            RETURNING id
+        """, (
+            fecha,
+            cliente["id"],
+            int(usuario["id"]),
+            tot["valor_venta"],
+            tot["op_gravada"],
+            tot["igv"],
+            tot["total"],
+            tipo_comprobante,
+            metodo_pago,
+            nro_comprobante,
+            placa_vehiculo,
+            pago_cliente_db,
+            vuelto_db,
+            id_caja
+        ))
 
     row = cursor.fetchone()
     if row is None:
@@ -139,6 +176,7 @@ def guardar_venta(
         )
         VALUES (%s, %s, %s, 'EMITIDO', %s, %s)
         ON CONFLICT (tipo, serie, numero) DO NOTHING
+        DO UPDATE SET id_venta = EXCLUDED.id_venta
     """, (
         tipo_comprobante.upper(),
         serie,
@@ -150,35 +188,36 @@ def guardar_venta(
     # ----------------------
     # Insertar detalle de venta y registrar salidas
     # ----------------------
-    for item in carrito:
-        cantidad = Decimal(str(item["Cantidad"]))
-        precio_unit = Decimal(str(item["Precio Unitario"]))
+    if not id_venta_existente:
+        for item in carrito:
+            cantidad = Decimal(str(item["Cantidad"]))
+            precio_unit = Decimal(str(item["Precio Unitario"]))
 
-        if "Nuevo RUS" not in regimen:
-            precio_unit = (precio_unit / Decimal("1.18")).quantize(Decimal("0.01"))
+            if "Nuevo RUS" not in regimen:
+                precio_unit = (precio_unit / Decimal("1.18")).quantize(Decimal("0.01"))
 
-        subtotal = (precio_unit * cantidad).quantize(Decimal("0.01"))
+            subtotal = (precio_unit * cantidad).quantize(Decimal("0.01"))
 
-        cursor.execute("""
-            INSERT INTO venta_detalle
-            (id_venta, id_producto, cantidad, precio_unitario, sub_total, precio_final)
-            VALUES (%s,%s,%s,%s,%s,%s)
-        """, (
-            id_venta,
-            item["ID Producto"],
-            cantidad,
-            precio_unit,
-            subtotal,
-            subtotal
-        ))
+            cursor.execute("""
+                INSERT INTO venta_detalle
+                (id_venta, id_producto, cantidad, precio_unitario, sub_total, precio_final)
+                VALUES (%s,%s,%s,%s,%s,%s)
+            """, (
+                id_venta,
+                item["ID Producto"],
+                cantidad,
+                precio_unit,
+                subtotal,
+                subtotal
+            ))
 
-        registrar_salida_por_venta(
-            cursor,
-            item["ID Producto"],
-            cantidad,
-            fecha,
-            f"Venta {nro_comprobante}"
-        )
+            registrar_salida_por_venta(
+                cursor,
+                item["ID Producto"],
+                cantidad,
+                fecha,
+                f"Venta {nro_comprobante}"
+            )
 
     # ----------------------
     # Registrar ingreso en caja
@@ -218,7 +257,7 @@ def resetear_venta(state):
     state.pop("venta_actual_id", None)
 
 def precio_valido(precio, costo):
-    return precio >= costo
+    return precio >= 0
 
 def anular_venta(venta_id, motivo, usuario):
     conn = get_connection()
@@ -454,3 +493,19 @@ def obtener_ventas_abiertas():
         WHERE v.estado = 'ABIERTA'
         ORDER BY v.fecha
     """)
+
+def obtener_valor_venta(carrito=None, id_venta=None):
+    if carrito is not None:
+        return sum(
+            (Decimal(str(i["Subtotal"])) for i in carrito),
+            Decimal("0.00")
+        )
+
+    if id_venta is not None:
+        df = query_df(
+            "SELECT COALESCE(SUM(sub_total),0) total FROM venta_detalle WHERE id_venta=%s",
+            (id_venta,)
+        )
+        return Decimal(str(df.iloc[0]["total"]))
+
+    return Decimal("0.00")
