@@ -525,9 +525,9 @@ def ventas_app():
                 except Exception as e:
                     st.error(str(e))
 
-    # ========================
+    # =======================
     # TAB 3: Reportes
-    # ========================
+    # =======================
     with tabs[2]:
         st.subheader("📊 Reportes de Ventas")
         tipo_reporte = st.selectbox("Selecciona reporte", ["Por cliente", "Por producto", "Diario", "Mensual"])
