@@ -175,8 +175,11 @@ def guardar_venta(
             tipo, serie, numero, estado, fecha, id_venta
         )
         VALUES (%s, %s, %s, 'EMITIDO', %s, %s)
-        ON CONFLICT (tipo, serie, numero) DO NOTHING
-        DO UPDATE SET id_venta = EXCLUDED.id_venta
+        ON CONFLICT (tipo, serie, numero)
+        DO UPDATE SET
+            id_venta = EXCLUDED.id_venta,
+            estado = 'EMITIDO',
+            fecha = EXCLUDED.fecha
     """, (
         tipo_comprobante.upper(),
         serie,
