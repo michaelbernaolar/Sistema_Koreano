@@ -238,7 +238,7 @@ def guardar_venta(
             tot["total"],
             f"Venta {nro_comprobante}",
             id_venta,
-            usuario["nombre"]
+            usuario["username"]
         ))
 
     conn.commit()
