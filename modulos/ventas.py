@@ -363,31 +363,25 @@ def ventas_app():
         else:
             st.info("🧹 Carrito vacío")
 
-            # Inicializar SIEMPRE
-            valor_venta_dec = Decimal("0.00") 
-            if not df_carrito.empty:
-                st.dataframe(df_carrito, width="stretch", hide_index=True)
+        valor_venta_dec = Decimal("0.00")
 
-                if tipo_venta == "POS":
-                    valor_venta_dec = obtener_valor_venta(
-                        carrito=st.session_state.carrito_ventas
-                    )
-                else:
-                    valor_venta_dec = obtener_valor_venta(
-                        id_venta=st.session_state["venta_abierta_id"]
-                    )
+        if not df_carrito.empty:
+            if tipo_venta == "POS":
+                valor_venta_dec = obtener_valor_venta(
+                    carrito=st.session_state.carrito_ventas
+                )
             else:
-                st.info("🧹 Carrito vacío")
-                valor_venta = 0.0
+                valor_venta_dec = obtener_valor_venta(
+                    id_venta=st.session_state["venta_abierta_id"]
+                )
 
             totales = calcular_totales(valor_venta_dec, regimen)
 
             op_gravada = float(totales["op_gravada"])
             igv = float(totales["igv"])
             total = float(totales["total"])
-            suma_total = float(totales["valor_venta"])
 
-            # Mostrar métricas
+            # 5️⃣ Mostrar métricas
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                 st.metric("💵 Valor Venta", f"S/. {valor_venta_dec:,.2f}")
