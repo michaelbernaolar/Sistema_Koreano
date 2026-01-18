@@ -395,42 +395,45 @@ def ventas_app():
             # ============================
             # Calculadora de cambio (solo efectivo)
             # ============================
-            vuelto = 0.0  # valor por defecto
-            boton_guardar = False
-            pago_cliente = None
+            st.session_state.setdefault("pago_cliente", None)
+            st.session_state.setdefault("boton_guardar", False)
+            st.session_state.setdefault("vuelto", 0.0)
 
             if metodo_pago == "Efectivo":
                 st.subheader("💵 Pago en efectivo")
 
                 pago_cliente_txt = st.text_input(
                     "💰 Monto entregado por el cliente",
+                    key="pago_cliente_input",
                     placeholder="Ingrese monto entregado"
                 )
 
-                if pago_cliente_txt.strip() != "":
+                if pago_cliente_txt.strip():
                     try:
-                        pago_cliente = float(pago_cliente_txt)
+                        pago = float(pago_cliente_txt)
 
-                        if pago_cliente < total:
+                        if pago < total:
                             st.warning(
                                 f"⚠️ El pago es menor al total a cobrar (S/. {total:,.2f})"
                             )
-                            boton_guardar = False
+                            st.session_state["boton_guardar"] = False
                         else:
-                            vuelto = round(pago_cliente - total, 2)
-                            st.success(
-                                f"💸 Vuelto a entregar: S/. {vuelto:,.2f}"
-                            )
-                            boton_guardar = True
+                            vuelto = round(pago - total, 2)
+                            st.success(f"💸 Vuelto a entregar: S/. {vuelto:,.2f}")
+
+                            st.session_state["pago_cliente"] = pago
+                            st.session_state["vuelto"] = vuelto
+                            st.session_state["boton_guardar"] = True
 
                     except ValueError:
                         st.error("❌ Ingrese un monto válido")
-                        boton_guardar = False
+                        st.session_state["boton_guardar"] = False
                 else:
-                    boton_guardar = False
+                    st.session_state["boton_guardar"] = False
             else:
-                # Métodos de pago no efectivo
-                boton_guardar = True
+                st.session_state["boton_guardar"] = True
+                st.session_state["pago_cliente"] = None
+                st.session_state["vuelto"] = None
             
             st.session_state.setdefault("venta_guardada", False)
             st.session_state.setdefault("pdf_generado", False)
@@ -451,7 +454,7 @@ def ventas_app():
                 if st.button(
                     "💾 Guardar venta",
                     type="primary",
-                    disabled=not boton_guardar or st.session_state["venta_guardada"]
+                    disabled=not st.session_state["boton_guardar"] or st.session_state["venta_guardada"]
                 ):
                     fecha = obtener_fecha_lima()
 
@@ -467,8 +470,8 @@ def ventas_app():
                         metodo_pago=metodo_pago,
                         nro_comprobante=nro_comprobante,
                         placa_vehiculo=placa_vehiculo,
-                        pago_cliente=pago_cliente,
-                        vuelto=vuelto,
+                        pago_cliente=st.session_state.get("pago_cliente"),
+                        vuelto=st.session_state.get("vuelto"),
                         carrito=st.session_state.carrito_ventas,
                         usuario=usuario, 
                         id_caja=st.session_state["caja_abierta_id"],
