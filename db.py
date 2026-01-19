@@ -722,33 +722,6 @@ def obtener_venta_por_id(id_venta):
         "tipo_comprobante": row[6],
     }
 
-# def obtener_detalle_venta(id_venta):
-#     conn = get_connection()
-#     cursor = conn.cursor()
-
-#     cursor.execute("""
-#         SELECT
-#             p.descripcion,
-#             d.cantidad,
-#             d.precio_final
-#         FROM public.venta_detalle d
-#         JOIN public.producto p ON p.id = d.id_producto
-#         WHERE d.id_venta = %s
-#         ORDER BY d.id
-#     """, (id_venta,))
-
-#     rows = cursor.fetchall()
-#     conn.close()
-
-#     return [
-#         {
-#             "producto": r[0],
-#             "cantidad": float(r[1]),
-#             "subtotal": float(r[2]),
-#         }
-#         for r in rows
-#     ]
-
 def obtener_fecha_lima(fecha=None):
     lima = pytz.timezone("America/Lima")
 

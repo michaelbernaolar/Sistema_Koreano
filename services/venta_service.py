@@ -483,7 +483,11 @@ def agregar_item_venta(id_venta, id_producto, cantidad, precio_unit):
 
 def obtener_ventas_abiertas():
     return query_df("""
-        SELECT v.id, c.nombre, v.placa_vehiculo, v.suma_total, v.fecha
+        SELECT 
+            v.id AS orden,
+            c.nombre AS cliente,
+            v.placa_vehiculo AS placa,
+            v.fecha
         FROM venta v
         JOIN cliente c ON c.id = v.id_cliente
         WHERE v.estado = 'ABIERTA'

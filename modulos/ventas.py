@@ -62,15 +62,16 @@ def ventas_app():
         df_abiertas = pd.DataFrame()  # ← CLAVE
 
         if tipo_venta == "Taller":
+            df_abiertas["fecha"] = pd.to_datetime(df_abiertas["fecha"]).dt.strftime("%d/%m %H:%M")
             df_abiertas = obtener_ventas_abiertas()
 
             if not df_abiertas.empty:
                 st.subheader("🛠 Servicios en proceso")
-                st.dataframe(df_abiertas)
+                st.dataframe(df_abiertas, hide_index=True, use_container_width=True)
 
                 venta_sel = st.selectbox(
                     "Selecciona una orden abierta",
-                    df_abiertas["id"].tolist(),
+                    df_abiertas["orden"].tolist(),
                     format_func=lambda x: f"Orden #{x}"
                 )
 
