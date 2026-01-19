@@ -62,10 +62,10 @@ def ventas_app():
         df_abiertas = pd.DataFrame()  # ← CLAVE
 
         if tipo_venta == "Taller":
-            df_abiertas["fecha"] = pd.to_datetime(df_abiertas["fecha"]).dt.strftime("%d/%m %H:%M")
             df_abiertas = obtener_ventas_abiertas()
 
             if not df_abiertas.empty:
+                df_abiertas["fecha"] = pd.to_datetime(df_abiertas["fecha"]).dt.strftime("%d/%m %H:%M")
                 st.subheader("🛠 Servicios en proceso")
                 st.dataframe(df_abiertas, hide_index=True, use_container_width=True)
 
