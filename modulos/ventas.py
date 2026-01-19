@@ -244,10 +244,14 @@ def ventas_app():
         if df_prod.empty: 
             st.warning("⚠️ No hay productos disponibles con esos filtros.")
         else:
-            productos_dict = {
-                f"{row.id} | {row.descripcion} | Stock: {row.stock_actual:.2f}": row
-                for row in df_prod.itertuples()
-            }
+            productos_dict = {}
+            for row in df_prod.itertuples():
+                stock = to_float(row.stock_actual, 0.0)
+
+                stock_label = f"{stock:.2f}" if stock > 0 else "SIN STOCK"
+
+                label = f"{row.id} | {row.descripcion} | Stock: {stock_label}"
+                productos_dict[label] = row
             
             opciones = list(productos_dict.keys())
 
