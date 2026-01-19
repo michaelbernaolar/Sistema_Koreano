@@ -38,7 +38,10 @@ def ventas_app():
     if not usuario:
         st.error("❌ No hay un usuario autenticado")
         st.stop()
-        
+
+    st.session_state.setdefault("placa_vehiculo", "")
+    st.session_state.setdefault("venta_abierta_id", None)
+
     inicializar_estado_venta(st.session_state)
     tabs = st.tabs(["📝 Registrar Venta", "📋 Consultar Ventas", "📄 Comprobante", "📊 Reportes"])
 
@@ -55,6 +58,7 @@ def ventas_app():
         )
         if tipo_venta == "POS":
             st.session_state.pop("venta_abierta_id", None)
+            st.session_state["placa_vehiculo"] = ""
 
         # ===============================
         # SERVICIOS / VENTAS EN CURSO
@@ -73,10 +77,19 @@ def ventas_app():
                 venta_sel = st.selectbox(
                     "Selecciona una orden abierta",
                     df_abiertas["orden"].tolist(),
-                    format_func=lambda x: f"Orden #{x}"
+                    format_func=lambda x: f"Orden #{x}",
+                    key="select_orden"
                 )
 
-                st.session_state["venta_abierta_id"] = venta_sel
+                # Si cambia la orden, actualizar placa
+                if st.session_state.get("venta_abierta_id") != venta_sel:
+                    st.session_state["venta_abierta_id"] = venta_sel
+
+                    placa = df_abiertas.loc[
+                        df_abiertas["orden"] == venta_sel, "placa"
+                    ].values[0]
+
+                    st.session_state["placa_vehiculo"] = placa
 
                 df_detalle = obtener_detalle_venta(venta_sel)
 
@@ -466,8 +479,13 @@ def ventas_app():
                     if "caja_abierta_id" not in st.session_state:
                         st.error("❌ No hay caja abierta")
                         st.stop()
-                    fecha = obtener_fecha_lima()
 
+                    if tipo_venta == "Taller" and not st.session_state["placa_vehiculo"]:
+                        st.error("❌ La orden de taller debe tener placa")
+                        st.stop()
+
+                    fecha = obtener_fecha_lima()
+                    
                     id_venta = guardar_venta(
                         fecha=fecha,
                         cliente=cliente,
