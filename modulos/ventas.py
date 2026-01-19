@@ -17,7 +17,7 @@ from services.producto_service import (
 )
 from services.venta_service import (
     calcular_totales, guardar_venta, agregar_item_venta, obtener_valor_venta, obtener_detalle_venta,
-    inicializar_estado_venta, resetear_venta, precio_valido, obtener_ventas_abiertas, crear_venta_abierta
+    inicializar_estado_venta, resetear_venta, precio_valido, obtener_ventas_abiertas, crear_venta_abierta, puede_guardar_venta
 )
 from services.comprobante_service import (
     generar_ticket_html, obtener_siguiente_correlativo, buscar_comprobantes,
@@ -59,7 +59,6 @@ def ventas_app():
         # ===============================
         # SERVICIOS / VENTAS EN CURSO
         # ===============================
-        st.subheader("🛠 Servicios en curso")
         df_abiertas = pd.DataFrame()  # ← CLAVE
 
         if tipo_venta == "Taller":
@@ -172,8 +171,6 @@ def ventas_app():
                 st.success(f"Orden de servicio #{id_venta} creada")
 
         # --- Carrito en sesión --
-        st.session_state.setdefault("carrito_ventas", [])
-
         st.markdown("### ➕ Agregar productos a la venta")
         df_filtros = obtener_filtros_productos()
 
@@ -395,50 +392,54 @@ def ventas_app():
             # ============================
             # Calculadora de cambio (solo efectivo)
             # ============================
-            st.session_state.setdefault("pago_cliente", None)
-            st.session_state.setdefault("boton_guardar", False)
-            st.session_state.setdefault("vuelto", 0.0)
+            pago_cliente_txt = None
+            pago_cliente = None
+            vuelto = None
 
             if metodo_pago == "Efectivo":
-                st.subheader("💵 Pago en efectivo")
-
                 pago_cliente_txt = st.text_input(
                     "💰 Monto entregado por el cliente",
-                    key="pago_cliente_input",
                     placeholder="Ingrese monto entregado"
                 )
 
-                if pago_cliente_txt.strip():
+                if pago_cliente_txt:
                     try:
-                        pago = float(pago_cliente_txt)
-
-                        if pago < total:
-                            st.warning(
-                                f"⚠️ El pago es menor al total a cobrar (S/. {total:,.2f})"
-                            )
-                            st.session_state["boton_guardar"] = False
+                        pago_cliente = float(pago_cliente_txt)
+                        if pago_cliente >= total:
+                            vuelto = round(pago_cliente - total, 2)
+                            st.success(f"💸 Vuelto: S/. {vuelto:,.2f}")
                         else:
-                            vuelto = round(pago - total, 2)
-                            st.success(f"💸 Vuelto a entregar: S/. {vuelto:,.2f}")
-
-                            st.session_state["pago_cliente"] = pago
-                            st.session_state["vuelto"] = vuelto
-                            st.session_state["boton_guardar"] = True
-
+                            st.warning("⚠️ El pago es menor al total")
                     except ValueError:
-                        st.error("❌ Ingrese un monto válido")
-                        st.session_state["boton_guardar"] = False
-                else:
-                    st.session_state["boton_guardar"] = False
-            else:
-                st.session_state["boton_guardar"] = True
-                st.session_state["pago_cliente"] = None
-                st.session_state["vuelto"] = None
+                        st.error("❌ Monto inválido")
             
             st.session_state.setdefault("venta_guardada", False)
             st.session_state.setdefault("pdf_generado", False)
             st.session_state.setdefault("ruta_pdf", None)
 
+            carrito_validacion = (
+                st.session_state.carrito_ventas
+                if tipo_venta == "POS"
+                else df_carrito.to_dict("records")
+            )
+
+            puede_guardar, motivo = puede_guardar_venta(
+                carrito=carrito_validacion,
+                metodo_pago=metodo_pago,
+                total=total,
+                pago_cliente_txt=pago_cliente_txt
+            )
+
+            # ============================
+            # VALIDACIÓN DE CAJA ABIERTA
+            # ============================
+            hay_caja_abierta = "caja_abierta_id" in st.session_state
+
+            disabled_guardar = (
+                not puede_guardar
+                or not hay_caja_abierta
+                or st.session_state.get("venta_guardada", False)
+            )
             # ============================
             # BOTONES EN UNA SOLA FILA
             # ============================
@@ -454,13 +455,12 @@ def ventas_app():
                 if st.button(
                     "💾 Guardar venta",
                     type="primary",
-                    disabled=not st.session_state["boton_guardar"] or st.session_state["venta_guardada"]
+                    disabled=disabled_guardar
                 ):
-                    fecha = obtener_fecha_lima()
-
                     if "caja_abierta_id" not in st.session_state:
                         st.error("❌ No hay caja abierta")
                         st.stop()
+                    fecha = obtener_fecha_lima()
 
                     id_venta = guardar_venta(
                         fecha=fecha,
@@ -470,19 +470,19 @@ def ventas_app():
                         metodo_pago=metodo_pago,
                         nro_comprobante=nro_comprobante,
                         placa_vehiculo=placa_vehiculo,
-                        pago_cliente=st.session_state.get("pago_cliente"),
-                        vuelto=st.session_state.get("vuelto"),
+                        pago_cliente=pago_cliente,
+                        vuelto=vuelto,
                         carrito=st.session_state.carrito_ventas,
-                        usuario=usuario, 
+                        usuario=usuario,
                         id_caja=st.session_state["caja_abierta_id"],
                         id_venta_existente=st.session_state.get("venta_abierta_id")
                     )
-
                     st.session_state["venta_actual_id"] = id_venta
                     st.session_state["venta_guardada"] = True
-
-                    st.success(f"✅ Venta registrada correctamente (ID: {id_venta})")
+                    st.success(f"✅ Venta registrada (ID {id_venta})")
                     st.rerun()
+                if not puede_guardar and motivo:
+                    st.info(f"ℹ️ {motivo}")
 
             with col3:
                 if st.button("🧾 Imprimir"):

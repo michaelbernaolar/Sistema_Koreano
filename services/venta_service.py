@@ -519,3 +519,26 @@ def obtener_detalle_venta(id_venta):
         WHERE d.id_venta = %s
         ORDER BY d.id
     """, (id_venta,))
+
+def puede_guardar_venta(
+    carrito,
+    metodo_pago,
+    total,
+    pago_cliente_txt
+):
+    if not carrito:
+        return False, "El carrito está vacío"
+
+    if metodo_pago == "Efectivo":
+        if not pago_cliente_txt:
+            return False, "Ingrese el monto entregado"
+
+        try:
+            pago = float(pago_cliente_txt)
+        except ValueError:
+            return False, "Monto entregado inválido"
+
+        if pago < total:
+            return False, "El pago es menor al total"
+
+    return True, None
