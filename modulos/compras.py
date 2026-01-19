@@ -144,21 +144,28 @@ def compras_app():
                 st.warning("⚠️ No hay productos disponibles con esos filtros.")
 
             else:
-                # ==============================
-                # SELECCIÓN DEL PRODUCTO
-                # ==============================
-                productos_dict = {
-                    f"{row.id} | {row.descripcion} | Stock: {row.stock_actual:.2f}": row
-                    for row in df_prod.itertuples()
-                }
+                productos_dict = {}
+                for row in df_prod.itertuples():
+                    stock = to_float(row.stock_actual, 0.0)
+
+                    stock_label = f"{stock:.2f}" if stock > 0 else "SIN STOCK"
+
+                    label = f"{row.id} | {row.descripcion} | Stock: {stock_label}"
+                    productos_dict[label] = row
+                
+                opciones = list(productos_dict.keys())
 
                 producto_sel = st.selectbox(
                     "📦 Selecciona un producto",
-                    list(productos_dict.keys())
+                    opciones,
+                    index=0 if opciones else None
                 )
 
-                row = productos_dict[producto_sel]
+                if producto_sel not in productos_dict:
+                    st.warning("🔄 La selección cambió, vuelve a elegir el producto.")
+                    st.stop()
 
+                row = productos_dict[producto_sel]
                 id_producto = row.id
                 desc_producto = row.descripcion
                 stock_disp = to_float(row.stock_actual)
