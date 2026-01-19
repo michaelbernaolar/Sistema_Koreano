@@ -32,7 +32,7 @@ def ventas_app():
             st.rerun()
         st.stop()
         
-    st.title("🛒 Registro y Consulta de Ventas")
+    st.title("🛒 Punto de venta")
     usuario = st.session_state.get("usuario")
 
     if not usuario:
@@ -66,6 +66,7 @@ def ventas_app():
 
             if not df_abiertas.empty:
                 df_abiertas["fecha"] = pd.to_datetime(df_abiertas["fecha"]).dt.strftime("%d/%m %H:%M")
+                
                 st.subheader("🛠 Servicios en proceso")
                 st.dataframe(df_abiertas, hide_index=True, use_container_width=True)
 
