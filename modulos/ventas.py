@@ -164,8 +164,9 @@ def ventas_app():
         with col3:
             placa_vehiculo = None
             if es_varios:
-                placa_vehiculo = st.text_input(
+                st.session_state["placa_vehiculo"] = st.text_input(
                     "🚗 Placa del vehículo (obligatoria)",
+                    value=st.session_state["placa_vehiculo"],
                     max_chars=10
                 ).upper()
 
@@ -173,12 +174,12 @@ def ventas_app():
         # ABRIR ORDEN DE SERVICIO
         # ===============================
         if st.button("🚗 Abrir orden de servicio"):
-            if not placa_vehiculo:
+            if not st.session_state["placa_vehiculo"]:
                 st.warning("Ingrese la placa del vehículo")
             else:
                 id_venta = crear_venta_abierta(
                     cliente_id=cliente_id,
-                    placa_vehiculo=placa_vehiculo,
+                    placa_vehiculo=st.session_state["placa_vehiculo"],
                     usuario_id=usuario["id"],
                     id_caja=st.session_state["caja_abierta_id"]
                 )
@@ -485,7 +486,7 @@ def ventas_app():
                         st.stop()
 
                     fecha = obtener_fecha_lima()
-                    
+
                     id_venta = guardar_venta(
                         fecha=fecha,
                         cliente=cliente,
@@ -493,7 +494,7 @@ def ventas_app():
                         tipo_comprobante=tipo_comprobante,
                         metodo_pago=metodo_pago,
                         nro_comprobante=nro_comprobante,
-                        placa_vehiculo=placa_vehiculo,
+                        placa_vehiculo=st.session_state["placa_vehiculo"],
                         pago_cliente=pago_cliente,
                         vuelto=vuelto,
                         carrito=st.session_state.carrito_ventas,
