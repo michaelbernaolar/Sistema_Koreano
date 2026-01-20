@@ -402,7 +402,6 @@ def ventas_app():
         
         # --- Eliminar producto del servicio (SOLO TALLER) ---
         if tipo_venta == "Taller" and not df_carrito.empty:
-            st.markdown("### ❌ Eliminar producto")
 
             col_sel, col_btn = st.columns([3, 1])
 
