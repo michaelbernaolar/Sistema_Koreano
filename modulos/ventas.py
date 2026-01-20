@@ -509,6 +509,7 @@ def ventas_app():
                         eliminar_items_servicio(st.session_state["venta_abierta_id"])
                         st.success("Servicio limpiado correctamente")
                         st.rerun() 
+            with col2:    
                 if st.button(
                     "💾 Guardar venta",
                     type="primary",
