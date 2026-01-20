@@ -85,7 +85,7 @@ def ventas_app():
                 df_abiertas["fecha"] = pd.to_datetime(df_abiertas["fecha"]).dt.strftime("%d/%m %H:%M")
                 
                 st.subheader("🛠 Servicios en proceso")
-                st.dataframe(df_abiertas, hide_index=True, width=True)
+                st.dataframe(df_abiertas, hide_index=True, width='stretch')
 
                 venta_sel = st.selectbox(
                     "Selecciona una orden abierta",
@@ -385,7 +385,7 @@ def ventas_app():
             if df_carrito.empty:
                 st.info("🧹 Carrito vacío")
             else:
-                st.dataframe(df_carrito, hide_index=True, width=True)
+                st.dataframe(df_carrito, hide_index=True, width='stretch')
 
         # --- TALLER ---
         else:
@@ -398,7 +398,7 @@ def ventas_app():
             if df_carrito.empty:
                 st.info("🧹 Carrito vacío")
             else:
-                st.dataframe(df_carrito, hide_index=True, width=True)
+                st.dataframe(df_carrito, hide_index=True, width='stretch')
         
         # --- Eliminar producto del servicio (SOLO TALLER) ---
         if tipo_venta == "Taller" and not df_carrito.empty:
@@ -649,7 +649,7 @@ def ventas_app():
         query += " ORDER BY v.fecha DESC"
         df_ventas = query_df(query, params)
 
-        st.dataframe(df_ventas, width="stretch", hide_index=True)
+        st.dataframe(df_ventas, width='stretch', hide_index=True)
 
         venta_id_anular = st.number_input(
             "ID de venta a anular",
