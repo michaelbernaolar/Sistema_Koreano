@@ -17,7 +17,8 @@ from services.producto_service import (
 )
 from services.venta_service import (
     calcular_totales, guardar_venta, agregar_item_venta, obtener_valor_venta, obtener_detalle_venta,
-    inicializar_estado_venta, resetear_venta, precio_valido, obtener_ventas_abiertas, crear_venta_abierta, puede_guardar_venta
+    inicializar_estado_venta, resetear_venta, precio_valido, obtener_ventas_abiertas, crear_venta_abierta, 
+    puede_guardar_venta, eliminar_item_servicio, eliminar_items_servicio
 )
 from services.comprobante_service import (
     generar_ticket_html, obtener_siguiente_correlativo, buscar_comprobantes,
@@ -380,18 +381,38 @@ def ventas_app():
 
         if tipo_venta == "POS":
             df_carrito = pd.DataFrame(st.session_state.carrito_ventas)
+
+            if not df_carrito.empty:
+                st.dataframe(df_carrito, hide_index=True)
+            else:
+                st.info("🧹 Carrito vacío")
+
+        # --- TALLER ---
         else:
-            df_carrito = df_carrito_taller if "df_carrito_taller" in locals() else pd.DataFrame()
             if "venta_abierta_id" not in st.session_state:
                 st.info("Abra o seleccione una orden de servicio")
                 df_carrito = pd.DataFrame()
             else:
                 df_carrito = obtener_detalle_venta(st.session_state["venta_abierta_id"])
 
-        if not df_carrito.empty:
-            st.dataframe(df_carrito, hide_index=True)
-        else:
-            st.info("🧹 Carrito vacío")
+            if not df_carrito.empty:
+                for _, row in df_carrito.iterrows():
+                    col1, col2, col3, col4, col5, col6 = st.columns([2, 3, 1, 1, 1, 0.6])
+
+                    col1.write(row["ID Producto"])
+                    col2.write(row["Descripción"])
+                    col3.write(row["Cantidad"])
+                    col4.write(f"S/. {row['Precio Unitario']:.2f}")
+                    col5.write(f"S/. {row['Subtotal']:.2f}")
+
+                    if col6.button("❌", key=f"del_{row['ID Producto']}"):
+                        eliminar_item_servicio(
+                            st.session_state["venta_abierta_id"],
+                            row["ID Producto"]
+                        )
+                        st.rerun()
+            else:
+                st.info("🧹 Carrito vacío")
 
         valor_venta_dec = Decimal("0.00")
 
@@ -482,6 +503,12 @@ def ventas_app():
                 if tipo_venta == "POS":
                     if st.button("🗑 Vaciar carrito", disabled=st.session_state["venta_guardada"]):
                         st.session_state.carrito_ventas = []
+
+                    if tipo_venta == "Taller":
+                        if st.button("🧹 Limpiar servicio completo"):
+                            eliminar_items_servicio(st.session_state["venta_abierta_id"])
+                            st.success("Servicio limpiado correctamente")
+                            st.rerun()
             with col2:
                 if st.button(
                     "💾 Guardar venta",
