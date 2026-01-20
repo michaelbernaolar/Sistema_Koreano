@@ -402,24 +402,25 @@ def ventas_app():
         
         # --- Eliminar producto del servicio (SOLO TALLER) ---
         if tipo_venta == "Taller" and not df_carrito.empty:
-            st.markdown("### ❌ Eliminar producto del servicio")
+            st.markdown("### ❌ Eliminar producto")
 
-            producto_eliminar = st.selectbox(
-                "Producto",
-                df_carrito["ID Producto"].tolist(),
-                format_func=lambda x: (
-                    f"{x} - "
-                    f"{df_carrito.loc[df_carrito['ID Producto'] == x, 'Descripción'].values[0]}"
-                )
-            )
+            col_sel, col_desc, col_btn = st.columns([2, 5, 2])
 
-            if st.button("Eliminar producto"):
-                eliminar_item_servicio(
-                    st.session_state["venta_abierta_id"],
-                    producto_eliminar
-                )
-                st.success("Producto eliminado correctamente")
-                st.rerun()
+            with col_sel:
+                producto_eliminar = st.selectbox("Código", df_carrito["ID Producto"].tolist(), label_visibility="collapsed")
+
+            with col_desc:
+                desc = df_carrito.loc[
+                    df_carrito["ID Producto"] == producto_eliminar,
+                    "Descripción"
+                ].values[0]
+                st.text_input("Descripción", value=desc, disabled=True, label_visibility="collapsed")
+
+            with col_btn:
+                if st.button("🗑 Eliminar", type="secondary"):
+                    eliminar_item_servicio(st.session_state["venta_abierta_id"], producto_eliminar)
+                    st.success("Producto eliminado")
+                    st.rerun()
 
         valor_venta_dec = Decimal("0.00")
 
