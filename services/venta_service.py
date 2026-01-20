@@ -559,27 +559,20 @@ def eliminar_items_servicio(id_venta):
     conn.commit()
     conn.close()
 
-def eliminar_items_servicio(id_venta):
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        DELETE FROM venta_detalle
-        WHERE id_venta = %s
-    """, (id_venta,))
-
-    conn.commit()
-    conn.close()
-
 def eliminar_item_servicio(id_venta, id_producto):
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
         DELETE FROM venta_detalle
-        WHERE id_venta = %s
-          AND id_producto = %s
-        LIMIT 1
+        WHERE ctid IN (
+            SELECT ctid
+            FROM venta_detalle
+            WHERE id_venta = %s
+              AND id_producto = %s
+            ORDER BY ctid
+            LIMIT 1
+        )
     """, (id_venta, id_producto))
 
     conn.commit()

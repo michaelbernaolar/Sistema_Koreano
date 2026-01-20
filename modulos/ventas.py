@@ -504,12 +504,11 @@ def ventas_app():
                     if st.button("🗑 Vaciar carrito", disabled=st.session_state["venta_guardada"]):
                         st.session_state.carrito_ventas = []
 
-                    if tipo_venta == "Taller":
-                        if st.button("🧹 Limpiar servicio completo"):
-                            eliminar_items_servicio(st.session_state["venta_abierta_id"])
-                            st.success("Servicio limpiado correctamente")
-                            st.rerun()
-            with col2:
+                if tipo_venta == "Taller":
+                    if st.button("🧹 Limpiar servicio completo"):
+                        eliminar_items_servicio(st.session_state["venta_abierta_id"])
+                        st.success("Servicio limpiado correctamente")
+                        st.rerun() 
                 if st.button(
                     "💾 Guardar venta",
                     type="primary",
@@ -702,7 +701,7 @@ def ventas_app():
             seleccion = st.dataframe(
                 df,
                 hide_index=True,
-                use_container_width=True,
+                width='stretch',
                 on_select="rerun",
                 selection_mode="single-row"
             )
