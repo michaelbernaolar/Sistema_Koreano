@@ -56,9 +56,21 @@ def ventas_app():
             ["POS", "Taller"],
             horizontal=True
         )
-        if tipo_venta == "POS":
+        # ===============================
+        # DETECTAR CAMBIO DE TIPO DE VENTA
+        # ===============================
+        tipo_anterior = st.session_state.get("tipo_venta_anterior")
+
+        if tipo_anterior != tipo_venta:
+            # Limpieza total al cambiar de modo
+            st.session_state["carrito_ventas"] = []
             st.session_state.pop("venta_abierta_id", None)
             st.session_state["placa_vehiculo"] = ""
+            st.session_state["venta_guardada"] = False
+            st.session_state["pdf_generado"] = False
+            st.session_state["ruta_pdf"] = None
+
+        st.session_state["tipo_venta_anterior"] = tipo_venta
 
         # ===============================
         # SERVICIOS / VENTAS EN CURSO
@@ -94,7 +106,7 @@ def ventas_app():
                 df_detalle = obtener_detalle_venta(venta_sel)
 
                 # Convertir a carrito visual (solo para mostrar)
-                st.session_state["carrito_ventas"] = df_detalle.to_dict("records")
+                df_carrito_taller = df_detalle.copy()
             else:
                 st.info("No hay servicios en curso")
 
@@ -369,6 +381,7 @@ def ventas_app():
         if tipo_venta == "POS":
             df_carrito = pd.DataFrame(st.session_state.carrito_ventas)
         else:
+            df_carrito = df_carrito_taller if "df_carrito_taller" in locals() else pd.DataFrame()
             if "venta_abierta_id" not in st.session_state:
                 st.info("Abra o seleccione una orden de servicio")
                 df_carrito = pd.DataFrame()
@@ -466,11 +479,9 @@ def ventas_app():
             col1, col2, col3, col4, col5, col6 = st.columns([1, 1.4, 1.4, 1.4, 1.4, 1])
 
             with col1:
-                if st.button(
-                    "🗑 Vaciar carrito",
-                    disabled=st.session_state["venta_guardada"]
-                ):
-                    st.session_state.carrito_ventas = []
+                if tipo_venta == "POS":
+                    if st.button("🗑 Vaciar carrito", disabled=st.session_state["venta_guardada"]):
+                        st.session_state.carrito_ventas = []
             with col2:
                 if st.button(
                     "💾 Guardar venta",
@@ -487,6 +498,11 @@ def ventas_app():
 
                     fecha = obtener_fecha_lima()
 
+                    carrito_guardar = (
+                        st.session_state.carrito_ventas
+                        if tipo_venta == "POS"
+                        else None  # Taller se guarda desde BD
+                    )
                     id_venta = guardar_venta(
                         fecha=fecha,
                         cliente=cliente,
@@ -497,7 +513,7 @@ def ventas_app():
                         placa_vehiculo=st.session_state["placa_vehiculo"],
                         pago_cliente=pago_cliente,
                         vuelto=vuelto,
-                        carrito=st.session_state.carrito_ventas,
+                        carrito=carrito_guardar,
                         usuario=usuario,
                         id_caja=st.session_state["caja_abierta_id"],
                         id_venta_existente=st.session_state.get("venta_abierta_id")
