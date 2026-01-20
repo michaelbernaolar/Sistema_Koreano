@@ -404,21 +404,22 @@ def ventas_app():
         if tipo_venta == "Taller" and not df_carrito.empty:
             st.markdown("### ❌ Eliminar producto")
 
-            col_sel, col_desc, col_btn = st.columns([2, 5, 2])
+            col_sel, col_btn = st.columns([3, 1])
 
             with col_sel:
-                producto_eliminar = st.selectbox("Código", df_carrito["ID Producto"].tolist(), label_visibility="collapsed")
-
-            with col_desc:
-                desc = df_carrito.loc[
-                    df_carrito["ID Producto"] == producto_eliminar,
-                    "Descripción"
-                ].values[0]
-                st.text_input("Descripción", value=desc, disabled=True, label_visibility="collapsed")
+                producto_eliminar = st.selectbox(
+                    "Código",
+                    df_carrito["ID Producto"].tolist(),
+                    help="Seleccione el código del producto a eliminar",
+                    label_visibility="collapsed"
+                )
 
             with col_btn:
                 if st.button("🗑 Eliminar", type="secondary"):
-                    eliminar_item_servicio(st.session_state["venta_abierta_id"], producto_eliminar)
+                    eliminar_item_servicio(
+                        st.session_state["venta_abierta_id"],
+                        producto_eliminar
+                    )
                     st.success("Producto eliminado")
                     st.rerun()
 
