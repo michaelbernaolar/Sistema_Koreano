@@ -85,7 +85,7 @@ def ventas_app():
                 df_abiertas["fecha"] = pd.to_datetime(df_abiertas["fecha"]).dt.strftime("%d/%m %H:%M")
                 
                 st.subheader("🛠 Servicios en proceso")
-                st.dataframe(df_abiertas, hide_index=True, use_container_width=True)
+                st.dataframe(df_abiertas, hide_index=True, width=True)
 
                 venta_sel = st.selectbox(
                     "Selecciona una orden abierta",
@@ -382,10 +382,10 @@ def ventas_app():
         if tipo_venta == "POS":
             df_carrito = pd.DataFrame(st.session_state.carrito_ventas)
 
-            if not df_carrito.empty:
-                st.dataframe(df_carrito, hide_index=True)
-            else:
+            if df_carrito.empty:
                 st.info("🧹 Carrito vacío")
+            else:
+                st.dataframe(df_carrito, hide_index=True, width=True)
 
         # --- TALLER ---
         else:
@@ -395,24 +395,31 @@ def ventas_app():
             else:
                 df_carrito = obtener_detalle_venta(st.session_state["venta_abierta_id"])
 
-            if not df_carrito.empty:
-                for _, row in df_carrito.iterrows():
-                    col1, col2, col3, col4, col5, col6 = st.columns([2, 3, 1, 1, 1, 0.6])
-
-                    col1.write(row["ID Producto"])
-                    col2.write(row["Descripción"])
-                    col3.write(row["Cantidad"])
-                    col4.write(f"S/. {row['Precio Unitario']:.2f}")
-                    col5.write(f"S/. {row['Subtotal']:.2f}")
-
-                    if col6.button("❌", key=f"del_{row['ID Producto']}"):
-                        eliminar_item_servicio(
-                            st.session_state["venta_abierta_id"],
-                            row["ID Producto"]
-                        )
-                        st.rerun()
-            else:
+            if df_carrito.empty:
                 st.info("🧹 Carrito vacío")
+            else:
+                st.dataframe(df_carrito, hide_index=True, width=True)
+        
+        # --- Eliminar producto del servicio (SOLO TALLER) ---
+        if tipo_venta == "Taller" and not df_carrito.empty:
+            st.markdown("### ❌ Eliminar producto del servicio")
+
+            producto_eliminar = st.selectbox(
+                "Producto",
+                df_carrito["ID Producto"].tolist(),
+                format_func=lambda x: (
+                    f"{x} - "
+                    f"{df_carrito.loc[df_carrito['ID Producto'] == x, 'Descripción'].values[0]}"
+                )
+            )
+
+            if st.button("Eliminar producto"):
+                eliminar_item_servicio(
+                    st.session_state["venta_abierta_id"],
+                    producto_eliminar
+                )
+                st.success("Producto eliminado correctamente")
+                st.rerun()
 
         valor_venta_dec = Decimal("0.00")
 
@@ -505,7 +512,7 @@ def ventas_app():
                         st.session_state.carrito_ventas = []
 
                 if tipo_venta == "Taller":
-                    if st.button("🗑 Vaciar carrito"):
+                    if st.button("🧹 Limpiar servicio completo"):
                         eliminar_items_servicio(st.session_state["venta_abierta_id"])
                         st.success("Servicio limpiado correctamente")
                         st.rerun() 
