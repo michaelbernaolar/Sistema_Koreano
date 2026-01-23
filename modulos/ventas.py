@@ -87,36 +87,36 @@ def ventas_app():
                 st.subheader("🛠 En proceso")
                 st.dataframe(df_abiertas, hide_index=True, width='stretch')
 
-                with st.expander("Selecciona y elimina orden"):
-                    col_sel, col_del = st.columns([3,1])
-                    with col_sel:
-                        venta_sel = st.selectbox(
-                            "Selecciona una orden abierta",
-                            df_abiertas["orden"].tolist(),
-                            format_func=lambda x: f"#{x}",
-                            key="select_orden"
-                        )
+                col_sel, col_del = st.columns([2,1])
 
-                        # Si cambia la orden, actualizar placa
-                        if st.session_state.get("venta_abierta_id") != venta_sel:
-                            st.session_state["venta_abierta_id"] = venta_sel
+                with col_sel:
+                    venta_sel = st.selectbox(
+                        "Selecciona una orden abierta",
+                        df_abiertas["orden"].tolist(),
+                        format_func=lambda x: f"#{x}",
+                        key="select_orden"
+                    )
 
-                            placa = df_abiertas.loc[
-                                df_abiertas["orden"] == venta_sel, "placa"
-                            ].values[0]
+                    # Si cambia la orden, actualizar placa
+                    if st.session_state.get("venta_abierta_id") != venta_sel:
+                        st.session_state["venta_abierta_id"] = venta_sel
 
-                            st.session_state["placa_vehiculo"] = placa
+                        placa = df_abiertas.loc[
+                            df_abiertas["orden"] == venta_sel, "placa"
+                        ].values[0]
 
-                    with col_del:
-                        if st.button("❌ Eliminar orden"):
-                            try:
-                                eliminar_venta_abierta(st.session_state["venta_abierta_id"])
-                                st.success(f"Orden #{st.session_state['venta_abierta_id']} eliminada correctamente")
-                                st.session_state.pop("venta_abierta_id", None)
-                                st.session_state["placa_vehiculo"] = ""
-                                st.rerun()
-                            except Exception as e:
-                                st.error(f"No se pudo eliminar la orden: {str(e)}")
+                        st.session_state["placa_vehiculo"] = placa
+
+                with col_del:
+                    if st.button("❌ Eliminar orden"):
+                        try:
+                            eliminar_venta_abierta(st.session_state["venta_abierta_id"])
+                            st.success(f"Orden #{st.session_state['venta_abierta_id']} eliminada correctamente")
+                            st.session_state.pop("venta_abierta_id", None)
+                            st.session_state["placa_vehiculo"] = ""
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"No se pudo eliminar la orden: {str(e)}")
 
                 df_detalle = obtener_detalle_venta(venta_sel)
 
@@ -124,6 +124,17 @@ def ventas_app():
                 df_carrito_taller = df_detalle.copy()
             else:
                 st.info("No hay servicios en curso")
+
+        with st.form("orden_form"):
+            venta_sel = st.selectbox(
+                "Selecciona una orden abierta",
+                df_abiertas["orden"].tolist(),
+                format_func=lambda x: f"#{x}"
+            )
+            eliminar = st.form_submit_button("❌ Eliminar orden")
+            
+            if eliminar:
+                st.success(f"Orden #{venta_sel} eliminada")
 
         col1, col2 = st.columns([3, 1])
         with col1:
