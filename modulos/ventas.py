@@ -451,15 +451,28 @@ def ventas_app():
             total = float(totales["total"])
 
             # 5️⃣ Mostrar métricas
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("💵 Valor Venta", f"S/. {valor_venta_dec:,.2f}")
-            with col2:
-                st.metric("💰 Op. Gravada", f"S/. {op_gravada:,.2f}")
-            with col3:
-                st.metric("💸 IGV (18%)", f"S/. {igv:,.2f}")
-            with col4:
-                st.metric("🧾 Total", f"S/. {total:,.2f}")
+            # col1, col2, col3, col4 = st.columns(4)
+            # with col1:
+            #     st.metric("💵 Valor Venta", f"S/. {valor_venta_dec:,.2f}")
+            # with col2:
+            #     st.metric("💰 Op. Gravada", f"S/. {op_gravada:,.2f}")
+            # with col3:
+            #     st.metric("💸 IGV (18%)", f"S/. {igv:,.2f}")
+            # with col4:
+            #     st.metric("🧾 Total", f"S/. {total:,.2f}")
+            
+            # Mostrar solo el total de forma principal
+            st.metric("🧾 Total", f"S/. {total:,.2f}")
+
+            # Expander para detalles de la venta
+            with st.expander("Detalle Venta"):
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("💵 Valor Venta", f"S/. {valor_venta_dec:,.2f}")
+                with col2:
+                    st.metric("💰 Op. Gravada", f"S/. {op_gravada:,.2f}")
+                with col3:
+                    st.metric("💸 IGV (18%)", f"S/. {igv:,.2f}")
 
             # ============================
             # Calculadora de cambio (solo efectivo)
