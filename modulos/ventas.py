@@ -125,17 +125,6 @@ def ventas_app():
             else:
                 st.info("No hay servicios en curso")
 
-        with st.form("orden_form"):
-            venta_sel = st.selectbox(
-                "Selecciona una orden abierta",
-                df_abiertas["orden"].tolist(),
-                format_func=lambda x: f"#{x}"
-            )
-            eliminar = st.form_submit_button("❌ Eliminar orden")
-            
-            if eliminar:
-                st.success(f"Orden #{venta_sel} eliminada")
-
         col1, col2 = st.columns([3, 1])
         with col1:
             st.subheader("📝 Registrar nueva venta")
