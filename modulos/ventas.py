@@ -84,7 +84,7 @@ def ventas_app():
             if not df_abiertas.empty:
                 df_abiertas["fecha"] = pd.to_datetime(df_abiertas["fecha"]).dt.strftime("%d/%m %H:%M")
                 
-                st.subheader("🛠 Servicios en proceso")
+                st.subheader("🛠 En proceso")
                 st.dataframe(df_abiertas, hide_index=True, width='stretch')
 
                 col_sel, col_del = st.columns([3,1])
@@ -93,7 +93,7 @@ def ventas_app():
                     venta_sel = st.selectbox(
                         "Selecciona una orden abierta",
                         df_abiertas["orden"].tolist(),
-                        format_func=lambda x: f"Orden #{x}",
+                        format_func=lambda x: f"#{x}",
                         key="select_orden"
                     )
 
@@ -108,7 +108,7 @@ def ventas_app():
                         st.session_state["placa_vehiculo"] = placa
 
                 with col_del:
-                    if st.button("❌ Eliminar orden seleccionada"):
+                    if st.button("❌ Eliminar orden"):
                         try:
                             eliminar_venta_abierta(st.session_state["venta_abierta_id"])
                             st.success(f"Orden #{st.session_state['venta_abierta_id']} eliminada correctamente")
