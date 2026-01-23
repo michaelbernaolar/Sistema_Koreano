@@ -87,7 +87,7 @@ def ventas_app():
                 st.subheader("🛠 En proceso")
                 st.dataframe(df_abiertas, hide_index=True, width='stretch')
 
-                col_sel, col_del = st.columns([3,1])
+                col_sel, col_del = st.columns([2,1])
 
                 with col_sel:
                     venta_sel = st.selectbox(
