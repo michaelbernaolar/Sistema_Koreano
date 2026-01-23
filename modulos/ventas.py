@@ -461,9 +461,7 @@ def ventas_app():
             # with col4:
             #     st.metric("🧾 Total", f"S/. {total:,.2f}")
             
-            # Mostrar solo el total de forma principal
-            st.metric("🧾 Total", f"S/. {total:,.2f}")
-
+        
             # Expander para detalles de la venta
             with st.expander("Detalle Venta"):
                 col1, col2, col3 = st.columns(3)
@@ -473,6 +471,9 @@ def ventas_app():
                     st.metric("💰 Op. Gravada", f"S/. {op_gravada:,.2f}")
                 with col3:
                     st.metric("💸 IGV (18%)", f"S/. {igv:,.2f}")
+
+            # Mostrar solo el total de forma principal
+            st.metric("🧾 Total", f"S/. {total:,.2f}")
 
             # ============================
             # Calculadora de cambio (solo efectivo)
