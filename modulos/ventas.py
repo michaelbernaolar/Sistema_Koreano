@@ -127,7 +127,7 @@ def ventas_app():
 
         col1, col2 = st.columns([3, 1])
         with col1:
-            st.subheader("📝 Registrar nueva venta")
+            st.subheader("📝 Registrar")
             # Obtener régimen desde configuración
             # Leer configuración general
             configuracion = obtener_configuracion()
@@ -214,7 +214,7 @@ def ventas_app():
                 st.success(f"Orden de servicio #{id_venta} creada")
 
         # --- Carrito en sesión --
-        st.markdown("### ➕ Agregar productos a la venta")
+        st.markdown("### ➕ Agregar productos")
         df_filtros = obtener_filtros_productos()
 
         col1, col2, col3 = st.columns(3)
