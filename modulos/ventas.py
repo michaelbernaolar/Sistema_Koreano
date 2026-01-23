@@ -18,7 +18,7 @@ from services.producto_service import (
 from services.venta_service import (
     calcular_totales, guardar_venta, agregar_item_venta, obtener_valor_venta, obtener_detalle_venta,
     inicializar_estado_venta, resetear_venta, precio_valido, obtener_ventas_abiertas, crear_venta_abierta, 
-    puede_guardar_venta, eliminar_item_servicio, eliminar_items_servicio
+    puede_guardar_venta, eliminar_item_servicio, eliminar_items_servicio, eliminar_venta_abierta
 )
 from services.comprobante_service import (
     generar_ticket_html, obtener_siguiente_correlativo, buscar_comprobantes,
@@ -103,6 +103,22 @@ def ventas_app():
                     ].values[0]
 
                     st.session_state["placa_vehiculo"] = placa
+
+                # -----------------------
+                # ELIMINAR ORDEN ABIERTA
+                # -----------------------
+                if tipo_venta == "Taller" and df_abiertas is not None and not df_abiertas.empty:
+                    col_del1, col_del2 = st.columns([3,1])
+                    with col_del2:
+                        if st.button("❌ Eliminar orden seleccionada"):
+                            try:
+                                eliminar_venta_abierta(st.session_state["venta_abierta_id"])
+                                st.success(f"Orden #{st.session_state['venta_abierta_id']} eliminada correctamente")
+                                st.session_state.pop("venta_abierta_id", None)
+                                st.session_state["placa_vehiculo"] = ""
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"No se pudo eliminar la orden: {str(e)}")
 
                 df_detalle = obtener_detalle_venta(venta_sel)
 

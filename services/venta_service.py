@@ -577,3 +577,28 @@ def eliminar_item_servicio(id_venta, id_producto):
 
     conn.commit()
     conn.close()
+
+def eliminar_venta_abierta(venta_id):
+    """
+    Elimina completamente una venta abierta (sin afectar caja ni comprobante)
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Verificar si existe y está abierta
+    cursor.execute("SELECT estado FROM venta WHERE id = %s", (venta_id,))
+    row = cursor.fetchone()
+    if not row:
+        raise ValueError("Venta no encontrada")
+    estado = row[0]
+
+    if estado != "ABIERTA":
+        raise ValueError("Solo se pueden eliminar ventas abiertas")
+
+    # Eliminar detalle
+    cursor.execute("DELETE FROM venta_detalle WHERE id_venta = %s", (venta_id,))
+    # Eliminar venta
+    cursor.execute("DELETE FROM venta WHERE id = %s", (venta_id,))
+
+    conn.commit()
+    conn.close()
