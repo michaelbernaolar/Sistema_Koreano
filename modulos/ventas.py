@@ -215,36 +215,32 @@ def ventas_app():
 
         # --- Carrito en sesión --
         st.markdown("### ➕ Agregar productos")
-        df_filtros = obtener_filtros_productos()
+        
+        with st.expander("Filtros de productos"):
+            df_filtros = obtener_filtros_productos()
 
-        col1, col2, col3 = st.columns(3)
+            # Crear columnas para los tres filtros
+            col_marca, col_categoria, col_stock = st.columns([1,1,1])  # proporciones ajustables
 
-        # --- CATEGORÍA (primer filtro) ---
-        with col2:
-            categorias = ["Todos"] + sorted(
-                df_filtros["categoria"].dropna().unique().tolist()
-            )
-            filtro_categoria = st.selectbox("Categoría", categorias)
+            # --- MARCA ---
+            with col_marca:
+                marcas = ["Todos"] + sorted(df_filtros["marca"].dropna().unique().tolist())
+                filtro_marca = st.selectbox("Marca", marcas)
 
-            if filtro_categoria != "Todos":
-                df_filtros = df_filtros[df_filtros["categoria"] == filtro_categoria]
+                if filtro_marca != "Todos":
+                    df_filtros = df_filtros[df_filtros["marca"] == filtro_marca]
 
-        # --- MARCA (depende de categoría) ---
-        with col1:
-            marcas = ["Todos"] + sorted(
-                df_filtros["marca"].dropna().unique().tolist()
-            )
-            filtro_marca = st.selectbox("Marca", marcas)
+            # --- CATEGORÍA ---
+            with col_categoria:
+                categorias = ["Todos"] + sorted(df_filtros["categoria"].dropna().unique().tolist())
+                filtro_categoria = st.selectbox("Categoría", categorias)
 
-            if filtro_marca != "Todos":
-                df_filtros = df_filtros[df_filtros["marca"] == filtro_marca]
+                if filtro_categoria != "Todos":
+                    df_filtros = df_filtros[df_filtros["categoria"] == filtro_categoria]
 
-        # --- STOCK (depende de los dos anteriores) ---
-        with col3:
-            filtro_stock = st.selectbox(
-                "Stock",
-                ["Todos", "Con stock", "Sin stock"]
-            )
+            # --- STOCK ---
+            with col_stock:
+                filtro_stock = st.selectbox("Stock", ["Todos", "Con stock", "Sin stock"])
 
         criterio = st.text_input(
             "Buscar por palabra clave (código, descripción, modelo, etc.)"
