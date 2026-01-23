@@ -406,7 +406,7 @@ def ventas_app():
                 "ID Producto": "ID",
                 "Cantidad": "Cant.",
                 "Precio Unitario": "P.U.",
-                "Descripción": "Desc",
+                "Descripción": "Descripción",
                 "Subtotal": "Subt."
             }
             df_mostrar = df_carrito.rename(columns=columnas_cortas)
