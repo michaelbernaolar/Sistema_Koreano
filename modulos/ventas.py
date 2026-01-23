@@ -33,7 +33,7 @@ def ventas_app():
             st.rerun()
         st.stop()
         
-    st.title("🛒 Punto de venta")
+    st.title("🛒 Ventas")
     usuario = st.session_state.get("usuario")
 
     if not usuario:
