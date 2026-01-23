@@ -391,13 +391,6 @@ def ventas_app():
 
         if tipo_venta == "POS":
             df_carrito = pd.DataFrame(st.session_state.carrito_ventas)
-
-            if df_carrito.empty:
-                st.info("🧹 Carrito vacío")
-            else:
-                st.dataframe(df_carrito, hide_index=True, width='stretch')
-
-        # --- TALLER ---
         else:
             if "venta_abierta_id" not in st.session_state:
                 st.info("Abra o seleccione una orden de servicio")
@@ -405,10 +398,20 @@ def ventas_app():
             else:
                 df_carrito = obtener_detalle_venta(st.session_state["venta_abierta_id"])
 
-            if df_carrito.empty:
-                st.info("🧹 Carrito vacío")
-            else:
-                st.dataframe(df_carrito, hide_index=True, width='stretch')
+        if df_carrito.empty:
+            st.info("🧹 Carrito vacío")
+        else:
+            # 🔹 RENOMBRAR COLUMNAS PARA MOSTRAR
+            columnas_cortas = {
+                "ID Producto": "ID",
+                "Cantidad": "Cant.",
+                "Precio Unitario": "P.U.",
+                "Descripción": "Desc",
+                "Subtotal": "Subt."
+            }
+            df_mostrar = df_carrito.rename(columns=columnas_cortas)
+
+            st.dataframe(df_mostrar, hide_index=True, width='stretch')
         
         # --- Eliminar producto del servicio (SOLO TALLER) ---
         if tipo_venta == "Taller" and not df_carrito.empty:
@@ -449,18 +452,6 @@ def ventas_app():
             op_gravada = float(totales["op_gravada"])
             igv = float(totales["igv"])
             total = float(totales["total"])
-
-            # 5️⃣ Mostrar métricas
-            # col1, col2, col3, col4 = st.columns(4)
-            # with col1:
-            #     st.metric("💵 Valor Venta", f"S/. {valor_venta_dec:,.2f}")
-            # with col2:
-            #     st.metric("💰 Op. Gravada", f"S/. {op_gravada:,.2f}")
-            # with col3:
-            #     st.metric("💸 IGV (18%)", f"S/. {igv:,.2f}")
-            # with col4:
-            #     st.metric("🧾 Total", f"S/. {total:,.2f}")
-            
         
             # Expander para detalles de la venta
             with st.expander("Detalle Venta"):
