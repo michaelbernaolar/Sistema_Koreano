@@ -109,11 +109,19 @@ def ventas_app():
                 col_sel, col_del = st.columns([2,1])
 
                 with col_sel:
+                    # venta_sel = st.selectbox(
+                    #     "Selecciona una orden",
+                    #     df_abiertas["orden"].tolist(),
+                    #     format_func=lambda x: f"#{x}",
+                    #     key="select_orden"
+                    # )
+
                     venta_sel = st.selectbox(
                         "Selecciona una orden",
                         df_abiertas["orden"].tolist(),
                         format_func=lambda x: f"#{x}",
-                        key="select_orden"
+                        key="select_orden",
+                        label_visibility="collapsed"
                     )
 
                     # Si cambia la orden, actualizar placa
