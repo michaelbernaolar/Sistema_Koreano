@@ -51,6 +51,7 @@ def ventas_app():
     # ========================
     with tabs[0]:
         st.session_state.setdefault("carrito_ventas", [])
+        st.session_state.setdefault("metodo_pago_select", "Yape")
 
         tipo_venta = st.radio(
             "Tipo de venta",
@@ -81,7 +82,7 @@ def ventas_app():
             st.session_state["filtro_stock"] = "Todos"
             
             # Método de pago por defecto
-            st.session_state["metodo_pago_select"] = "Efectivo"
+            st.session_state["metodo_pago_select"] = "Yape"
 
         st.session_state["tipo_venta_anterior"] = tipo_venta
 
