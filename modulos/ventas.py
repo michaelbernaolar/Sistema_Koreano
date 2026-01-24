@@ -73,9 +73,9 @@ def ventas_app():
 
             # Campos de búsqueda y filtros
             st.session_state["criterio_busqueda"] = ""
-            # st.session_state["filtro_marca"] = "Todos"
-            # st.session_state["filtro_categoria"] = "Todos"
-            # st.session_state["filtro_stock"] = "Todos"
+            st.session_state["filtro_marca"] = "Todos"
+            st.session_state["filtro_categoria"] = "Todos"
+            st.session_state["filtro_stock"] = "Todos"
 
         st.session_state["tipo_venta_anterior"] = tipo_venta
 
@@ -231,7 +231,7 @@ def ventas_app():
             # --- MARCA ---
             with col_marca:
                 marcas = ["Todos"] + sorted(df_filtros["marca"].dropna().unique().tolist())
-                filtro_marca = st.selectbox("Marca", marcas)
+                filtro_marca = st.selectbox("Marca", marcas, key="filtro_marca")
 
                 if filtro_marca != "Todos":
                     df_filtros = df_filtros[df_filtros["marca"] == filtro_marca]
@@ -239,14 +239,14 @@ def ventas_app():
             # --- CATEGORÍA ---
             with col_categoria:
                 categorias = ["Todos"] + sorted(df_filtros["categoria"].dropna().unique().tolist())
-                filtro_categoria = st.selectbox("Categoría", categorias)
+                filtro_categoria = st.selectbox("Categoría", categorias, key="filtro_categoria")
 
                 if filtro_categoria != "Todos":
                     df_filtros = df_filtros[df_filtros["categoria"] == filtro_categoria]
 
             # --- STOCK ---
             with col_stock:
-                filtro_stock = st.selectbox("Stock", ["Todos", "Con stock", "Sin stock"])
+                filtro_stock = st.selectbox("Stock", ["Todos", "Con stock", "Sin stock"], key="filtro_stock")
 
         criterio = st.text_input(
             "Buscar por palabra clave (código, descripción, modelo, etc.)",
