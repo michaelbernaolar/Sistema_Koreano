@@ -272,6 +272,7 @@ def ventas_app():
                 st.success(f"Orden de servicio #{id_venta} creada")
 
         # --- Carrito en sesión --
+        st.markdown('<div id="agregar-producto"></div>', unsafe_allow_html=True)
         st.markdown("### ➕ Agregar productos")
 
         with st.expander("Filtros de productos"):
@@ -446,7 +447,18 @@ def ventas_app():
                 
                 st.session_state["limpiar_filtros_pendiente"] = True
                 st.success("Producto agregado correctamente")
-                st.rerun()
+                # ===== Scroll automático =====
+                scroll_js = """
+                <script>
+                const elem = document.getElementById("agregar-producto");
+                if(elem) {
+                    elem.scrollIntoView({behavior: "smooth"});
+                }
+                </script>
+                """
+                components.html(scroll_js, height=0)
+
+                #st.rerun()
 
         # --- Mostrar carrito ---
         st.subheader("🛒 Carrito de Venta")
