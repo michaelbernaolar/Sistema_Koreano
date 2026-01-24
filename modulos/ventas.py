@@ -200,11 +200,15 @@ def ventas_app():
         with col3:
             placa_vehiculo = None
             if es_varios:
-                st.session_state["placa_vehiculo"] = st.text_input(
+                st.text_input(
                     "🚗 Placa del vehículo (obligatoria)",
-                    value=st.session_state["placa_vehiculo"],
+                    key="placa_vehiculo",
                     max_chars=10
-                ).upper()
+                )
+
+                # Forzar mayúsculas SIEMPRE
+                if st.session_state.get("placa_vehiculo"):
+                    st.session_state["placa_vehiculo"] = st.session_state["placa_vehiculo"].upper() 
 
         # ===============================
         # ABRIR ORDEN DE SERVICIO
