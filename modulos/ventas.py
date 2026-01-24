@@ -28,6 +28,7 @@ from ui.styles import (
     aplicar_estilos_input_busqueda, aplicar_estilos_selectbox
 )   
 
+
 def ventas_app():
     # ========= LIMPIEZA DIFERIDA DE FILTROS (DEBE IR PRIMERO) =========
     if st.session_state.pop("limpiar_filtros_pendiente", False):
@@ -35,6 +36,7 @@ def ventas_app():
         st.session_state["filtro_marca"] = "Todos"
         st.session_state["filtro_categoria"] = "Todos"
         st.session_state["filtro_stock"] = "Todos"
+        st.rerun()
 
     aplicar_estilos_input_busqueda()
     aplicar_estilos_selectbox()
@@ -435,10 +437,7 @@ def ventas_app():
                     })
                 
                 st.success("Producto agregado correctamente")
-                st.session_state["criterio_busqueda"] = ""
-                st.session_state["filtro_marca"] = "Todos"
-                st.session_state["filtro_categoria"] = "Todos"
-                st.session_state["filtro_stock"] = "Todos"
+                st.session_state["limpiar_filtros_pendiente"] = True
                 st.rerun()
 
         # --- Mostrar carrito ---
