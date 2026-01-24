@@ -41,6 +41,18 @@ def ventas_app():
         # recarga la página
         st.rerun()
 
+    # ===== Scroll automático si se agregó un producto =====
+    if st.session_state.pop("scroll_a_agregar", False):
+        scroll_js = """
+        <script>
+        setTimeout(() => {
+            const elem = document.getElementById("agregar-producto");
+            if(elem) { elem.scrollIntoView({behavior: "smooth"}); }
+        }, 100);  // espera a que todo se renderice
+        </script>
+        """
+        components.html(scroll_js, height=0)
+        
     aplicar_estilos_input_busqueda()
     aplicar_estilos_selectbox()
 
@@ -272,8 +284,8 @@ def ventas_app():
                 st.success(f"Orden de servicio #{id_venta} creada")
 
         # --- Carrito en sesión --
-        st.markdown('<div id="agregar-producto"></div>', unsafe_allow_html=True)
         st.markdown("### ➕ Agregar productos")
+        st.markdown('<div id="agregar-producto"></div>', unsafe_allow_html=True)
 
         with st.expander("Filtros de productos"):
             df_filtros = obtener_filtros_productos()
@@ -446,19 +458,9 @@ def ventas_app():
                     })
                 
                 st.session_state["limpiar_filtros_pendiente"] = True
+                st.session_state["scroll_a_agregar"] = True
                 st.success("Producto agregado correctamente")
                 st.rerun()
-                
-                # ===== Scroll automático =====
-                scroll_js = """
-                <script>
-                setTimeout(() => {
-                    const elem = document.getElementById("agregar-producto");
-                    if(elem) { elem.scrollIntoView({behavior: "smooth"}); }
-                }, 100);  // espera 100ms a que todo se renderice
-                </script>
-                """
-                components.html(scroll_js, height=0)
 
         # --- Mostrar carrito ---
         st.subheader("🛒 Carrito de Venta")
