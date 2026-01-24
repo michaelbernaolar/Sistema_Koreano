@@ -116,7 +116,7 @@ def ventas_app():
                         df_abiertas["orden"].tolist(),
                         format_func=lambda x: f"#{x}",
                         key="select_orden",
-                        label_visibility="collapsed"
+                        #label_visibility="collapsed"
                     )
 
                     # Si cambia la orden, actualizar placa
