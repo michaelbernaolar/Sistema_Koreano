@@ -253,7 +253,21 @@ def ventas_app():
                 st.success(f"Orden de servicio #{id_venta} creada")
 
         # --- Carrito en sesión --
-        st.markdown("### ➕ Agregar productos")
+        st.markdown('<h3 id="agregar-productos">➕ Agregar productos</h3>', unsafe_allow_html=True)
+        
+        # Scroll automático si viene el parámetro
+        query_params = st.experimental_get_query_params()
+        if "scroll_to" in query_params:
+            scroll_target = query_params["scroll_to"][0]
+            scroll_js = f"""
+                <script>
+                    const elemento = document.getElementById('{scroll_target}');
+                    if(elemento){{
+                        elemento.scrollIntoView({{behavior: 'smooth'}});
+                    }}
+                </script>
+            """
+            components.html(scroll_js, height=0)
 
         with st.expander("Filtros de productos"):
             df_filtros = obtener_filtros_productos()
@@ -427,6 +441,7 @@ def ventas_app():
                 
                 st.session_state["limpiar_filtros_pendiente"] = True
                 st.success("Producto agregado correctamente")
+                st.experimental_set_query_params(scroll_to="agregar-productos")
                 st.rerun()
 
         # --- Mostrar carrito ---
