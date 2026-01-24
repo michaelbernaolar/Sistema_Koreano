@@ -165,7 +165,7 @@ def ventas_app():
                         st.session_state["placa_vehiculo"] = placa
 
                 with col_del:
-                    if st.button("❌ Eliminar"):
+                    if st.button("❌ Eliminar", key="eliminar_venta"):
                         try:
                             eliminar_venta_abierta(st.session_state["venta_abierta_id"])
                             st.success(f"Orden #{st.session_state['venta_abierta_id']} eliminada correctamente")
@@ -489,7 +489,7 @@ def ventas_app():
                 )
 
             with col_btn:
-                if st.button("❌ Eliminar", type="secondary"):
+                if st.button("❌ Eliminar", key=f"eliminar_producto_{producto_eliminar}", type="secondary"):
                     eliminar_item_servicio(
                         st.session_state["venta_abierta_id"],
                         producto_eliminar
