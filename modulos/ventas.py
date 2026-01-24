@@ -116,12 +116,20 @@ def ventas_app():
                     #     key="select_orden"
                     # )
 
+                    # venta_sel = st.selectbox(
+                    #     "Selecciona una orden",
+                    #     df_abiertas["orden"].tolist(),
+                    #     format_func=lambda x: f"#{x}",
+                    #     key="select_orden",
+                    #     label_visibility="collapsed"
+                    # )
+                    # st.markdown("**Selecciona una orden**")
+
                     venta_sel = st.selectbox(
-                        "Selecciona una orden",
+                        "",
                         df_abiertas["orden"].tolist(),
                         format_func=lambda x: f"#{x}",
-                        key="select_orden",
-                        label_visibility="collapsed"
+                        key="select_orden"
                     )
 
                     # Si cambia la orden, actualizar placa
