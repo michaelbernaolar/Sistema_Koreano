@@ -87,11 +87,14 @@ def ventas_app():
                 st.subheader("🛠 En proceso")
                 st.dataframe(df_abiertas, hide_index=True, width='stretch')
                 
-                col_sel, col_del = st.columns([2,1])
+                col_label, col_sel, col_del = st.columns([3,2,1])
+
+                with col_label:
+                    st.markdown("Selecciona orden")
 
                 with col_sel:
                     venta_sel = st.selectbox(
-                        "Selecciona una orden abierta",
+                        "",
                         df_abiertas["orden"].tolist(),
                         format_func=lambda x: f"#{x}",
                         key="select_orden"
@@ -108,7 +111,7 @@ def ventas_app():
                         st.session_state["placa_vehiculo"] = placa
 
                 with col_del:
-                    if st.button("❌ Eliminar orden"):
+                    if st.button("❌ Eliminar"):
                         try:
                             eliminar_venta_abierta(st.session_state["venta_abierta_id"])
                             st.success(f"Orden #{st.session_state['venta_abierta_id']} eliminada correctamente")
