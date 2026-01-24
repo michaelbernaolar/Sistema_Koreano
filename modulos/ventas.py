@@ -40,19 +40,7 @@ def ventas_app():
         
         # recarga la página
         st.rerun()
-
-    # ===== Scroll automático si se agregó un producto =====
-    if st.session_state.pop("scroll_a_agregar", False):
-        scroll_js = """
-        <script>
-        setTimeout(() => {
-            const elem = document.getElementById("agregar-producto");
-            if(elem) { elem.scrollIntoView({behavior: "smooth"}); }
-        }, 100);  // espera a que todo se renderice
-        </script>
-        """
-        components.html(scroll_js, height=0)
-        
+       
     aplicar_estilos_input_busqueda()
     aplicar_estilos_selectbox()
 
@@ -78,6 +66,18 @@ def ventas_app():
     st.session_state.setdefault("filtro_categoria", "Todos")
     st.session_state.setdefault("filtro_stock", "Todos")
 
+    # ===== Scroll automático si se agregó un producto =====
+    if st.session_state.pop("scroll_a_agregar", False):
+        scroll_js = """
+        <script>
+        setTimeout(() => {
+            const elem = document.getElementById("agregar-producto");
+            if(elem) { elem.scrollIntoView({behavior: "smooth"}); }
+        }, 100);  // espera a que todo se renderice
+        </script>
+        """
+        components.html(scroll_js, height=0)
+
     inicializar_estado_venta(st.session_state)
     tabs = st.tabs(["📝 Registrar Venta", "📋 Consultar Ventas", "📄 Comprobante", "📊 Reportes"])
 
@@ -98,25 +98,6 @@ def ventas_app():
         # DETECTAR CAMBIO DE TIPO DE VENTA
         # ===============================
         tipo_anterior = st.session_state.get("tipo_venta_anterior")
-
-        # if tipo_anterior != tipo_venta:
-        #     # Limpieza total al cambiar de modo
-        #     st.session_state["carrito_ventas"] = []
-        #     st.session_state.pop("venta_abierta_id", None)
-            
-        #     if tipo_venta == "POS":
-        #         st.session_state["placa_vehiculo"] = ""
-
-        #     st.session_state["venta_guardada"] = False
-        #     st.session_state["pdf_generado"] = False
-        #     st.session_state["ruta_pdf"] = None
-
-        #     # Campos de búsqueda y filtros
-        #     st.session_state["reset_busqueda_post_rerun"] = True
-        #     st.rerun()
-            
-        #     # Método de pago por defecto
-        #     st.session_state["metodo_pago_select"] = "Yape"
 
         if tipo_anterior != tipo_venta:
             # Limpieza total al cambiar de modo
@@ -460,7 +441,7 @@ def ventas_app():
                 st.session_state["limpiar_filtros_pendiente"] = True
                 st.session_state["scroll_a_agregar"] = True
                 st.success("Producto agregado correctamente")
-                st.rerun()
+                st.experimental_rerun()
 
         # --- Mostrar carrito ---
         st.subheader("🛒 Carrito de Venta")
