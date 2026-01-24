@@ -32,18 +32,13 @@ from ui.styles import (
 def ventas_app():
     # ========= LIMPIEZA SEGURA DE FILTROS =========
     if st.session_state.pop("limpiar_filtros_pendiente", False):
-
-        # ELIMINAR keys en lugar de asignar valores
-        for k in [
-            "criterio_busqueda",
-            "filtro_marca",
-            "filtro_categoria",
-            "filtro_stock"
-        ]:
-            if k in st.session_state:
-                del st.session_state[k]
-
-        # luego recarga la página
+        # ⚡ SOLO reiniciamos los valores, no eliminamos la key
+        st.session_state["criterio_busqueda"] = ""
+        st.session_state["filtro_marca"] = "Todos"
+        st.session_state["filtro_categoria"] = "Todos"
+        st.session_state["filtro_stock"] = "Todos"
+        
+        # recarga la página
         st.rerun()
 
     aplicar_estilos_input_busqueda()
