@@ -29,10 +29,7 @@ from ui.styles import (
 )   
 
 def limpiar_filtros_busqueda():
-    st.session_state["criterio_busqueda"] = ""
-    st.session_state["filtro_marca"] = "Todos"
-    st.session_state["filtro_categoria"] = "Todos"
-    st.session_state["filtro_stock"] = "Todos"
+    st.session_state["limpiar_filtros_pendiente"] = True
 
 def ventas_app():
     aplicar_estilos_input_busqueda()
@@ -240,7 +237,13 @@ def ventas_app():
 
         # --- Carrito en sesión --
         st.markdown("### ➕ Agregar productos")
-        
+        # -------- LIMPIEZA DIFERIDA DE FILTROS --------
+        if st.session_state.pop("limpiar_filtros_pendiente", False):
+            st.session_state["criterio_busqueda"] = ""
+            st.session_state["filtro_marca"] = "Todos"
+            st.session_state["filtro_categoria"] = "Todos"
+            st.session_state["filtro_stock"] = "Todos"
+
         with st.expander("Filtros de productos"):
             df_filtros = obtener_filtros_productos()
 
