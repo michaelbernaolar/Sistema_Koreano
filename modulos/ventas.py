@@ -528,9 +528,9 @@ def ventas_app():
                         st.session_state.carrito_ventas = []
 
                 if tipo_venta == "Taller":
-                    if st.button("🧹 Limpiar servicio completo"):
+                    if st.button("🗑 Vaciar carrito"):
                         eliminar_items_servicio(st.session_state["venta_abierta_id"])
-                        st.success("Servicio limpiado correctamente")
+                        st.success("Se limpio correctamente")
                         st.rerun() 
             with col2:    
                 if st.button(
