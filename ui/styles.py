@@ -5,7 +5,7 @@ def aplicar_estilos_input_busqueda():
         """
         <style>
         div[data-baseweb="input"] > div {
-            background-color: #1f2937;
+            background-color: #2596be;
             border: 1px solid #4b5563;
             border-radius: 6px;
         }
