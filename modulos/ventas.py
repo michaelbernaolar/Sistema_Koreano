@@ -441,7 +441,7 @@ def ventas_app():
                 st.session_state["limpiar_filtros_pendiente"] = True
                 st.session_state["scroll_a_agregar"] = True
                 st.success("Producto agregado correctamente")
-                st.experimental_rerun()
+                st.rerun()
 
         # --- Mostrar carrito ---
         st.subheader("🛒 Carrito de Venta")
