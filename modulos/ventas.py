@@ -30,12 +30,20 @@ from ui.styles import (
 
 
 def ventas_app():
-    # ========= LIMPIEZA DIFERIDA DE FILTROS (DEBE IR PRIMERO) =========
+    # ========= LIMPIEZA SEGURA DE FILTROS =========
     if st.session_state.pop("limpiar_filtros_pendiente", False):
-        st.session_state["criterio_busqueda"] = ""
-        st.session_state["filtro_marca"] = "Todos"
-        st.session_state["filtro_categoria"] = "Todos"
-        st.session_state["filtro_stock"] = "Todos"
+
+        # ELIMINAR keys en lugar de asignar valores
+        for k in [
+            "criterio_busqueda",
+            "filtro_marca",
+            "filtro_categoria",
+            "filtro_stock"
+        ]:
+            if k in st.session_state:
+                del st.session_state[k]
+
+        # luego recarga la página
         st.rerun()
 
     aplicar_estilos_input_busqueda()
@@ -57,6 +65,11 @@ def ventas_app():
 
     st.session_state.setdefault("placa_vehiculo", "")
     st.session_state.setdefault("venta_abierta_id", None)
+
+    st.session_state.setdefault("criterio_busqueda", "")
+    st.session_state.setdefault("filtro_marca", "Todos")
+    st.session_state.setdefault("filtro_categoria", "Todos")
+    st.session_state.setdefault("filtro_stock", "Todos")
 
     inicializar_estado_venta(st.session_state)
     tabs = st.tabs(["📝 Registrar Venta", "📋 Consultar Ventas", "📄 Comprobante", "📊 Reportes"])
