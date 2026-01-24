@@ -106,57 +106,20 @@ def ventas_app():
                 st.subheader("🛠 En proceso")
                 st.dataframe(df_abiertas, hide_index=True, width='stretch')
         
-                # col_sel, col_del = st.columns([3, 1])
-
-                # with col_sel:
-                #     venta_sel = st.selectbox(
-                #         "Selecciona una orden",
-                #         df_abiertas["orden"].tolist(),
-                #         format_func=lambda x: f"#{x}",
-                #         key="select_orden",
-                #         label_visibility="collapsed"
-                #     )
-                #     st.markdown("**Selecciona una orden**")
-
-                #     # Si cambia la orden, actualizar placa
-                #     if st.session_state.get("venta_abierta_id") != venta_sel:
-                #         st.session_state["venta_abierta_id"] = venta_sel
-
-                #         placa = df_abiertas.loc[
-                #             df_abiertas["orden"] == venta_sel, "placa"
-                #         ].values[0]
-
-                #         st.session_state["placa_vehiculo"] = placa
-
-                # with col_del:
-                #     if st.button("❌ Eliminar"):
-                #         try:
-                #             eliminar_venta_abierta(st.session_state["venta_abierta_id"])
-                #             st.success(f"Orden #{st.session_state['venta_abierta_id']} eliminada correctamente")
-                #             st.session_state.pop("venta_abierta_id", None)
-                #             st.session_state["placa_vehiculo"] = ""
-                #             st.rerun()
-                #         except Exception as e:
-                #             st.error(f"No se pudo eliminar la orden: {str(e)}")
-
-
                 col_sel, col_del = st.columns([3, 1])
 
+                st.markdown("**Selecciona una orden**")
+                
                 with col_sel:
-                    st.markdown("**Selecciona una orden**")
+                    venta_sel = st.selectbox(
+                        "Selecciona una orden",
+                        df_abiertas["orden"].tolist(),
+                        format_func=lambda x: f"#{x}",
+                        key="select_orden",
+                        label_visibility="collapsed"
+                    )
 
-                    col_spacer, col_select = st.columns([2, 3])
-
-                    with col_select:
-                        venta_sel = st.selectbox(
-                            "",
-                            df_abiertas["orden"].tolist(),
-                            format_func=lambda x: f"#{x}",
-                            key="select_orden",
-                            label_visibility="collapsed"
-                        )
-
-                    # Lógica intacta
+                    # Si cambia la orden, actualizar placa
                     if st.session_state.get("venta_abierta_id") != venta_sel:
                         st.session_state["venta_abierta_id"] = venta_sel
 
@@ -167,7 +130,6 @@ def ventas_app():
                         st.session_state["placa_vehiculo"] = placa
 
                 with col_del:
-                    st.markdown("&nbsp;", unsafe_allow_html=True)
                     if st.button("❌ Eliminar"):
                         try:
                             eliminar_venta_abierta(st.session_state["venta_abierta_id"])
