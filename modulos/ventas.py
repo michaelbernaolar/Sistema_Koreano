@@ -109,10 +109,10 @@ def ventas_app():
                 col_sel, col_del = st.columns([3, 1])
 
                 st.markdown("**Selecciona una orden**")
-                
+
                 with col_sel:
                     venta_sel = st.selectbox(
-                        "Selecciona una orden",
+                        "",
                         df_abiertas["orden"].tolist(),
                         format_func=lambda x: f"#{x}",
                         key="select_orden",
