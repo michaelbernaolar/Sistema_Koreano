@@ -335,6 +335,7 @@ def ventas_app():
 
             st.write("### 📋 Detalles del producto")
             st.write(f"🔢 Código: {id_producto}")
+            st.write(f"🧾 Descripción: {desc_producto}")
             st.write(f"🏭 Marca: {row.marca}")
             st.write(f"📖 Catálogo: {row.catalogo}")
 
