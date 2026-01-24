@@ -251,21 +251,9 @@ def ventas_app():
                 )
                 st.session_state["venta_abierta_id"] = id_venta
                 st.success(f"Orden de servicio #{id_venta} creada")
-        # ===== Scroll automático si se agregó un producto =====
-        if st.session_state.pop("scroll_a_agregar", False):
-            scroll_js = """
-            <script>
-            setTimeout(() => {
-                const elem = document.getElementById("agregar-producto");
-                if(elem) { elem.scrollIntoView({behavior: "smooth"}); }
-            }, 100);  // espera a que todo se renderice
-            </script>
-            """
-            components.html(scroll_js, height=0)
-        
+
         # --- Carrito en sesión --
         st.markdown("### ➕ Agregar productos")
-        st.markdown('<div id="agregar-producto"></div>', unsafe_allow_html=True)
 
         with st.expander("Filtros de productos"):
             df_filtros = obtener_filtros_productos()
