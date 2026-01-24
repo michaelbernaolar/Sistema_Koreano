@@ -86,15 +86,12 @@ def ventas_app():
                 
                 st.subheader("🛠 En proceso")
                 st.dataframe(df_abiertas, hide_index=True, width='stretch')
-                
-                col_label, col_sel, col_del = st.columns([3,2,1])
-
-                with col_label:
-                    st.markdown("Selecciona orden")
+        
+                col_sel, col_del = st.columns([2,1])
 
                 with col_sel:
                     venta_sel = st.selectbox(
-                        "",
+                        "Selecciona una orden",
                         df_abiertas["orden"].tolist(),
                         format_func=lambda x: f"#{x}",
                         key="select_orden"
