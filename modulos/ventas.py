@@ -28,6 +28,12 @@ from ui.styles import (
     aplicar_estilos_input_busqueda, aplicar_estilos_selectbox
 )   
 
+def limpiar_filtros_busqueda():
+    st.session_state["criterio_busqueda"] = ""
+    st.session_state["filtro_marca"] = "Todos"
+    st.session_state["filtro_categoria"] = "Todos"
+    st.session_state["filtro_stock"] = "Todos"
+
 def ventas_app():
     aplicar_estilos_input_busqueda()
     aplicar_estilos_selectbox()
@@ -82,10 +88,7 @@ def ventas_app():
             st.session_state["ruta_pdf"] = None
 
             # Campos de búsqueda y filtros
-            st.session_state["criterio_busqueda"] = ""
-            st.session_state["filtro_marca"] = "Todos"
-            st.session_state["filtro_categoria"] = "Todos"
-            st.session_state["filtro_stock"] = "Todos"
+            limpiar_filtros_busqueda()
             
             # Método de pago por defecto
             st.session_state["metodo_pago_select"] = "Yape"
@@ -386,7 +389,7 @@ def ventas_app():
             else:
                 boton_carrito = True
 
-            if st.button("➕ Agregar a la venta", disabled=not boton_carrito):
+            if st.button("➕ Agregar a la venta", disabled=not boton_carrito, on_click=limpiar_filtros_busqueda):
                 if tipo_venta == "Taller":
                     df_abiertas = obtener_ventas_abiertas()
                     if "venta_abierta_id" not in st.session_state:
@@ -410,9 +413,6 @@ def ventas_app():
                     })
 
                 st.success("Producto agregado correctamente")
-
-                st.session_state["criterio_busqueda"] = ""
-                st.rerun()
 
         # --- Mostrar carrito ---
         st.subheader("🛒 Carrito de Venta")
