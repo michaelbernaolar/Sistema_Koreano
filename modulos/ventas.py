@@ -18,7 +18,7 @@ from services.producto_service import (
 from services.venta_service import (
     calcular_totales, guardar_venta, agregar_item_venta, obtener_valor_venta, obtener_detalle_venta,
     inicializar_estado_venta, resetear_venta, precio_valido, obtener_ventas_abiertas, crear_venta_abierta, 
-    puede_guardar_venta, eliminar_item_servicio, eliminar_items_servicio, eliminar_venta_abierta
+    puede_guardar_venta, eliminar_item_servicio, eliminar_items_servicio, eliminar_venta_abierta, placa_a_mayusculas
 )
 from services.comprobante_service import (
     generar_ticket_html, obtener_siguiente_correlativo, buscar_comprobantes,
@@ -203,7 +203,8 @@ def ventas_app():
                 st.text_input(
                     "🚗 Placa del vehículo (obligatoria)",
                     key="placa_vehiculo",
-                    max_chars=10
+                    max_chars=10,
+                    on_change=placa_a_mayusculas
                 )
 
                 # Forzar mayúsculas SIEMPRE

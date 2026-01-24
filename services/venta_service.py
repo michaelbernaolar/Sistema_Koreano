@@ -1,4 +1,5 @@
 # venta_service.py
+import streamlit as st
 from datetime import datetime, date
 from decimal import Decimal
 from db import get_connection, registrar_salida_por_venta, obtener_fecha_lima, query_df
@@ -602,3 +603,7 @@ def eliminar_venta_abierta(venta_id):
 
     conn.commit()
     conn.close()
+
+def placa_a_mayusculas():
+    if "placa_vehiculo" in st.session_state and st.session_state["placa_vehiculo"]:
+        st.session_state["placa_vehiculo"] = st.session_state["placa_vehiculo"].upper()
