@@ -107,7 +107,7 @@ def ventas_app():
                 st.dataframe(df_abiertas, hide_index=True, width='stretch')
 
                 st.markdown("Selección de orden")
-                col_sel, col_del, col_space = st.columns([2, 1, 5])               
+                col_sel, col_del, col_space = st.columns([2, 1, 6])               
 
                 with col_sel:
                     venta_sel = st.selectbox(
@@ -410,6 +410,9 @@ def ventas_app():
                     })
 
                 st.success("Producto agregado correctamente")
+
+                st.session_state["criterio_busqueda"] = ""
+                st.rerun()
 
         # --- Mostrar carrito ---
         st.subheader("🛒 Carrito de Venta")
