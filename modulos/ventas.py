@@ -209,18 +209,27 @@ def ventas_app():
         # ===============================
         # ABRIR ORDEN DE SERVICIO
         # ===============================
-        if st.button("🚗 Abrir orden de servicio"):
-            if not st.session_state["placa_vehiculo"]:
-                st.warning("Ingrese la placa del vehículo")
+        col_tipo, col_boton = st.columns([3,1])
+        with col_tipo:
+            st.write("")  # Solo para alinear visualmente
+
+        with col_boton:
+            placa = st.session_state.get("placa_vehiculo", "").strip()
+
+            # Botón deshabilitado si no hay placa
+            if not placa:
+                st.button("🚗 Abrir orden de servicio", disabled=True)
+                st.warning("Ingrese la placa del vehículo para habilitar el botón")
             else:
-                id_venta = crear_venta_abierta(
-                    cliente_id=cliente_id,
-                    placa_vehiculo=st.session_state["placa_vehiculo"],
-                    usuario_id=usuario["id"],
-                    id_caja=st.session_state["caja_abierta_id"]
-                )
-                st.session_state["venta_abierta_id"] = id_venta
-                st.success(f"Orden de servicio #{id_venta} creada")
+                if st.button("🚗 Abrir orden de servicio"):
+                    id_venta = crear_venta_abierta(
+                        cliente_id=cliente_id,
+                        placa_vehiculo=placa,
+                        usuario_id=usuario["id"],
+                        id_caja=st.session_state["caja_abierta_id"]
+                    )
+                    st.session_state["venta_abierta_id"] = id_venta
+                    st.success(f"Orden de servicio #{id_venta} creada") 
 
         # --- Carrito en sesión --
         st.markdown("### ➕ Agregar productos")
