@@ -78,7 +78,7 @@ def ventas_app():
             st.session_state["filtro_stock"] = "Todos"
             
             # Método de pago por defecto
-            st.session_state["metodo_pago"] = "Efectivo"
+            st.session_state["metodo_pago_select"] = "Efectivo"
 
         st.session_state["tipo_venta_anterior"] = tipo_venta
 
