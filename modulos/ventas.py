@@ -444,8 +444,8 @@ def ventas_app():
                         "Subtotal": round(cantidad * precio_unit, 2)
                     })
                 
-                st.success("Producto agregado correctamente")
                 st.session_state["limpiar_filtros_pendiente"] = True
+                st.success("Producto agregado correctamente")
                 st.rerun()
 
         # --- Mostrar carrito ---
@@ -489,7 +489,7 @@ def ventas_app():
                 )
 
             with col_btn:
-                if st.button("🗑 Eliminar", type="secondary"):
+                if st.button("❌ Eliminar", type="secondary"):
                     eliminar_item_servicio(
                         st.session_state["venta_abierta_id"],
                         producto_eliminar
