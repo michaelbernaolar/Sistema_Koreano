@@ -66,7 +66,7 @@ def ventas_app():
             # Limpieza total al cambiar de modo
             st.session_state["carrito_ventas"] = []
             st.session_state.pop("venta_abierta_id", None)
-            st.session_state["placa_vehiculo"] = ""
+            st.session_state.pop("placa_vehiculo", None)
             st.session_state["venta_guardada"] = False
             st.session_state["pdf_generado"] = False
             st.session_state["ruta_pdf"] = None
