@@ -389,7 +389,7 @@ def ventas_app():
             else:
                 boton_carrito = True
 
-            if st.button("➕ Agregar a la venta", disabled=not boton_carrito, on_click=limpiar_filtros_busqueda):
+            if st.button("➕ Agregar a la venta", disabled=not boton_carrito):
                 if tipo_venta == "Taller":
                     df_abiertas = obtener_ventas_abiertas()
                     if "venta_abierta_id" not in st.session_state:
@@ -411,8 +411,10 @@ def ventas_app():
                         "Precio Unitario": precio_unit,
                         "Subtotal": round(cantidad * precio_unit, 2)
                     })
-
+                
+                limpiar_filtros_busqueda()
                 st.success("Producto agregado correctamente")
+                st.rerun()
 
         # --- Mostrar carrito ---
         st.subheader("🛒 Carrito de Venta")
