@@ -24,11 +24,14 @@ from services.comprobante_service import (
     generar_ticket_html, obtener_siguiente_correlativo, buscar_comprobantes,
     generar_ticket_pdf, registrar_reimpresion
 )
-from ui.styles import aplicar_estilos_input_busqueda
+from ui.styles import (
+    aplicar_estilos_input_busqueda, aplicar_estilos_selectbox
+)   
 
 def ventas_app():
     aplicar_estilos_input_busqueda()
-    
+    aplicar_estilos_selectbox()
+
     if "caja_abierta_id" not in st.session_state:
         st.warning("⚠️ No hay una caja abierta")
         if st.button("Ir a Caja"):
