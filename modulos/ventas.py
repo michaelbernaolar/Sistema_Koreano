@@ -447,18 +447,18 @@ def ventas_app():
                 
                 st.session_state["limpiar_filtros_pendiente"] = True
                 st.success("Producto agregado correctamente")
+                st.rerun()
+                
                 # ===== Scroll automático =====
                 scroll_js = """
                 <script>
-                const elem = document.getElementById("agregar-producto");
-                if(elem) {
-                    elem.scrollIntoView({behavior: "smooth"});
-                }
+                setTimeout(() => {
+                    const elem = document.getElementById("agregar-producto");
+                    if(elem) { elem.scrollIntoView({behavior: "smooth"}); }
+                }, 100);  // espera 100ms a que todo se renderice
                 </script>
                 """
                 components.html(scroll_js, height=0)
-
-                #st.rerun()
 
         # --- Mostrar carrito ---
         st.subheader("🛒 Carrito de Venta")
