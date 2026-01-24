@@ -66,18 +66,6 @@ def ventas_app():
     st.session_state.setdefault("filtro_categoria", "Todos")
     st.session_state.setdefault("filtro_stock", "Todos")
 
-    # ===== Scroll automático si se agregó un producto =====
-    if st.session_state.pop("scroll_a_agregar", False):
-        scroll_js = """
-        <script>
-        setTimeout(() => {
-            const elem = document.getElementById("agregar-producto");
-            if(elem) { elem.scrollIntoView({behavior: "smooth"}); }
-        }, 100);  // espera a que todo se renderice
-        </script>
-        """
-        components.html(scroll_js, height=0)
-
     inicializar_estado_venta(st.session_state)
     tabs = st.tabs(["📝 Registrar Venta", "📋 Consultar Ventas", "📄 Comprobante", "📊 Reportes"])
 
@@ -263,7 +251,18 @@ def ventas_app():
                 )
                 st.session_state["venta_abierta_id"] = id_venta
                 st.success(f"Orden de servicio #{id_venta} creada")
-
+        # ===== Scroll automático si se agregó un producto =====
+        if st.session_state.pop("scroll_a_agregar", False):
+            scroll_js = """
+            <script>
+            setTimeout(() => {
+                const elem = document.getElementById("agregar-producto");
+                if(elem) { elem.scrollIntoView({behavior: "smooth"}); }
+            }, 100);  // espera a que todo se renderice
+            </script>
+            """
+            components.html(scroll_js, height=0)
+        
         # --- Carrito en sesión --
         st.markdown("### ➕ Agregar productos")
         st.markdown('<div id="agregar-producto"></div>', unsafe_allow_html=True)
@@ -439,7 +438,6 @@ def ventas_app():
                     })
                 
                 st.session_state["limpiar_filtros_pendiente"] = True
-                st.session_state["scroll_a_agregar"] = True
                 st.success("Producto agregado correctamente")
                 st.rerun()
 
