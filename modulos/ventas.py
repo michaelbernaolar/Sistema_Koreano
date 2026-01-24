@@ -18,7 +18,9 @@ from services.producto_service import (
 from services.venta_service import (
     calcular_totales, guardar_venta, agregar_item_venta, obtener_valor_venta, obtener_detalle_venta,
     inicializar_estado_venta, resetear_venta, precio_valido, obtener_ventas_abiertas, crear_venta_abierta, 
-    puede_guardar_venta, eliminar_item_servicio, eliminar_items_servicio, eliminar_venta_abierta, placa_a_mayusculas
+    puede_guardar_venta, eliminar_item_servicio, eliminar_items_servicio, eliminar_venta_abierta, placa_a_mayusculas,
+    aplicar_estilos_input_busqueda
+
 )
 from services.comprobante_service import (
     generar_ticket_html, obtener_siguiente_correlativo, buscar_comprobantes,
@@ -26,6 +28,8 @@ from services.comprobante_service import (
 )
 
 def ventas_app():
+    aplicar_estilos_input_busqueda()
+    
     if "caja_abierta_id" not in st.session_state:
         st.warning("⚠️ No hay una caja abierta")
         if st.button("Ir a Caja"):
