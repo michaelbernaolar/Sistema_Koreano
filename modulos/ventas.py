@@ -105,10 +105,9 @@ def ventas_app():
                 
                 st.subheader("🛠 En proceso")
                 st.dataframe(df_abiertas, hide_index=True, width='stretch')
-        
-                col_sel, col_del = st.columns([3, 1])
-
                 st.markdown("**Selecciona una orden**")
+
+                col_sel, col_del = st.columns([1, 1])                
 
                 with col_sel:
                     venta_sel = st.selectbox(
@@ -116,7 +115,6 @@ def ventas_app():
                         df_abiertas["orden"].tolist(),
                         format_func=lambda x: f"#{x}",
                         key="select_orden",
-                        #label_visibility="collapsed"
                     )
 
                     # Si cambia la orden, actualizar placa
