@@ -1,4 +1,4 @@
-from turtle import st
+import streamlit as st
 
 def aplicar_estilos_input_busqueda():
     st.markdown(
