@@ -68,6 +68,7 @@ def ventas_app():
     with tabs[0]:
         st.session_state.setdefault("carrito_ventas", [])
         st.session_state.setdefault("metodo_pago_select", "Yape")
+        st.session_state.setdefault("criterio_busqueda", "")
 
         tipo_venta = st.radio(
             "Tipo de venta",
@@ -273,7 +274,6 @@ def ventas_app():
 
         criterio = st.text_input(
             "Buscar por palabra clave (código, descripción, modelo, etc.)",
-            value=st.session_state.get("criterio_busqueda", ""),
             key="criterio_busqueda"
         )
 
