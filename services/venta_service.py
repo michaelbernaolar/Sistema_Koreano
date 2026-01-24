@@ -605,5 +605,5 @@ def eliminar_venta_abierta(venta_id):
     conn.close()
 
 def placa_a_mayusculas():
-    if "placa_vehiculo" in st.session_state and st.session_state["placa_vehiculo"]:
+    if st.session_state.get("placa_vehiculo"):
         st.session_state["placa_vehiculo"] = st.session_state["placa_vehiculo"].upper()

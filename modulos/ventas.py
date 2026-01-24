@@ -207,10 +207,6 @@ def ventas_app():
                     on_change=placa_a_mayusculas
                 )
 
-                # Forzar mayúsculas SIEMPRE
-                if st.session_state.get("placa_vehiculo"):
-                    st.session_state["placa_vehiculo"] = st.session_state["placa_vehiculo"].upper() 
-
         # ===============================
         # ABRIR ORDEN DE SERVICIO
         # ===============================
