@@ -11,7 +11,7 @@ def aplicar_estilos_input_busqueda():
         }
 
         div[data-baseweb="input"] input {
-            color: #ffffff;
+            color: #111827;
             font-weight: 500;
         }
 
