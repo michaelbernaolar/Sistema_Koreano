@@ -450,10 +450,10 @@ def ventas_app():
                 # ===== Scroll automático =====
                 scroll_js = """
                 <script>
-                const elem = document.getElementById("agregar-producto");
-                if(elem) {
-                    elem.scrollIntoView({behavior: "smooth"});
-                }
+                setTimeout(() => {
+                    const elem = document.getElementById("agregar-producto");
+                    if(elem) { elem.scrollIntoView({behavior: "smooth"}); }
+                }, 100);  // espera 100ms a que todo se renderice
                 </script>
                 """
                 components.html(scroll_js, height=0)
