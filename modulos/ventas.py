@@ -28,9 +28,6 @@ from ui.styles import (
     aplicar_estilos_input_busqueda, aplicar_estilos_selectbox
 )   
 
-def limpiar_filtros_busqueda():
-    st.session_state["limpiar_filtros_pendiente"] = True
-
 def ventas_app():
     # ========= LIMPIEZA DIFERIDA DE FILTROS (DEBE IR PRIMERO) =========
     if st.session_state.pop("limpiar_filtros_pendiente", False):
@@ -80,11 +77,30 @@ def ventas_app():
         # ===============================
         tipo_anterior = st.session_state.get("tipo_venta_anterior")
 
+        # if tipo_anterior != tipo_venta:
+        #     # Limpieza total al cambiar de modo
+        #     st.session_state["carrito_ventas"] = []
+        #     st.session_state.pop("venta_abierta_id", None)
+            
+        #     if tipo_venta == "POS":
+        #         st.session_state["placa_vehiculo"] = ""
+
+        #     st.session_state["venta_guardada"] = False
+        #     st.session_state["pdf_generado"] = False
+        #     st.session_state["ruta_pdf"] = None
+
+        #     # Campos de búsqueda y filtros
+        #     st.session_state["reset_busqueda_post_rerun"] = True
+        #     st.rerun()
+            
+        #     # Método de pago por defecto
+        #     st.session_state["metodo_pago_select"] = "Yape"
+
         if tipo_anterior != tipo_venta:
             # Limpieza total al cambiar de modo
             st.session_state["carrito_ventas"] = []
             st.session_state.pop("venta_abierta_id", None)
-            
+
             if tipo_venta == "POS":
                 st.session_state["placa_vehiculo"] = ""
 
@@ -92,10 +108,12 @@ def ventas_app():
             st.session_state["pdf_generado"] = False
             st.session_state["ruta_pdf"] = None
 
-            # Campos de búsqueda y filtros
-            limpiar_filtros_busqueda()
-            
-            # Método de pago por defecto
+            # 🔥 LIMPIEZA DE BÚSQUEDA (CLAVE)
+            st.session_state["criterio_busqueda"] = ""
+            st.session_state["filtro_marca"] = "Todos"
+            st.session_state["filtro_categoria"] = "Todos"
+            st.session_state["filtro_stock"] = "Todos"
+
             st.session_state["metodo_pago_select"] = "Yape"
 
         st.session_state["tipo_venta_anterior"] = tipo_venta
@@ -416,8 +434,11 @@ def ventas_app():
                         "Subtotal": round(cantidad * precio_unit, 2)
                     })
                 
-                limpiar_filtros_busqueda()
                 st.success("Producto agregado correctamente")
+                st.session_state["criterio_busqueda"] = ""
+                st.session_state["filtro_marca"] = "Todos"
+                st.session_state["filtro_categoria"] = "Todos"
+                st.session_state["filtro_stock"] = "Todos"
                 st.rerun()
 
         # --- Mostrar carrito ---
