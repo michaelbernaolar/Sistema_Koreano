@@ -71,6 +71,12 @@ def ventas_app():
             st.session_state["pdf_generado"] = False
             st.session_state["ruta_pdf"] = None
 
+            # Campos de búsqueda y filtros
+            st.session_state["criterio_busqueda"] = ""
+            # st.session_state["filtro_marca"] = "Todos"
+            # st.session_state["filtro_categoria"] = "Todos"
+            # st.session_state["filtro_stock"] = "Todos"
+
         st.session_state["tipo_venta_anterior"] = tipo_venta
 
         # ===============================
@@ -243,7 +249,9 @@ def ventas_app():
                 filtro_stock = st.selectbox("Stock", ["Todos", "Con stock", "Sin stock"])
 
         criterio = st.text_input(
-            "Buscar por palabra clave (código, descripción, modelo, etc.)"
+            "Buscar por palabra clave (código, descripción, modelo, etc.)",
+            value=st.session_state.get("criterio_busqueda", ""),
+            key="criterio_busqueda"
         )
 
         LIMITE_INICIAL = 20
