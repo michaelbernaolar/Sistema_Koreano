@@ -18,14 +18,13 @@ from services.producto_service import (
 from services.venta_service import (
     calcular_totales, guardar_venta, agregar_item_venta, obtener_valor_venta, obtener_detalle_venta,
     inicializar_estado_venta, resetear_venta, precio_valido, obtener_ventas_abiertas, crear_venta_abierta, 
-    puede_guardar_venta, eliminar_item_servicio, eliminar_items_servicio, eliminar_venta_abierta, placa_a_mayusculas,
-    aplicar_estilos_input_busqueda
-
+    puede_guardar_venta, eliminar_item_servicio, eliminar_items_servicio, eliminar_venta_abierta, placa_a_mayusculas
 )
 from services.comprobante_service import (
     generar_ticket_html, obtener_siguiente_correlativo, buscar_comprobantes,
     generar_ticket_pdf, registrar_reimpresion
 )
+from ui.styles import aplicar_estilos_input_busqueda
 
 def ventas_app():
     aplicar_estilos_input_busqueda()
