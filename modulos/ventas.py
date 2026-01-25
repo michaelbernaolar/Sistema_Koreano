@@ -517,21 +517,20 @@ def ventas_app():
             vuelto = None
 
             if metodo_pago == "Efectivo":
-                pago_cliente_txt = st.text_input(
+                pago_cliente = st.number_input(
                     "💰 Monto entregado por el cliente",
-                    placeholder="Ingrese monto entregado"
+                    min_value=0.0,
+                    step=0.1,
+                    format="%.2f",
+                    key="pago_cliente"
                 )
 
-                if pago_cliente_txt:
-                    try:
-                        pago_cliente = float(pago_cliente_txt)
-                        if pago_cliente >= total:
-                            vuelto = round(pago_cliente - total, 2)
-                            st.success(f"💸 Vuelto: S/. {vuelto:,.2f}")
-                        else:
-                            st.warning("⚠️ El pago es menor al total")
-                    except ValueError:
-                        st.error("❌ Monto inválido")
+                if pago_cliente > 0:
+                    if pago_cliente >= total:
+                        vuelto = round(pago_cliente - total, 2)
+                        st.success(f"💸 Vuelto: S/. {vuelto:,.2f}")
+                    else:
+                        st.warning("⚠️ El pago es menor al total")
             
             st.session_state.setdefault("venta_guardada", False)
             st.session_state.setdefault("pdf_generado", False)
