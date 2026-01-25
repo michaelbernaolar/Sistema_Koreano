@@ -514,14 +514,16 @@ def ventas_app():
             # ============================
             pago_cliente = 0.0
             vuelto = 0.0
-
+            def reset_pago_cliente():
+                st.session_state["pago_cliente"] = 0.0
             if metodo_pago == "Efectivo":
                 pago_cliente = st.number_input(
                     "💰 Monto entregado por el cliente",
                     min_value=0.0,
                     step=0.1,
                     format="%.2f",
-                    key="pago_cliente"
+                    key="pago_cliente",
+                    on_change=reset_pago_cliente
                 )
 
                 if pago_cliente > 0:
