@@ -512,9 +512,8 @@ def ventas_app():
             # ============================
             # Calculadora de cambio (solo efectivo)
             # ============================
-            pago_cliente_txt = None
-            pago_cliente = None
-            vuelto = None
+            pago_cliente = 0.0
+            vuelto = 0.0
 
             if metodo_pago == "Efectivo":
                 pago_cliente = st.number_input(
@@ -545,8 +544,7 @@ def ventas_app():
             puede_guardar, motivo = puede_guardar_venta(
                 carrito=carrito_validacion,
                 metodo_pago=metodo_pago,
-                total=total,
-                pago_cliente_txt=pago_cliente_txt
+                total=total
             )
 
             # ============================
