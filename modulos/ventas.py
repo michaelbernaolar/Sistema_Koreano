@@ -542,9 +542,10 @@ def ventas_app():
             )
 
             puede_guardar, motivo = puede_guardar_venta(
-                carrito=carrito_validacion,
-                metodo_pago=metodo_pago,
-                total=total
+                carrito=carrito_validacion, 
+                metodo_pago=metodo_pago, 
+                total=total, 
+                pago_cliente=pago_cliente
             )
 
             # ============================

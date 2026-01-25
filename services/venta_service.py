@@ -529,17 +529,17 @@ def puede_guardar_venta(
     carrito,
     metodo_pago,
     total,
-    pago_cliente_txt
+    pago_cliente
 ):
     if not carrito:
         return False, "El carrito está vacío"
 
     if metodo_pago == "Efectivo":
-        if not pago_cliente_txt:
+        if not pago_cliente:
             return False, "Ingrese el monto entregado"
 
         try:
-            pago = float(pago_cliente_txt)
+            pago = float(pago_cliente)
         except ValueError:
             return False, "Monto entregado inválido"
 
