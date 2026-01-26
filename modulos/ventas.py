@@ -60,7 +60,11 @@ def ventas_app():
     with tabs[0]:
         st.session_state.setdefault("carrito_ventas", [])
         st.session_state.setdefault("metodo_pago_select", "Yape")
-        st.session_state.setdefault("criterio_busqueda", "")
+        #st.session_state.setdefault("criterio_busqueda", "")
+
+        # 🔥 LIMPIEZA CONTROLADA DEL INPUT DE BÚSQUEDA
+        if st.session_state.pop("limpiar_busqueda", False):
+            st.session_state["criterio_busqueda"] = ""
 
         tipo_venta = st.radio(
             "Tipo de venta",
