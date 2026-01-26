@@ -409,7 +409,7 @@ def ventas_app():
                         "Precio Unitario": precio_unit,
                         "Subtotal": round(cantidad * precio_unit, 2)
                     })
-
+                st.session_state["criterio_busqueda"] = ""
                 st.success("Producto agregado correctamente")
 
         # --- Mostrar carrito ---
