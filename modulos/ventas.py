@@ -60,11 +60,7 @@ def ventas_app():
     with tabs[0]:
         st.session_state.setdefault("carrito_ventas", [])
         st.session_state.setdefault("metodo_pago_select", "Yape")
-        #st.session_state.setdefault("criterio_busqueda", "")
-
-        # 🔥 LIMPIEZA CONTROLADA DEL INPUT DE BÚSQUEDA
-        if st.session_state.pop("limpiar_busqueda", False):
-            st.session_state["criterio_busqueda"] = ""
+        st.session_state.setdefault("criterio_busqueda", "")
 
         tipo_venta = st.radio(
             "Tipo de venta",
@@ -413,10 +409,8 @@ def ventas_app():
                         "Precio Unitario": precio_unit,
                         "Subtotal": round(cantidad * precio_unit, 2)
                     })
-                st.session_state["criterio_busqueda"] = ""
-                st.session_state.pop("producto_sel", None)
+            
                 st.success("Producto agregado correctamente")
-                st.rerun()
 
         # --- Mostrar carrito ---
         st.subheader("🛒 Carrito de Venta")
