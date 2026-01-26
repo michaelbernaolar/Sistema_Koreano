@@ -267,7 +267,8 @@ def ventas_app():
                 filtro_stock = st.selectbox("Stock", ["Todos", "Con stock", "Sin stock"], key="filtro_stock")
 
         criterio = st.text_input(
-            "Buscar por palabra clave (código, descripción, modelo, etc.)"
+            "Buscar por palabra clave (código, descripción, modelo, etc.)",
+            key="criterio_busqueda"
         )
 
         LIMITE_INICIAL = 20
