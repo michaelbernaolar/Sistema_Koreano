@@ -30,6 +30,10 @@ from ui.styles import (
 
 
 def ventas_app():
+
+    aplicar_estilos_input_busqueda()
+    aplicar_estilos_selectbox()
+    
     if "caja_abierta_id" not in st.session_state:
         st.warning("⚠️ No hay una caja abierta")
         if st.button("Ir a Caja"):
