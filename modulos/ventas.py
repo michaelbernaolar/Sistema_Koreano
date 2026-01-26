@@ -30,20 +30,6 @@ from ui.styles import (
 
 
 def ventas_app():
-    # ========= LIMPIEZA SEGURA DE FILTROS =========
-    if st.session_state.pop("limpiar_filtros_pendiente", False):
-        # ⚡ SOLO reiniciamos los valores, no eliminamos la key
-        st.session_state["criterio_busqueda"] = ""
-        st.session_state["filtro_marca"] = "Todos"
-        st.session_state["filtro_categoria"] = "Todos"
-        st.session_state["filtro_stock"] = "Todos"
-        
-        # recarga la página
-        st.rerun()
-       
-    aplicar_estilos_input_busqueda()
-    aplicar_estilos_selectbox()
-
     if "caja_abierta_id" not in st.session_state:
         st.warning("⚠️ No hay una caja abierta")
         if st.button("Ir a Caja"):
@@ -60,11 +46,6 @@ def ventas_app():
 
     st.session_state.setdefault("placa_vehiculo", "")
     st.session_state.setdefault("venta_abierta_id", None)
-
-    st.session_state.setdefault("criterio_busqueda", "")
-    st.session_state.setdefault("filtro_marca", "Todos")
-    st.session_state.setdefault("filtro_categoria", "Todos")
-    st.session_state.setdefault("filtro_stock", "Todos")
 
     inicializar_estado_venta(st.session_state)
     tabs = st.tabs(["📝 Registrar Venta", "📋 Consultar Ventas", "📄 Comprobante", "📊 Reportes"])
@@ -282,8 +263,7 @@ def ventas_app():
                 filtro_stock = st.selectbox("Stock", ["Todos", "Con stock", "Sin stock"], key="filtro_stock")
 
         criterio = st.text_input(
-            "Buscar por palabra clave (código, descripción, modelo, etc.)",
-            key="criterio_busqueda"
+            "Buscar por palabra clave (código, descripción, modelo, etc.)"
         )
 
         LIMITE_INICIAL = 20
@@ -424,10 +404,8 @@ def ventas_app():
                         "Precio Unitario": precio_unit,
                         "Subtotal": round(cantidad * precio_unit, 2)
                     })
-                
-                st.session_state["limpiar_filtros_pendiente"] = True
+
                 st.success("Producto agregado correctamente")
-                st.rerun()
 
         # --- Mostrar carrito ---
         st.subheader("🛒 Carrito de Venta")
