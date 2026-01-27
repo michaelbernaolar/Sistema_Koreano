@@ -600,7 +600,7 @@ def ventas_app():
                     st.info(f"ℹ️ {motivo}")
 
             with col3:
-                if st.button("🧾 Imprimir"):
+                if st.button("🧾 Imprimir", disabled=not st.session_state.get("venta_guardada", False)):
                     if "venta_actual_id" in st.session_state:
                         html = generar_ticket_html(
                             st.session_state["venta_actual_id"]
