@@ -621,7 +621,7 @@ def ventas_app():
                         """
                         components.html(auto_print_html, height=0)
             with col4:
-                if st.button("🔁 Reimprimir"):
+                if st.button("🔁 Reimprimir", disabled=not st.session_state.get("venta_guardada", False)):
                     if "venta_actual_id" in st.session_state:
                         registrar_reimpresion(st.session_state["venta_actual_id"], usuario)
                         html = generar_ticket_html(st.session_state["venta_actual_id"])
