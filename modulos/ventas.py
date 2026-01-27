@@ -32,10 +32,6 @@ def vaciar_carrito_pos():
     st.session_state.carrito_ventas = []
     st.session_state["_carrito_vaciado"] = True
 
-def finalizar_venta():
-    st.session_state.clear()
-    st.rerun()
-
 def ventas_app():
 
     aplicar_estilos_input_busqueda()
@@ -661,10 +657,13 @@ def ventas_app():
                             mime="application/pdf"
                         )
             with col6:
-                st.button("✔️ Finalizar", disabled=not st.session_state.get("venta_guardada", False),
-                    on_click=finalizar_venta,
-                    key="finalizar_venta"
-                )
+                if st.button("✔️ Finalizar", disabled=not st.session_state.get("venta_guardada", False)):
+                    resetear_venta(st.session_state)
+                    st.rerun()
+
+            # -------- LIMPIAR BANDERA DE RESET VISUAL --------
+            if st.session_state.get("reset_en_progreso"):
+                st.session_state.pop("reset_en_progreso")
 
     # ========================
     # TAB 2: Consultar Ventas
