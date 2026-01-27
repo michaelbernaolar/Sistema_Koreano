@@ -649,7 +649,7 @@ def ventas_app():
                             mime="application/pdf"
                         )
             with col6:
-                if st.button("✔️ Finalizar"):
+                if st.button("✔️ Finalizar", disabled=not st.session_state.get("venta_guardada", False)):
                     resetear_venta(st.session_state)
                     st.rerun()
 
