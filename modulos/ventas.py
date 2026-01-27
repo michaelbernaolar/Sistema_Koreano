@@ -28,6 +28,9 @@ from ui.styles import (
     aplicar_estilos_input_busqueda, aplicar_estilos_selectbox
 )   
 
+def vaciar_carrito_pos():
+    st.session_state.carrito_ventas = []
+    st.session_state["_carrito_vaciado"] = True
 
 def ventas_app():
 
@@ -416,7 +419,10 @@ def ventas_app():
         st.subheader("🛒 Carrito de Venta")
 
         if tipo_venta == "POS":
-            df_carrito = pd.DataFrame(st.session_state.carrito_ventas)
+            if st.session_state.pop("_carrito_vaciado", False):
+                df_carrito = pd.DataFrame()
+            else:
+                df_carrito = pd.DataFrame(st.session_state.carrito_ventas)
         else:
             if "venta_abierta_id" not in st.session_state:
                 st.info("Abra o seleccione una orden de servicio")
@@ -548,8 +554,10 @@ def ventas_app():
 
             with col1:
                 if tipo_venta == "POS":
-                    if st.button("🗑 Vaciar carrito", disabled=st.session_state["venta_guardada"]):
-                        st.session_state.carrito_ventas = []
+                    st.button("🗑 Vaciar carrito", disabled=st.session_state.get("venta_guardada", False),
+                        on_click=vaciar_carrito_pos,
+                        key="vaciar_pos"
+                    )
 
                 if tipo_venta == "Taller":
                     if st.button("🗑 Vaciar carrito"):
