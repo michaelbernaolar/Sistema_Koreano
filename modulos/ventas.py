@@ -33,7 +33,7 @@ def vaciar_carrito_pos():
     st.session_state["_carrito_vaciado"] = True
 
 def finalizar_venta():
-    resetear_venta(st.session_state)
+    st.session_state.clear()
     st.rerun()
 
 def ventas_app():
