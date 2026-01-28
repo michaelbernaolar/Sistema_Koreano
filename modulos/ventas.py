@@ -19,7 +19,7 @@ from services.venta_service import (
     calcular_totales, guardar_venta, agregar_item_venta, obtener_valor_venta, obtener_detalle_venta,
     inicializar_estado_venta, precio_valido, obtener_ventas_abiertas, crear_venta_abierta, 
     puede_guardar_venta, eliminar_item_servicio, eliminar_items_servicio, eliminar_venta_abierta, placa_a_mayusculas,
-    resetear_modulo_ventas
+    resetear_modulo_ventas, vaciar_carrito_pos
 )
 from services.comprobante_service import (
     generar_ticket_html, obtener_siguiente_correlativo, buscar_comprobantes,
@@ -28,10 +28,6 @@ from services.comprobante_service import (
 from ui.styles import (
     aplicar_estilos_input_busqueda, aplicar_estilos_selectbox
 )   
-
-def vaciar_carrito_pos():
-    st.session_state.carrito_ventas = []
-    st.session_state["_carrito_vaciado"] = True
 
 def ventas_app():
 

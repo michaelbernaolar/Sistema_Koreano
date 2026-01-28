@@ -650,3 +650,8 @@ def resetear_modulo_ventas():
     st.session_state["carrito_ventas"] = []
     st.session_state["metodo_pago_select"] = "Yape"
     st.session_state["venta_guardada"] = False
+
+
+def vaciar_carrito_pos():
+    st.session_state.carrito_ventas = []
+    st.session_state["_carrito_vaciado"] = True
