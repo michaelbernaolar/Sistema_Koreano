@@ -18,7 +18,8 @@ from services.producto_service import (
 from services.venta_service import (
     calcular_totales, guardar_venta, agregar_item_venta, obtener_valor_venta, obtener_detalle_venta,
     inicializar_estado_venta, resetear_venta, precio_valido, obtener_ventas_abiertas, crear_venta_abierta, 
-    puede_guardar_venta, eliminar_item_servicio, eliminar_items_servicio, eliminar_venta_abierta, placa_a_mayusculas
+    puede_guardar_venta, eliminar_item_servicio, eliminar_items_servicio, eliminar_venta_abierta, placa_a_mayusculas,
+    resetear_modulo_ventas
 )
 from services.comprobante_service import (
     generar_ticket_html, obtener_siguiente_correlativo, buscar_comprobantes,
@@ -658,7 +659,7 @@ def ventas_app():
                         )
             with col6:
                 if st.button("✔️ Finalizar", disabled=not st.session_state.get("venta_guardada", False)):
-                    resetear_venta(st.session_state)
+                    resetear_modulo_ventas()
                     st.rerun()
 
             # -------- LIMPIAR BANDERA DE RESET VISUAL --------

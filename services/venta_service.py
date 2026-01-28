@@ -607,3 +607,40 @@ def eliminar_venta_abierta(venta_id):
 def placa_a_mayusculas():
     if st.session_state.get("placa_vehiculo"):
         st.session_state["placa_vehiculo"] = st.session_state["placa_vehiculo"].upper()
+
+def resetear_modulo_ventas():
+    claves_ventas = [
+        # Venta / estado general
+        "venta_guardada",
+        "venta_actual_id",
+        "venta_abierta_id",
+        "pdf_generado",
+        "ruta_pdf",
+
+        # Carrito y pagos
+        "carrito_ventas",
+        "metodo_pago_select",
+        "pago_cliente",
+
+        # Cliente / placa
+        "placa_vehiculo",
+
+        # Búsqueda y filtros
+        "criterio_busqueda",
+        "filtro_marca",
+        "filtro_categoria",
+        "filtro_stock",
+
+        # UI / control
+        "tipo_venta_anterior",
+        "_carrito_vaciado",
+        "reset_en_progreso",
+    ]
+
+    for key in claves_ventas:
+        st.session_state.pop(key, None)
+
+    # Valores por defecto mínimos
+    st.session_state["carrito_ventas"] = []
+    st.session_state["metodo_pago_select"] = "Yape"
+    st.session_state["venta_guardada"] = False
