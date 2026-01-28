@@ -37,6 +37,16 @@ def parsear_comprobante(nro_comprobante: str):
             "Formato de comprobante inválido. Use SERIE-NUMERO (ej: T-000001)"
         )
     
+def venta_ya_cerrada(id_venta):
+    df = query_df(
+        "SELECT estado FROM venta WHERE id = %s",
+        (id_venta,)
+    )
+    return (
+        not df.empty and 
+        df.iloc[0]["estado"] in ("EMITIDA", "CERRADA")
+    )
+
 def guardar_venta(
     fecha,
     cliente,
@@ -52,6 +62,11 @@ def guardar_venta(
     id_caja,
     id_venta_existente=None
 ):
+    # 🔒 Protección backend
+    if id_venta_existente:
+        if venta_ya_cerrada(id_venta_existente):
+            raise Exception("La venta ya fue cerrada previamente")
+        
     fecha = obtener_fecha_lima()
 
     conn = get_connection()

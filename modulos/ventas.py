@@ -548,6 +548,16 @@ def ventas_app():
                 or not hay_caja_abierta
                 or st.session_state.get("venta_guardada", False)
             )
+
+            # 🔒 Lock para evitar doble guardado
+            st.session_state.setdefault("guardando_venta", False)
+
+            # ℹ️ Feedback de validación (NO es error)
+            if not puede_guardar and motivo:
+                st.info(f"ℹ️ {motivo}")
+
+            if st.session_state["guardando_venta"]:
+                st.info("⏳ Guardando venta, por favor espere...")
             # ============================
             # BOTONES EN UNA SOLA FILA
             # ============================
@@ -569,44 +579,56 @@ def ventas_app():
                 if st.button(
                     "💾 Guardar venta",
                     type="primary",
-                    disabled=disabled_guardar
+                    disabled=disabled_guardar or st.session_state["guardando_venta"]
                 ):
-                    if "caja_abierta_id" not in st.session_state:
-                        st.error("❌ No hay caja abierta")
-                        st.stop()
+                    # 🔒 ACTIVAR LOCK INMEDIATO
+                    st.session_state["guardando_venta"] = True
 
-                    if tipo_venta == "Taller" and not st.session_state["placa_vehiculo"]:
-                        st.error("❌ La orden de taller debe tener placa")
-                        st.stop()
+                    try:
+                        if "caja_abierta_id" not in st.session_state:
+                            st.error("❌ No hay caja abierta")
+                            st.stop()
 
-                    fecha = obtener_fecha_lima()
+                        if tipo_venta == "Taller" and not st.session_state["placa_vehiculo"]:
+                            st.error("❌ La orden de taller debe tener placa")
+                            st.stop()
 
-                    carrito_guardar = (
-                        st.session_state.carrito_ventas
-                        if tipo_venta == "POS"
-                        else None  # Taller se guarda desde BD
-                    )
-                    id_venta = guardar_venta(
-                        fecha=fecha,
-                        cliente=cliente,
-                        regimen=regimen,
-                        tipo_comprobante=tipo_comprobante,
-                        metodo_pago=metodo_pago,
-                        nro_comprobante=nro_comprobante,
-                        placa_vehiculo=st.session_state["placa_vehiculo"],
-                        pago_cliente=pago_cliente,
-                        vuelto=vuelto,
-                        carrito=carrito_guardar,
-                        usuario=usuario,
-                        id_caja=st.session_state["caja_abierta_id"],
-                        id_venta_existente=st.session_state.get("venta_abierta_id")
-                    )
-                    st.session_state["venta_actual_id"] = id_venta
-                    st.session_state["venta_guardada"] = True
-                    st.success(f"✅ Venta registrada (ID {id_venta})")
-                    st.rerun()
-                if not puede_guardar and motivo:
-                    st.info(f"ℹ️ {motivo}")
+                        fecha = obtener_fecha_lima()
+
+                        carrito_guardar = (
+                            st.session_state.carrito_ventas
+                            if tipo_venta == "POS"
+                            else None  # Taller se guarda desde BD
+                        )
+
+                        if st.session_state.get("venta_guardada"):
+                            st.warning("⚠️ Esta venta ya fue guardada")
+                            st.stop()
+                            
+                        id_venta = guardar_venta(
+                            fecha=fecha,
+                            cliente=cliente,
+                            regimen=regimen,
+                            tipo_comprobante=tipo_comprobante,
+                            metodo_pago=metodo_pago,
+                            nro_comprobante=nro_comprobante,
+                            placa_vehiculo=st.session_state["placa_vehiculo"],
+                            pago_cliente=pago_cliente,
+                            vuelto=vuelto,
+                            carrito=carrito_guardar,
+                            usuario=usuario,
+                            id_caja=st.session_state["caja_abierta_id"],
+                            id_venta_existente=st.session_state.get("venta_abierta_id")
+                        )
+                        st.session_state["venta_actual_id"] = id_venta
+                        st.session_state["venta_guardada"] = True
+                        st.session_state["guardando_venta"] = False
+                        st.success(f"✅ Venta registrada (ID {id_venta})")
+                        st.rerun()
+                    except Exception as e:
+                        # 🔓 LIBERAR LOCK SI FALLA
+                        st.session_state["guardando_venta"] = False
+                        st.error(f"❌ Error al guardar la venta: {e}")
 
             with col3:
                 if st.button("🧾 Imprimir", disabled=not st.session_state.get("venta_guardada", False)):
