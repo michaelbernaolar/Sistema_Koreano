@@ -48,7 +48,6 @@ def venta_ya_cerrada(id_venta):
     )
 
 def guardar_venta(
-    fecha,
     cliente,
     regimen,
     tipo_comprobante,
@@ -266,14 +265,6 @@ def inicializar_estado_venta(state):
     state.setdefault("venta_guardada", False)
     state.setdefault("pdf_generado", False)
     state.setdefault("ruta_pdf", None)
-
-def resetear_venta(state):
-    state["reset_en_progreso"] = True
-    state["carrito_ventas"] = []
-    state["venta_guardada"] = False
-    state["pdf_generado"] = False
-    state["ruta_pdf"] = None
-    state.pop("venta_actual_id", None)
 
 def precio_valido(precio, costo):
     return precio >= 0

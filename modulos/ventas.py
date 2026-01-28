@@ -17,7 +17,7 @@ from services.producto_service import (
 )
 from services.venta_service import (
     calcular_totales, guardar_venta, agregar_item_venta, obtener_valor_venta, obtener_detalle_venta,
-    inicializar_estado_venta, resetear_venta, precio_valido, obtener_ventas_abiertas, crear_venta_abierta, 
+    inicializar_estado_venta, precio_valido, obtener_ventas_abiertas, crear_venta_abierta, 
     puede_guardar_venta, eliminar_item_servicio, eliminar_items_servicio, eliminar_venta_abierta, placa_a_mayusculas,
     resetear_modulo_ventas
 )
@@ -101,7 +101,7 @@ def ventas_app():
         # ===============================
         # SERVICIOS / VENTAS EN CURSO
         # ===============================
-        df_abiertas = pd.DataFrame()  # ← CLAVE
+        #df_abiertas = pd.DataFrame()  # ← CLAVE 
 
         if tipo_venta == "Taller":
             df_abiertas = obtener_ventas_abiertas()
@@ -593,7 +593,7 @@ def ventas_app():
                             st.error("❌ La orden de taller debe tener placa")
                             st.stop()
 
-                        fecha = obtener_fecha_lima()
+                        #fecha = obtener_fecha_lima()
 
                         carrito_guardar = (
                             st.session_state.carrito_ventas
@@ -606,7 +606,6 @@ def ventas_app():
                             st.stop()
                             
                         id_venta = guardar_venta(
-                            fecha=fecha,
                             cliente=cliente,
                             regimen=regimen,
                             tipo_comprobante=tipo_comprobante,
