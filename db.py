@@ -401,14 +401,14 @@ def actualizar_producto(data):
         stock_actual = %s,
         precio_venta = %s,
         imagen = %s,
-        activo = %s,
-        margen_utilidad=%s           
+        activo = %s          
     WHERE id = %s
     ''', data)
 
     # 🔥 Recalcular precio y valor_venta CON el margen recién actualizado
     producto_id = data[-1]
     precio_anterior, precio_nuevo, margen_usado, costo_prom = recalcular_precios_producto(cursor, producto_id)
+
 
     # 📌 Registrar historial
     registrar_historial_precio(cursor, producto_id, precio_anterior, precio_nuevo, margen_usado, costo_prom)
