@@ -407,13 +407,24 @@ def actualizar_producto(data):
 
     # 🔥 Recalcular precio y valor_venta CON el margen recién actualizado
     producto_id = data[-1]
-    precio_anterior, precio_nuevo, margen_usado, costo_prom = recalcular_precios_producto(cursor, producto_id)
 
+    # 🔒 Recalcular precios (blindado)
+    resultado = recalcular_precios_producto(cursor, producto_id)
 
-    # 📌 Registrar historial
-    registrar_historial_precio(cursor, producto_id, precio_anterior, precio_nuevo, margen_usado, costo_prom)
+    if resultado and resultado[0] is not None:
+        precio_anterior, precio_nuevo, margen_usado, costo_prom = resultado
+
+        registrar_historial_precio(
+            cursor,
+            producto_id,
+            precio_anterior,
+            precio_nuevo,
+            margen_usado,
+            costo_prom
+        )
 
     conn.commit()
+    cursor.close()
     conn.close()
 
 def actualizar_costo_promedio(cursor, id_producto, cantidad_entrada, costo_unitario_entrada):
@@ -509,8 +520,11 @@ def recalcular_precios_producto(cursor, id_producto):
     # Obtener configuración global
     cursor.execute("SELECT igv, margen_utilidad FROM configuracion WHERE id = 1")
     config = cursor.fetchone()
-    igv_global = config[0]
-    margen_global = config[1]
+
+    if not config:
+        return None, None, None, None
+    
+    igv_global, margen_global = config
 
     # Obtener datos del producto
     cursor.execute("""
@@ -521,8 +535,8 @@ def recalcular_precios_producto(cursor, id_producto):
     fila = cursor.fetchone()
 
     if not fila:
-        return None
-
+        return None, None, None, None
+    
     costo_promedio, margen_producto, precio_anterior = fila
 
     # Si el producto NO tiene margen asignado → usar el global

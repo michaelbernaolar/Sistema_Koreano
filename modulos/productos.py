@@ -164,7 +164,9 @@ def productos_app():
                     row["id"]
                 )
 
-                actualizar_producto(data)
+                with st.spinner("💾 Guardando cambios del producto..."):
+                    actualizar_producto(data)
+                    
                 st.success("✅ Producto actualizado correctamente")
                 st.rerun()
 
