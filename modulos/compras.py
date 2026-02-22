@@ -302,12 +302,12 @@ def compras_app():
                                 igv, total, metodo_pago
                             )
                             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            RETURNING id
                         """, (
                             fecha, id_proveedor, nro_doc, tipo_doc,
                             float(suma_total), float(descuento), float(op_gravada), float(op_gratuita),
                             float(igv), float(total), metodo_pago
                         ))
-
 
                         id_compra = cursor.fetchone()[0]
 
