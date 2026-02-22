@@ -6,7 +6,7 @@ import os
 import streamlit as st
 import pytz
 
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 if os.getenv("STREAMLIT_ENV") != "cloud":
     from dotenv import load_dotenv
@@ -428,14 +428,20 @@ def actualizar_producto(data):
     conn.close()
 
 def actualizar_costo_promedio(cursor, id_producto, cantidad_entrada, costo_unitario_entrada):
+    
+    # 🔹 Convertimos entradas a Decimal
+    cantidad_entrada = Decimal(str(cantidad_entrada))
+    costo_unitario_entrada = Decimal(str(costo_unitario_entrada))
+
     cursor.execute("SELECT stock_actual, costo_promedio FROM producto WHERE id = %s", (id_producto,))
     fila = cursor.fetchone()
     if not fila:
         return
 
     stock_actual, costo_promedio_actual = fila
-    stock_actual = stock_actual or 0
-    costo_promedio_actual = costo_promedio_actual or 0
+
+    stock_actual = Decimal(stock_actual or 0)
+    costo_promedio_actual = Decimal(costo_promedio_actual or 0)
 
     # 🔹 Si el producto es nuevo o no tiene costo previo
     if costo_promedio_actual == 0 or stock_actual == 0:
@@ -446,6 +452,7 @@ def actualizar_costo_promedio(cursor, id_producto, cantidad_entrada, costo_unita
         nuevo_costo_promedio = (total_valor_anterior + total_valor_nuevo) / (stock_actual + cantidad_entrada)
 
     nuevo_stock = stock_actual + cantidad_entrada
+    valor_inventario = nuevo_stock * nuevo_costo_promedio
 
     cursor.execute("""
         UPDATE public.producto
@@ -457,9 +464,9 @@ def actualizar_costo_promedio(cursor, id_producto, cantidad_entrada, costo_unita
         WHERE id = %s
     """, (
         nuevo_stock,
-        round(nuevo_costo_promedio, 4),
-        round(costo_unitario_entrada, 4),
-        round(nuevo_stock * nuevo_costo_promedio, 2),
+        nuevo_costo_promedio.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP),
+        costo_unitario_entrada.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP),
+        valor_inventario.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
         id_producto
     ))
 
