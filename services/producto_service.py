@@ -12,6 +12,21 @@ def obtener_valores_unicos(columna):
     conn.close()
     return df[columna].dropna().sort_values().tolist()
 
+def procesar_criterio_comodin(criterio: str):
+    if not criterio:
+        return []
+
+    criterio = criterio.lower().strip()
+
+    # eliminar múltiples *
+    while "**" in criterio:
+        criterio = criterio.replace("**", "*")
+
+    # dividir por *
+    palabras = [p.strip() for p in criterio.split("*") if p.strip()]
+
+    return palabras
+
 
 def buscar_producto_avanzado(
     criterio=None,
@@ -34,17 +49,21 @@ def buscar_producto_avanzado(
     params = []
 
     if criterio:
-        criterio = f"%{criterio.lower()}%"
-        query += """
-            AND (
-                LOWER(p.id) LIKE %s OR
-                LOWER(p.descripcion) LIKE %s OR
-                LOWER(p.catalogo) LIKE %s OR
-                LOWER(p.marca) LIKE %s OR
-                LOWER(p.modelo) LIKE %s
-            )
-        """
-        params.extend([criterio] * 5)
+        palabras = procesar_criterio_comodin(criterio)
+
+        for palabra in palabras:
+            like = f"%{palabra}%"
+
+            query += """
+                AND (
+                    LOWER(CAST(p.id AS TEXT)) LIKE %s OR
+                    LOWER(p.descripcion) LIKE %s OR
+                    LOWER(p.catalogo) LIKE %s OR
+                    LOWER(p.marca) LIKE %s OR
+                    LOWER(p.modelo) LIKE %s
+                )
+            """
+            params.extend([like] * 5)
 
     if marca and marca != "Todos":
         query += " AND p.marca = %s"
