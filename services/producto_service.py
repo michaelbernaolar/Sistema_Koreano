@@ -106,18 +106,23 @@ def contar_productos(
     """
     params = []
 
+    # 🔎 MISMA LÓGICA QUE buscar_producto_avanzado
     if criterio:
-        criterio = f"%{criterio.lower()}%"
-        query += """
-            AND (
-                LOWER(p.id) LIKE %s OR
-                LOWER(p.descripcion) LIKE %s OR
-                LOWER(p.catalogo) LIKE %s OR
-                LOWER(p.marca) LIKE %s OR
-                LOWER(p.modelo) LIKE %s
-            )
-        """
-        params.extend([criterio] * 5)
+        palabras = procesar_criterio_comodin(criterio)
+
+        for palabra in palabras:
+            like = f"%{palabra}%"
+
+            query += """
+                AND (
+                    LOWER(CAST(p.id AS TEXT)) LIKE %s OR
+                    LOWER(p.descripcion) LIKE %s OR
+                    LOWER(p.catalogo) LIKE %s OR
+                    LOWER(p.marca) LIKE %s OR
+                    LOWER(p.modelo) LIKE %s
+                )
+            """
+            params.extend([like] * 5)
 
     if marca and marca != "Todos":
         query += " AND p.marca = %s"
@@ -134,6 +139,7 @@ def contar_productos(
 
     cursor.execute(query, params)
     total = cursor.fetchone()[0]
+
     conn.close()
     return total
 
