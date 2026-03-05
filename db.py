@@ -22,6 +22,7 @@ def get_connection():
         DATABASE_URL,
         sslmode="require"
     )
+    conn.autocommit = True
     cur = conn.cursor()
     cur.execute("SET search_path TO public;")
     cur.close()
